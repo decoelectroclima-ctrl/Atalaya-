@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Shield Silhouette -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M54,22 C68,26 80,30 84,34 C84,58 76,74 54,86 C32,74 24,58 24,34 C28,30 40,26 54,22 Z" />
+    <path
+        android:fillColor="#121214"
+        android:pathData="M54,26 C65,29.5 75,33 78.5,36.5 C78.5,56 71.5,70 54,80.5 C36.5,70 29.5,56 29.5,36.5 C33,33 43,29.5 54,26 Z" />
+    <!-- Golden Kintsugi Seam / Crack -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFDF00"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M54,30 L48,42 L58,50 L44,62 L54,76" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFDF00"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M48,42 L38,46 M58,50 L66,54 M44,62 L36,68" />
+</vector>

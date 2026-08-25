@@ -1,0 +1,6 @@
+{
+  "name": "SOLTAR",
+  "description": "Aplicación de acompañamiento para ruptura, duelo afectivo, regulación emocional, aceptación y reconstrucción de autonomía.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
