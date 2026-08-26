@@ -2,39 +2,42 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// SOLTAR Warm Slate & Stone Palette (Adult, calming, minimalist, technological)
-val SoltarBackground = Color(0xFF0F1115)
-val SoltarSurface = Color(0xFF171A21)
-val SoltarSurfaceElevated = Color(0xFF20242D)
-val SoltarSurfaceHighlight = Color(0xFF2A303C)
-val SoltarBorder = Color(0xFF2F3746)
-val SoltarBorderSubtle = Color(0xFF222834)
+// SOLTAR Warm Kintsugi & Stone Palette
+val SoltarBackground = Color(0xFF100E0C)
+val SoltarSurface = Color(0xFF1B1713)
+val SoltarSurfaceElevated = Color(0xFF211C17)
+val SoltarSurfaceHighlight = Color(0xFF28221B)
+val SoltarBorder = Color(0xFF423625)
+val SoltarBorderSubtle = Color(0xFF241F19)
 
-// Accent Colors
-val SoltarAmber = Color(0xFFE5A958)
-val SoltarAmberLight = Color(0xFFFDE8C5)
-val SoltarAmberDark = Color(0xFF9E6B24)
+// Accent Colors (Kintsugi Gold)
+val SoltarAmber = Color(0xFFE7A94F)
+val SoltarAmberLight = Color(0xFFFBE3B8)
+val SoltarAmberDark = Color(0xFF8F5A1E)
 
-val SoltarSage = Color(0xFF7EA89B)
-val SoltarSageLight = Color(0xFFD4E8E1)
-val SoltarSageDark = Color(0xFF385E53)
+// Salvia
+val SoltarSage = Color(0xFF7FA694)
+val SoltarSageLight = Color(0xFFD8E8DF)
+val SoltarSageDark = Color(0xFF3B5A4C)
 
-val SoltarTerracotta = Color(0xFFD97757)
-val SoltarTerracottaLight = Color(0xFFF7D5CA)
+// Terracota
+val SoltarTerracotta = Color(0xFFDB7C5C)
+val SoltarTerracottaLight = Color(0xFFF6D4C6)
 
-val SoltarBlue = Color(0xFF6B9AC4)
-val SoltarBlueLight = Color(0xFFD0E3F5)
+// Azul Info
+val SoltarBlue = Color(0xFF6E96BE)
+val SoltarBlueLight = Color(0xFFD5E3F0)
 
 // Typography & Text
-val TextPrimary = Color(0xFFF2F4F8)
-val TextSecondary = Color(0xFFA5ADB8)
-val TextMuted = Color(0xFF6C7684)
+val TextPrimary = Color(0xFFF5F1EA)
+val TextSecondary = Color(0xFFB6ABA0)
+val TextMuted = Color(0xFF7F7469)
 
 // Semantic colors
-val UrgeAlertRed = Color(0xFFE05252)
-val UrgeAlertBackground = Color(0xFF2D1517)
-val SuccessGreen = Color(0xFF5BA87E)
-val InfoBlue = Color(0xFF5282B8)
+val UrgeAlertRed = Color(0xFFE2604F)
+val UrgeAlertBackground = Color(0xFF2C1712)
+val SuccessGreen = Color(0xFF63AE82)
+val InfoBlue = Color(0xFF6E96BE)
 
 // Legacy alias compatibility
 val ObsidianBackground = SoltarBackground

@@ -2,7 +2,7 @@ package com.example.data
 
 import kotlinx.coroutines.flow.Flow
 
-class SoltarRepository(private val database: AtalayaDatabase) {
+class SoltarRepository(private val database: AdrianaDatabase) {
 
     // Daily Checkins
     val allCheckins: Flow<List<CheckinEntity>> = database.checkinDao().getAllCheckins()

@@ -36,7 +36,7 @@ fun AiCompanionDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().imePadding(),
             containerColor = SoltarBackground,
             topBar = {
                 Row(
@@ -53,7 +53,7 @@ fun AiCompanionDialog(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "ACOMPAÑANTE SOLTAR",
+                            text = "ACOMPAÑANTE ADRIANA",
                             style = MaterialTheme.typography.titleSmall,
                             color = SoltarAmber,
                             fontWeight = FontWeight.Bold,
@@ -147,28 +147,76 @@ fun AiCompanionDialog(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 contentPadding = PaddingValues(top = 16.dp, bottom = 20.dp)
             ) {
-                // Grounding Prompt Card
+                // Grounding & Clinical Disclaimer Card
                 item {
+                    var isDisclaimerExpanded by remember { mutableStateOf(false) }
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
                         border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorder)
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = SoltarAmber,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "Marco: ${uiState.preferredFramework.title}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                IconButton(
+                                    onClick = { isDisclaimerExpanded = !isDisclaimerExpanded },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        if (isDisclaimerExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                        contentDescription = "Expandir aviso clínico",
+                                        tint = TextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "💡 Recordatorio",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = SoltarAmber,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "SOLTAR no validará falsas esperanzas ni alimentará bucles de '¿y si...?'. Estamos aquí para devolverte a tu realidad, a tu cuerpo y a tu dignidad.",
+                                text = "ADRIANA acompaña tu proceso desde el rigor y la compasión, sin validar falsas ilusiones ni alimentar rumiaciones.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                                 lineHeight = 18.sp
                             )
+
+                            if (isDisclaimerExpanded) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = SoltarSurface,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorder)
+                                ) {
+                                    Text(
+                                        text = "⚖️ Aviso ético y clínico: ADRIANA es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextMuted,
+                                        modifier = Modifier.padding(10.dp),
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -206,7 +254,7 @@ fun AiCompanionDialog(
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
-                                            text = "SOLTAR",
+                                            text = "ADRIANA",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = SoltarAmber,
                                             fontWeight = FontWeight.Bold

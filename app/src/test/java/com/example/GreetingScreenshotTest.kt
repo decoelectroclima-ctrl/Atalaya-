@@ -37,7 +37,7 @@ class GreetingScreenshotTest {
           modifier = Modifier.fillMaxSize().background(SoltarBackground).padding(16.dp),
           contentAlignment = Alignment.Center
         ) {
-          Text("SOLTAR", color = TextPrimary)
+          Text("ADRIANA", color = TextPrimary)
         }
       }
     }

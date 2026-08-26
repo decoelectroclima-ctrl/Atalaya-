@@ -7,7 +7,7 @@
     android:viewportHeight="108">
 
     <!-- Group centered strictly in safe zone (within 66dp of 108dp) -->
-    <!-- Left Ceramic Vessel Shard (Warm Slate Ceramic) -->
+    <!-- Left Ceramic Vessel Shard (Warm Stone Ceramic with enhanced contrast) -->
     <path
         android:pathData="M52,24 C44,24 38,30 36,38 C34,48 33,60 38,70 C42,78 48,82 52,83 L51,68 L54,58 L49,46 L53,35 Z">
         <aapt:attr name="android:fillColor">
@@ -17,13 +17,13 @@
                 android:endX="54"
                 android:endY="83"
                 android:type="linear">
-                <item android:color="#2A241E" android:offset="0.0"/>
-                <item android:color="#1B1713" android:offset="1.0"/>
+                <item android:color="#4A3F35" android:offset="0.0"/>
+                <item android:color="#322A23" android:offset="1.0"/>
             </gradient>
         </aapt:attr>
     </path>
 
-    <!-- Right Ceramic Vessel Shard (Slightly lighter angle) -->
+    <!-- Right Ceramic Vessel Shard (Slightly lighter illuminated angle) -->
     <path
         android:pathData="M56,24 C64,24 70,30 72,38 C74,48 75,60 70,70 C66,78 60,82 56,83 L55,68 L58,58 L53,46 L57,35 Z">
         <aapt:attr name="android:fillColor">
@@ -33,8 +33,8 @@
                 android:endX="75"
                 android:endY="83"
                 android:type="linear">
-                <item android:color="#362E26" android:offset="0.0"/>
-                <item android:color="#211C17" android:offset="1.0"/>
+                <item android:color="#54483C" android:offset="0.0"/>
+                <item android:color="#3A3027" android:offset="1.0"/>
             </gradient>
         </aapt:attr>
     </path>
@@ -42,12 +42,12 @@
     <!-- Ceramic Edge Highlights -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#33E7A94F"
+        android:strokeColor="#55E7A94F"
         android:strokeWidth="1"
         android:pathData="M52,24 C44,24 38,30 36,38 C34,48 33,60 38,70 C42,78 48,82 52,83" />
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#22E7A94F"
+        android:strokeColor="#44E7A94F"
         android:strokeWidth="1"
         android:pathData="M56,24 C64,24 70,30 72,38 C74,48 75,60 70,70 C66,78 60,82 56,83" />
 

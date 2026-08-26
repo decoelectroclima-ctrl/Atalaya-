@@ -28,10 +28,10 @@ import kotlinx.coroutines.launch
         JournalEntryEntity::class,
         UserProfileEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
-abstract class AtalayaDatabase : RoomDatabase() {
+abstract class AdrianaDatabase : RoomDatabase() {
     abstract fun checkinDao(): CheckinDao
     abstract fun urgeEpisodeDao(): UrgeEpisodeDao
     abstract fun thoughtDao(): ThoughtDao
@@ -53,35 +53,34 @@ abstract class AtalayaDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var INSTANCE: AtalayaDatabase? = null
+        private var INSTANCE: AdrianaDatabase? = null
 
-        fun getDatabase(context: Context): AtalayaDatabase {
+        fun getDatabase(context: Context): AdrianaDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
-                    AtalayaDatabase::class.java,
-                    "soltar_database"
+                    AdrianaDatabase::class.java,
+                    "adriana_database"
                 )
                 .fallbackToDestructiveMigration(dropAllTables = true)
-                .addCallback(DatabasePrepopulationCallback(context))
                 .build()
                 INSTANCE = instance
                 instance
             }
         }
-    }
 
-    private class DatabasePrepopulationCallback(
-        private val context: Context
-    ) : RoomDatabase.Callback() {
-        override fun onCreate(db: SupportSQLiteDatabase) {
-            super.onCreate(db)
-            CoroutineScope(Dispatchers.IO).launch {
-                populateInitialData(getDatabase(context))
+        suspend fun populateInitialDataIfEmpty(database: AdrianaDatabase) {
+            try {
+                val settings = database.soltarSettingsDao().getSettingsOnce()
+                if (settings == null) {
+                    populateInitialData(database)
+                }
+            } catch (_: Exception) {
+                // Ignore gracefully if tables are still initializing
             }
         }
 
-        private suspend fun populateInitialData(database: AtalayaDatabase) {
+        private suspend fun populateInitialData(database: AdrianaDatabase) {
             // Initial Check-in
             database.checkinDao().insertOrUpdateCheckin(
                 CheckinEntity(
@@ -240,7 +239,7 @@ abstract class AtalayaDatabase : RoomDatabase() {
             database.aiMessageDao().insertMessage(
                 AiMessageEntity(
                     sender = "soltar_ai",
-                    content = "Bienvenido/a a **SOLTAR**. Este no es un espacio para alimentar la rumiación ni buscar culpables. Es una herramienta de precisión para regular tu sistema nervioso, comprender lo vivido con rigor y reconstruir tu autonomía.\n\n*«Puedes seguir queriendo a alguien y dejar de organizar tu vida alrededor de esa persona.»*\n\n¿Qué está ocurriendo hoy en tu día?",
+                    content = "Bienvenido/a a **ADRIANA**. Este no es un espacio para alimentar la rumiación ni buscar culpables. Es una herramienta de precisión para regular tu sistema nervioso, comprender lo vivido con rigor y reconstruir tu autonomía.\n\n*«Puedes seguir queriendo a alguien y dejar de organizar tu vida alrededor de esa persona.»*\n\n¿Qué está ocurriendo hoy en tu día?",
                     detectedRumination = false
                 )
             )
@@ -250,11 +249,28 @@ abstract class AtalayaDatabase : RoomDatabase() {
                 SoltarSettingsEntity(
                     id = 1,
                     memoryEnabled = true,
-                    userName = "Viajero",
+                    userName = "Santiago",
+                    userEmail = "santiago.recuperacion@adriana.app",
+                    isLoggedIn = true,
+                    authProvider = "email",
                     breakupDateTimestamp = System.currentTimeMillis() - (21L * 24 * 3600 * 1000),
-                    biometricLockEnabled = false
+                    biometricLockEnabled = false,
+                    soundEnabled = true,
+                    onboardingCompleted = true,
+                    preferredFramework = "PSICOLOGIA_MODERNA",
+                    contact1Name = "Carlos (Amigo de confianza)",
+                    contact1Phone = "+34600112233",
+                    contact1Relationship = "Amigo íntimo / Mentor",
+                    contact2Name = "Dra. Elena (Psicóloga)",
+                    contact2Phone = "+34611223344",
+                    contact2Relationship = "Terapeuta de apoyo",
+                    subscriptionTier = "FREE",
+                    isTrialActive = false,
+                    modernPsychologyPerspectiveActive = true
                 )
             )
         }
     }
 }
+
+typealias AtalayaDatabase = AdrianaDatabase

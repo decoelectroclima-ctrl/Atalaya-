@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.SoltarSoundManager
+import com.example.data.WisdomBank
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
@@ -91,37 +92,80 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
     ) {
-        // 1. Stoic Daily Principle
+        // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
         item {
+            val wisdomCard = uiState.currentWisdomCard ?: WisdomBank.getRandomCard(uiState.preferredFramework, emptyList())
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("stoic_compass_card"),
+                    .testTag("wisdom_compass_card"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("✨", fontSize = 14.sp)
-                        Text(
-                            text = "PRINCIPIO DE DIGNIDAD",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SoltarAmber,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("✨", fontSize = 14.sp)
+                            Text(
+                                text = wisdomCard.title,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                viewModel.rotateWisdomCard(uiState.preferredFramework)
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Rotar sabiduría",
+                                tint = SoltarAmberLight,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "«No puedes controlar lo que la otra persona hace o siente. Pero tienes soberanía absoluta sobre tu silencio, tus pasos y tu dignidad en este instante.»",
+                        text = wisdomCard.quote,
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextPrimary,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                         lineHeight = 22.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "— ${wisdomCard.author}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SoltarAmber,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.align(Alignment.End)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider(color = SoltarBorderSubtle)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = wisdomCard.reflection,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 18.sp
                     )
                 }
             }

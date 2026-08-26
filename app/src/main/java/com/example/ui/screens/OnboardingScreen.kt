@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,17 +26,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.SoltarSoundManager
+import com.example.data.SoltarFramework
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 
-data class OnboardingStep(
-    val badge: String,
-    val title: String,
-    val subtitle: String,
-    val quote: String,
-    val icon: ImageVector,
-    val accentColor: androidx.compose.ui.graphics.Color
-)
+sealed class OnboardingPage {
+    data class Info(
+        val badge: String,
+        val title: String,
+        val subtitle: String,
+        val quote: String,
+        val icon: ImageVector,
+        val accentColor: androidx.compose.ui.graphics.Color
+    ) : OnboardingPage()
+
+    data object FrameworkSelector : OnboardingPage()
+}
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -43,19 +49,22 @@ fun OnboardingScreen(
     viewModel: SoltarViewModel,
     onComplete: () -> Unit
 ) {
-    var currentStep by remember { mutableStateOf(0) }
+    var currentStepIndex by remember { mutableStateOf(0) }
+    val uiState by viewModel.uiState.collectAsState()
+    var selectedFramework by remember(uiState.preferredFramework) { mutableStateOf(uiState.preferredFramework) }
 
-    val steps = remember {
+    val pages: List<OnboardingPage> = remember {
         listOf(
-            OnboardingStep(
+            OnboardingPage.Info(
                 badge = "FILOSOFÍA KINTSUGI",
                 title = "Lo que se rompe puede ser más fuerte con oro",
-                subtitle = "En Japón, la cerámica rota se repara con resina de oro. Las grietas no se ocultan: se iluminan. SOLTAR no es una app para olvidar; es un santuario para reconstruir tu dignidad personal.",
+                subtitle = "En Japón, la cerámica rota se repara con resina de oro. Las grietas no se ocultan: se iluminan. ADRIANA no es una app para olvidar; es un espacio para reconstruir tu dignidad y soberanía personal.",
                 quote = "«No eres débil por sentir dolor; estás atravesando la alquimia de tu propia reconstrucción.»",
                 icon = Icons.Default.AutoAwesome,
                 accentColor = SoltarAmber
             ),
-            OnboardingStep(
+            OnboardingPage.FrameworkSelector,
+            OnboardingPage.Info(
                 badge = "EL ANCLAJE",
                 title = "Contacto Cero: Respeto implacable a tu paz",
                 subtitle = "El contacto cero no es manipulación ni orgullo: es el tiempo biológico que tu sistema nervioso necesita para desintoxicarse de la dopamina intermitente y recuperar tu eje.",
@@ -63,7 +72,7 @@ fun OnboardingScreen(
                 icon = Icons.Default.Shield,
                 accentColor = SoltarSage
             ),
-            OnboardingStep(
+            OnboardingPage.Info(
                 badge = "SISTEMA DE PRECISIÓN",
                 title = "Herramientas reales cuando la mente entra en pánico",
                 subtitle = "Dispones de un protocolo somático de 20 minutos para impulsos agudos, laboratorio TCC para desarmar bucles, y auditorías objetivas de la relación.",
@@ -74,7 +83,8 @@ fun OnboardingScreen(
         )
     }
 
-    val step = steps[currentStep]
+    val totalSteps = pages.size
+    val currentPage = pages[currentStepIndex]
 
     Box(
         modifier = Modifier
@@ -87,7 +97,7 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Bar with Skip
+            // Top Bar with Step Counter & Skip
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,7 +111,7 @@ fun OnboardingScreen(
                     border = BorderStroke(1.dp, SoltarBorder)
                 ) {
                     Text(
-                        text = "SOLTAR • ${currentStep + 1}/${steps.size}",
+                        text = "ADRIANA • ${currentStepIndex + 1}/$totalSteps",
                         style = MaterialTheme.typography.labelSmall,
                         color = SoltarAmber,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -110,10 +120,11 @@ fun OnboardingScreen(
                     )
                 }
 
-                if (currentStep < steps.size - 1) {
+                if (currentStepIndex < totalSteps - 1) {
                     TextButton(
                         onClick = {
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.setFramework(selectedFramework)
                             viewModel.setOnboardingCompleted(true)
                             onComplete()
                         }
@@ -125,79 +136,180 @@ fun OnboardingScreen(
 
             // Main Animated Content
             AnimatedContent(
-                targetState = step,
+                targetState = currentPage,
                 transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "onboarding_step"
-            ) { targetStep ->
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp)
-                ) {
-                    // Glowing Icon Container
-                    Surface(
-                        modifier = Modifier.size(96.dp),
-                        shape = CircleShape,
-                        color = targetStep.accentColor.copy(alpha = 0.12f),
-                        border = BorderStroke(1.5.dp, targetStep.accentColor.copy(alpha = 0.5f))
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = targetStep.icon,
-                                contentDescription = null,
-                                tint = targetStep.accentColor,
-                                modifier = Modifier.size(44.dp)
+                label = "onboarding_page"
+            ) { page ->
+                when (page) {
+                    is OnboardingPage.Info -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp)
+                        ) {
+                            Surface(
+                                modifier = Modifier.size(90.dp),
+                                shape = CircleShape,
+                                color = page.accentColor.copy(alpha = 0.12f),
+                                border = BorderStroke(1.5.dp, page.accentColor.copy(alpha = 0.5f))
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = page.icon,
+                                        contentDescription = null,
+                                        tint = page.accentColor,
+                                        modifier = Modifier.size(42.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+
+                            Text(
+                                text = page.badge,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = page.accentColor,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.4.sp
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = page.title,
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 28.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            Text(
+                                text = page.subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 22.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Card(
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                                border = BorderStroke(1.dp, SoltarBorder)
+                            ) {
+                                Text(
+                                    text = page.quote,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = SoltarAmberLight,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(16.dp),
+                                    lineHeight = 20.sp
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(28.dp))
+                    is OnboardingPage.FrameworkSelector -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "MARCO DE SABIDURÍA",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.4.sp
+                            )
 
-                    Text(
-                        text = targetStep.badge,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = targetStep.accentColor,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.4.sp
-                    )
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "¿Desde qué enfoque prefieres acompañar tu proceso?",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 26.sp
+                            )
 
-                    Text(
-                        text = targetStep.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 28.sp
-                    )
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Elige la perspectiva que guiará tus reflexiones diarias y las respuestas de tu coach. Podrás cambiarla cuando quieras desde tu Perfil sin afectar tu progreso.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 18.sp
+                            )
 
-                    Text(
-                        text = targetStep.subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextSecondary,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 22.sp
-                    )
+                            Spacer(modifier = Modifier.height(18.dp))
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                SoltarFramework.entries.forEach { framework ->
+                                    val isSelected = selectedFramework == framework
+                                    val borderColor = if (isSelected) SoltarAmber else SoltarBorder
+                                    val bgColor = if (isSelected) SoltarAmber.copy(alpha = 0.08f) else SoltarSurface
 
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                        border = BorderStroke(1.dp, SoltarBorder)
-                    ) {
-                        Text(
-                            text = targetStep.quote,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = SoltarAmberLight,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(16.dp),
-                            lineHeight = 20.sp
-                        )
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                selectedFramework = framework
+                                                viewModel.setFramework(framework)
+                                            },
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = CardDefaults.cardColors(containerColor = bgColor),
+                                        border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, borderColor)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            RadioButton(
+                                                selected = isSelected,
+                                                onClick = {
+                                                    selectedFramework = framework
+                                                    viewModel.setFramework(framework)
+                                                },
+                                                colors = RadioButtonDefaults.colors(
+                                                    selectedColor = SoltarAmber,
+                                                    unselectedColor = TextMuted
+                                                )
+                                            )
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = framework.title,
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    color = if (isSelected) SoltarAmber else TextPrimary,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Spacer(modifier = Modifier.height(3.dp))
+                                                Text(
+                                                    text = framework.description,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = TextSecondary,
+                                                    lineHeight = 17.sp,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -206,17 +318,17 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 20.dp),
+                    .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // Page Indicator Dots
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    steps.indices.forEach { index ->
-                        val isCurrent = index == currentStep
+                    pages.indices.forEach { index ->
+                        val isCurrent = index == currentStepIndex
                         Box(
                             modifier = Modifier
                                 .height(6.dp)
@@ -230,11 +342,15 @@ fun OnboardingScreen(
                 // CTA Button
                 Button(
                     onClick = {
-                        if (currentStep < steps.size - 1) {
+                        if (currentStepIndex < totalSteps - 1) {
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            currentStep++
+                            if (currentPage is OnboardingPage.FrameworkSelector) {
+                                viewModel.setFramework(selectedFramework)
+                            }
+                            currentStepIndex++
                         } else {
                             viewModel.playSound(SoltarSoundManager.SoundType.WARM_CHIME)
+                            viewModel.setFramework(selectedFramework)
                             viewModel.setOnboardingCompleted(true)
                             onComplete()
                         }
@@ -251,7 +367,7 @@ fun OnboardingScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = if (currentStep < steps.size - 1) "Siguiente" else "Comenzar mi reconstrucción",
+                            text = if (currentStepIndex < totalSteps - 1) "Siguiente" else "Comenzar mi reconstrucción",
                             color = SoltarBackground,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
@@ -268,3 +384,4 @@ fun OnboardingScreen(
         }
     }
 }
+

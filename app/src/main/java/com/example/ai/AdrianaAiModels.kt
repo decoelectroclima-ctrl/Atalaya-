@@ -4,8 +4,8 @@ import org.json.JSONObject
 
 enum class SubscriptionTier(val label: String, val badge: String) {
     GRATUITO("Gratuito (Base)", "1 Nivel Kintsu / 3 Píldoras día"),
-    ATALAYA_PASO("Atalaya Paso (Mensual)", "Acceso Ilimitado + Biblioteca Base"),
-    ATALAYA_CORE("Atalaya Core (Anual / Pro)", "Acceso Total + Audios + Personalización Gold")
+    ADRIANA_PASO("ADRIANA Paso (Mensual)", "Acceso Ilimitado + Biblioteca Base"),
+    ADRIANA_CORE("ADRIANA Core (Anual / Pro)", "Acceso Total + Audios + Personalización Gold")
 }
 
 data class ReadingPill(
@@ -51,7 +51,7 @@ data class FallbackResponse(
     val statusMessage: String = "Sovereignty maintained. System active."
 )
 
-data class AtalayaInterventionResponse(
+data class AdrianaInterventionResponse(
     val userStateDetected: String, // Somatic_Panic | Rumination | Idealization | Neutral | Medical_Crisis
     val recommendedAction: String, // Somatic_Breathing | Stoic_Reframing | Reality_Audit | Emergency_Helpline
     val somaticExercise: String?,
@@ -65,6 +65,8 @@ data class AtalayaInterventionResponse(
     val safetyFilter: SafetyFilterResult = SafetyFilterResult(),
     val fallbackResponse: FallbackResponse = FallbackResponse()
 )
+
+typealias AtalayaInterventionResponse = AdrianaInterventionResponse
 
 data class UserContextVariables(
     val demographics: String = "Adulto (18+), En proceso de duelo y reconstrucción",
@@ -83,4 +85,3 @@ data class UserContextVariables(
         """.trimIndent()
     }
 }
-

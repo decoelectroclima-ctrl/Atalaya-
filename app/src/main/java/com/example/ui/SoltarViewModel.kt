@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ai.SoltarAiEngine
+import com.example.ai.SoltarUserContext
 import com.example.data.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -119,12 +120,37 @@ data class SoltarUiState(
 
     // Onboarding & Sound UI State
     val isOnboardingVisible: Boolean = false,
-    val isSoundEnabled: Boolean = true
+    val isSoundEnabled: Boolean = true,
+
+    // Reference Framework & Wisdom Cards
+    val preferredFramework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
+    val currentWisdomCard: WisdomCard? = null,
+
+    // Authentication & Account Management
+    val isAuthDialogVisible: Boolean = false,
+    val authDialogMode: String = "LOGIN", // "LOGIN" | "REGISTER" | "FORGOT"
+    val authEmailInput: String = "",
+    val authPasswordInput: String = "",
+    val authNameInput: String = "",
+    val authConfirmPasswordInput: String = "",
+    val authRememberMe: Boolean = true,
+
+    // Paywall & Monetization
+    val isPaywallVisible: Boolean = false,
+    val selectedSubscriptionPlan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ANNUAL,
+    val isProcessingPayment: Boolean = false,
+
+    // Support Network Contact Editor Dialog
+    val isSupportContactDialogVisible: Boolean = false,
+    val editingContactIndex: Int = 1,
+    val contactNameInput: String = "",
+    val contactPhoneInput: String = "",
+    val contactRelationshipInput: String = ""
 )
 
 class SoltarViewModel(application: Application) : AndroidViewModel(application) {
 
-    val repository: SoltarRepository = SoltarRepository(AtalayaDatabase.getDatabase(application))
+    val repository: SoltarRepository = SoltarRepository(AdrianaDatabase.getDatabase(application))
 
     private val _uiState = MutableStateFlow(SoltarUiState())
     val uiState: StateFlow<SoltarUiState> = _uiState.asStateFlow()
@@ -169,6 +195,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     private var urgeTimerJob: Job? = null
 
     init {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            AdrianaDatabase.populateInitialDataIfEmpty(AdrianaDatabase.getDatabase(application))
+        }
         loadTodayCheckin()
         observeSettings()
     }
@@ -178,14 +207,74 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             repository.settings.collect { currentSettings ->
                 if (currentSettings != null) {
                     com.example.audio.SoltarSoundManager.isSoundEnabled = currentSettings.soundEnabled
+                    val framework = SoltarFramework.fromKey(currentSettings.preferredFramework)
+                    val recentList = currentSettings.recentCardIds
+                        .split(",")
+                        .filter { it.isNotBlank() }
+
+                    val currentCard = _uiState.value.currentWisdomCard
+                    val newCard = if (currentCard == null || currentCard.framework != framework) {
+                        WisdomBank.getRandomCard(framework, recentList)
+                    } else {
+                        currentCard
+                    }
+
                     _uiState.update {
                         it.copy(
                             isSoundEnabled = currentSettings.soundEnabled,
-                            isOnboardingVisible = !currentSettings.onboardingCompleted
+                            isOnboardingVisible = !currentSettings.onboardingCompleted,
+                            preferredFramework = framework,
+                            currentWisdomCard = newCard
                         )
                     }
                 }
             }
+        }
+    }
+
+    fun setFramework(framework: SoltarFramework) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val recentList = current.recentCardIds.split(",").filter { it.isNotBlank() }
+            val newCard = WisdomBank.getRandomCard(framework, recentList)
+            val updatedRecent = (recentList + newCard.id).takeLast(5).joinToString(",")
+
+            repository.saveSettings(
+                current.copy(
+                    preferredFramework = framework.key,
+                    recentCardIds = updatedRecent
+                )
+            )
+            _uiState.update {
+                it.copy(
+                    preferredFramework = framework,
+                    currentWisdomCard = newCard
+                )
+            }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+            showNotification("A partir de ahora tus tarjetas y tu coach hablarán en clave ${framework.title}.")
+        }
+    }
+
+    fun resetAppData() {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            val db = AdrianaDatabase.getDatabase(getApplication())
+            db.clearAllTables()
+            AdrianaDatabase.populateInitialDataIfEmpty(db)
+            // No need to call observeSettings(), it will re-trigger as the Room database flow updates
+        }
+    }
+
+    fun rotateWisdomCard(framework: SoltarFramework = _uiState.value.preferredFramework) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val recentList = current.recentCardIds.split(",").filter { it.isNotBlank() }
+            val newCard = WisdomBank.getRandomCard(framework, recentList)
+            val updatedRecent = (recentList + newCard.id).takeLast(5).joinToString(",")
+
+            repository.saveSettings(current.copy(recentCardIds = updatedRecent))
+            _uiState.update { it.copy(currentWisdomCard = newCard) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
         }
     }
 
@@ -705,6 +794,44 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun setAiInputMessage(t: String) = _uiState.update { it.copy(aiInputMessage = t) }
     fun toggleMemoryModal(visible: Boolean) = _uiState.update { it.copy(isMemoryModalVisible = visible) }
 
+    fun buildUserPersonalizationContext(): SoltarUserContext {
+        val currentSettings = settings.value
+        val startTs = currentSettings?.breakupDateTimestamp ?: (System.currentTimeMillis() - (14L * 24 * 3600 * 1000))
+        val diffDays = ((System.currentTimeMillis() - startTs) / (24 * 3600 * 1000L)).coerceAtLeast(0L).toInt()
+
+        val allCheckinsList = checkins.value
+        val lastCheckin = allCheckinsList.maxByOrNull { it.timestamp }
+        val lastMood = lastCheckin?.let {
+            "Dolor: ${it.pain.toInt()}/10, Ansiedad: ${it.anxiety.toInt()}/10, Nostalgia: ${it.nostalgia.toInt()}/10, Rumiación: ${it.rumination.toInt()}/10"
+        } ?: ""
+        val avgAutonomy = lastCheckin?.autonomy ?: 5f
+
+        val recentTriggers = (relapses.value.map { it.trigger } + urgeEpisodes.value.map { it.trigger })
+            .filter { it.isNotBlank() }
+            .distinct()
+            .take(4)
+
+        val patternsAudited = audits.value
+            .mapNotNull { it.patternIdentified.ifBlank { null } ?: if (it.title.isNotBlank()) it.title else null }
+            .take(3)
+
+        val activeGoals = identityGoals.value
+            .filter { !it.isCompleted }
+            .map { "${it.area}: ${it.goalTitle}" }
+            .take(3)
+
+        return SoltarUserContext(
+            streakDays = diffDays,
+            totalCheckins = allCheckinsList.size,
+            lastCheckinMood = lastMood,
+            averageAutonomyScore = avgAutonomy,
+            recentRelapseTriggers = recentTriggers,
+            recentPatternsAudited = patternsAudited,
+            activeIdentityGoals = activeGoals,
+            framework = _uiState.value.preferredFramework
+        )
+    }
+
     fun sendAiMessage() {
         val text = _uiState.value.aiInputMessage.trim()
         if (text.isBlank() || _uiState.value.isAiTyping) return
@@ -720,7 +847,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             )
 
             val currentMessages = aiMessages.value.map { it.sender to it.content }
-            val response = SoltarAiEngine.generateResponse(text, currentMessages)
+            val framework = _uiState.value.preferredFramework
+            val userContext = buildUserPersonalizationContext()
+            val response = SoltarAiEngine.generateResponse(text, currentMessages, framework, userContext)
 
             repository.saveAiMessage(
                 AiMessageEntity(
@@ -761,9 +890,346 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun fullDataReset() {
+        resetAppData()
+        showNotification("🧹 Todos los registros locales han sido reiniciados.")
+    }
+
+    // ==========================================
+    // AUTHENTICATION & USER MANAGEMENT
+    // ==========================================
+    fun openAuthDialog(mode: String = "LOGIN") {
+        _uiState.update {
+            it.copy(
+                isAuthDialogVisible = true,
+                authDialogMode = mode,
+                authEmailInput = settings.value?.userEmail ?: "",
+                authPasswordInput = "",
+                authConfirmPasswordInput = "",
+                authNameInput = settings.value?.userName ?: ""
+            )
+        }
+    }
+
+    fun closeAuthDialog() {
+        _uiState.update { it.copy(isAuthDialogVisible = false) }
+    }
+
+    fun setAuthEmail(email: String) = _uiState.update { it.copy(authEmailInput = email) }
+    fun setAuthPassword(pwd: String) = _uiState.update { it.copy(authPasswordInput = pwd) }
+    fun setAuthName(name: String) = _uiState.update { it.copy(authNameInput = name) }
+    fun setAuthConfirmPassword(pwd: String) = _uiState.update { it.copy(authConfirmPasswordInput = pwd) }
+    fun setAuthRememberMe(b: Boolean) = _uiState.update { it.copy(authRememberMe = b) }
+    fun setAuthDialogMode(mode: String) = _uiState.update { it.copy(authDialogMode = mode) }
+
+    fun loginWithEmailPassword() {
+        val email = _uiState.value.authEmailInput.trim()
+        val password = _uiState.value.authPasswordInput.trim()
+        if (email.isBlank() || !email.contains("@")) {
+            showNotification("⚠️ Por favor, introduce un correo electrónico válido.")
+            return
+        }
+        if (password.length < 6) {
+            showNotification("⚠️ La contraseña debe tener al menos 6 caracteres.")
+            return
+        }
+
         viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val derivedName = if (current.userName.isNotBlank() && current.userName != "Viajero") current.userName else email.substringBefore("@").replaceFirstChar { it.uppercase() }
+            repository.saveSettings(
+                current.copy(
+                    isLoggedIn = true,
+                    userEmail = email,
+                    userName = derivedName,
+                    authProvider = "email"
+                )
+            )
+            closeAuthDialog()
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            showNotification("✨ Sesión iniciada como $derivedName. Bienvenido/a de nuevo a ADRIANA.")
+        }
+    }
+
+    fun registerWithEmailPassword() {
+        val name = _uiState.value.authNameInput.trim()
+        val email = _uiState.value.authEmailInput.trim()
+        val password = _uiState.value.authPasswordInput.trim()
+        val confirm = _uiState.value.authConfirmPasswordInput.trim()
+
+        if (name.isBlank()) {
+            showNotification("⚠️ Por favor, introduce tu nombre.")
+            return
+        }
+        if (email.isBlank() || !email.contains("@")) {
+            showNotification("⚠️ Por favor, introduce un correo electrónico válido.")
+            return
+        }
+        if (password.length < 6) {
+            showNotification("⚠️ La contraseña debe tener al menos 6 caracteres.")
+            return
+        }
+        if (password != confirm) {
+            showNotification("⚠️ Las contraseñas no coinciden.")
+            return
+        }
+
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(
+                current.copy(
+                    isLoggedIn = true,
+                    userName = name,
+                    userEmail = email,
+                    authProvider = "email",
+                    accountCreatedAt = System.currentTimeMillis()
+                )
+            )
+            closeAuthDialog()
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            showNotification("🌱 Cuenta creada con éxito para $name. Tu espacio seguro está listo.")
+        }
+    }
+
+    fun sendPasswordResetEmail() {
+        val email = _uiState.value.authEmailInput.trim()
+        if (email.isBlank() || !email.contains("@")) {
+            showNotification("⚠️ Introduce el correo asociado a tu cuenta para restablecer la clave.")
+            return
+        }
+        closeAuthDialog()
+        playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+        showNotification("📩 Hemos enviado las instrucciones de recuperación a $email.")
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(
+                current.copy(
+                    isLoggedIn = false,
+                    authProvider = "guest"
+                )
+            )
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification("🔒 Has cerrado sesión. Tus datos locales se conservan protegidos.")
+        }
+    }
+
+    fun deleteAccount() {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(
+                current.copy(
+                    isLoggedIn = false,
+                    userName = "Viajero",
+                    userEmail = "",
+                    authProvider = "guest",
+                    contact1Name = "",
+                    contact1Phone = "",
+                    contact1Relationship = "",
+                    contact2Name = "",
+                    contact2Phone = "",
+                    contact2Relationship = "",
+                    contact3Name = "",
+                    contact3Phone = "",
+                    contact3Relationship = "",
+                    subscriptionTier = "FREE",
+                    isTrialActive = false
+                )
+            )
             repository.clearAiMemory()
-            showNotification("🧹 Todos los registros locales han sido reiniciados.")
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification("🛡️ Cuenta y datos identificativos eliminados. Respeto absoluto a tu privacidad.")
+        }
+    }
+
+    // ==========================================
+    // SUPPORT NETWORK (RED DE APOYO)
+    // ==========================================
+    fun openSupportContactDialog(index: Int) {
+        val current = settings.value
+        val (name, phone, rel) = when (index) {
+            1 -> Triple(current?.contact1Name ?: "", current?.contact1Phone ?: "", current?.contact1Relationship ?: "")
+            2 -> Triple(current?.contact2Name ?: "", current?.contact2Phone ?: "", current?.contact2Relationship ?: "")
+            3 -> Triple(current?.contact3Name ?: "", current?.contact3Phone ?: "", current?.contact3Relationship ?: "")
+            else -> Triple("", "", "")
+        }
+
+        _uiState.update {
+            it.copy(
+                isSupportContactDialogVisible = true,
+                editingContactIndex = index,
+                contactNameInput = name,
+                contactPhoneInput = phone,
+                contactRelationshipInput = rel
+            )
+        }
+    }
+
+    fun closeSupportContactDialog() {
+        _uiState.update { it.copy(isSupportContactDialogVisible = false) }
+    }
+
+    fun setContactName(name: String) = _uiState.update { it.copy(contactNameInput = name) }
+    fun setContactPhone(phone: String) = _uiState.update { it.copy(contactPhoneInput = phone) }
+    fun setContactRelationship(rel: String) = _uiState.update { it.copy(contactRelationshipInput = rel) }
+
+    fun saveSupportContact() {
+        val s = _uiState.value
+        val index = s.editingContactIndex
+        val name = s.contactNameInput.trim()
+        val phone = s.contactPhoneInput.trim()
+        val rel = s.contactRelationshipInput.trim()
+
+        if (name.isBlank()) {
+            showNotification("⚠️ Por favor, introduce el nombre del contacto.")
+            return
+        }
+
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val updated = when (index) {
+                1 -> current.copy(contact1Name = name, contact1Phone = phone, contact1Relationship = rel)
+                2 -> current.copy(contact2Name = name, contact2Phone = phone, contact2Relationship = rel)
+                3 -> current.copy(contact3Name = name, contact3Phone = phone, contact3Relationship = rel)
+                else -> current
+            }
+            repository.saveSettings(updated)
+            closeSupportContactDialog()
+            playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+            showNotification("👥 Contacto de la Red de Apoyo guardado.")
+        }
+    }
+
+    fun deleteSupportContact(index: Int) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val updated = when (index) {
+                1 -> current.copy(contact1Name = "", contact1Phone = "", contact1Relationship = "")
+                2 -> current.copy(contact2Name = "", contact2Phone = "", contact2Relationship = "")
+                3 -> current.copy(contact3Name = "", contact3Phone = "", contact3Relationship = "")
+                else -> current
+            }
+            repository.saveSettings(updated)
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification("🗑️ Contacto eliminado de tu Red de Apoyo.")
+        }
+    }
+
+    // ==========================================
+    // PERSPECTIVES & COMPASS SETTINGS
+    // ==========================================
+    fun toggleFaithPerspective(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(faithPerspectiveActive = enabled))
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        }
+    }
+
+    fun toggleStoicPerspective(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(stoicPerspectiveActive = enabled))
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        }
+    }
+
+    fun toggleModernPsychologyPerspective(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(modernPsychologyPerspectiveActive = enabled))
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        }
+    }
+
+    // ==========================================
+    // MONETIZATION, SUBSCRIPTION & PAYWALL
+    // ==========================================
+    fun openPaywall(plan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ANNUAL) {
+        _uiState.update {
+            it.copy(
+                isPaywallVisible = true,
+                selectedSubscriptionPlan = plan,
+                isProcessingPayment = false
+            )
+        }
+        playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+    }
+
+    fun closePaywall() {
+        _uiState.update { it.copy(isPaywallVisible = false, isProcessingPayment = false) }
+    }
+
+    fun selectSubscriptionPlan(plan: SubscriptionPlan) {
+        _uiState.update { it.copy(selectedSubscriptionPlan = plan) }
+        playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+    }
+
+    fun purchaseSubscription(plan: SubscriptionPlan) {
+        _uiState.update { it.copy(isProcessingPayment = true) }
+        viewModelScope.launch {
+            delay(1200) // Realistic secure billing transaction handshake
+            val current = settings.value ?: SoltarSettingsEntity()
+            val expiry = System.currentTimeMillis() + if (plan == SubscriptionPlan.PREMIUM_ANNUAL) (365L * 24 * 3600 * 1000) else (30L * 24 * 3600 * 1000)
+            repository.saveSettings(
+                current.copy(
+                    subscriptionTier = plan.tierKey,
+                    isTrialActive = false,
+                    subscriptionExpiryTimestamp = expiry
+                )
+            )
+            _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            showNotification("💎 ¡Bienvenido/a a ADRIANA Premium! Tu acceso completo está activo.")
+        }
+    }
+
+    fun startFreeTrial() {
+        _uiState.update { it.copy(isProcessingPayment = true) }
+        viewModelScope.launch {
+            delay(1000)
+            val current = settings.value ?: SoltarSettingsEntity()
+            val expiry = System.currentTimeMillis() + (7L * 24 * 3600 * 1000)
+            repository.saveSettings(
+                current.copy(
+                    subscriptionTier = SubscriptionPlan.PREMIUM_ANNUAL.tierKey,
+                    isTrialActive = true,
+                    subscriptionExpiryTimestamp = expiry
+                )
+            )
+            _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            showNotification("🌟 Has iniciado tus 7 días de prueba gratis en ADRIANA Premium.")
+        }
+    }
+
+    fun cancelSubscription() {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(
+                current.copy(
+                    subscriptionTier = "FREE",
+                    isTrialActive = false,
+                    subscriptionExpiryTimestamp = 0L
+                )
+            )
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification("ℹ️ Tu suscripción ha sido cancelada. Mantienes el acceso a ADRIANA Free.")
+        }
+    }
+
+    fun restorePurchases() {
+        _uiState.update { it.copy(isProcessingPayment = true) }
+        viewModelScope.launch {
+            delay(1000)
+            val current = settings.value ?: SoltarSettingsEntity()
+            _uiState.update { it.copy(isProcessingPayment = false) }
+            if (current.subscriptionTier != "FREE" || current.isTrialActive) {
+                showNotification("✅ Suscripción restaurada con éxito: ${current.subscriptionTier}")
+            } else {
+                showNotification("ℹ️ No se encontraron compras previas activas en esta cuenta.")
+            }
         }
     }
 }

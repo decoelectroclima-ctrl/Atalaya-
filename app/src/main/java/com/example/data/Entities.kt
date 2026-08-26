@@ -155,10 +155,34 @@ data class SoltarSettingsEntity(
     @PrimaryKey val id: Int = 1,
     val memoryEnabled: Boolean = true,
     val userName: String = "Viajero",
+    val userEmail: String = "",
+    val isLoggedIn: Boolean = false,
+    val authProvider: String = "guest", // "email" | "google" | "guest"
+    val accountCreatedAt: Long = System.currentTimeMillis(),
     val breakupDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Default 2 weeks ago
     val biometricLockEnabled: Boolean = false,
     val soundEnabled: Boolean = true,
-    val onboardingCompleted: Boolean = false
+    val onboardingCompleted: Boolean = false,
+    val preferredFramework: String = "PSICOLOGIA_MODERNA",
+    val recentCardIds: String = "",
+    // Support Network (Red de Apoyo - up to 3 contacts)
+    val contact1Name: String = "",
+    val contact1Phone: String = "",
+    val contact1Relationship: String = "",
+    val contact2Name: String = "",
+    val contact2Phone: String = "",
+    val contact2Relationship: String = "",
+    val contact3Name: String = "",
+    val contact3Phone: String = "",
+    val contact3Relationship: String = "",
+    // Subscription & Monetization
+    val subscriptionTier: String = "FREE", // "FREE" | "PREMIUM_MONTHLY" | "PREMIUM_ANNUAL"
+    val isTrialActive: Boolean = false,
+    val subscriptionExpiryTimestamp: Long = 0L,
+    // Perspectives
+    val faithPerspectiveActive: Boolean = false,
+    val stoicPerspectiveActive: Boolean = false,
+    val modernPsychologyPerspectiveActive: Boolean = true
 )
 
 // Legacy entity backwards compatibility

@@ -162,6 +162,9 @@ interface SoltarSettingsDao {
     @Query("SELECT * FROM soltar_settings WHERE id = 1")
     fun getSettings(): Flow<SoltarSettingsEntity?>
 
+    @Query("SELECT * FROM soltar_settings WHERE id = 1 LIMIT 1")
+    suspend fun getSettingsOnce(): SoltarSettingsEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveSettings(settings: SoltarSettingsEntity)
 }

@@ -66,6 +66,9 @@ class MainActivity : ComponentActivity() {
                         uiState.isLetterModalVisible ||
                         uiState.isIdentityGoalModalVisible ||
                         uiState.isRelapseModalVisible ||
+                        uiState.isAuthDialogVisible ||
+                        uiState.isPaywallVisible ||
+                        uiState.isSupportContactDialogVisible ||
                         uiState.isOnboardingVisible
 
                 // Root Exit Confirmation BackHandler
@@ -153,7 +156,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Column {
                                     Text(
-                                        text = "SOLTAR",
+                                        text = "ADRIANA",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = SoltarAmber,
                                         fontWeight = FontWeight.ExtraBold,
@@ -180,7 +183,7 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Icon(
                                         Icons.Default.Psychology,
-                                        contentDescription = "SOLTAR IA",
+                                        contentDescription = "ADRIANA Coach",
                                         tint = SoltarAmber,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -341,6 +344,27 @@ class MainActivity : ComponentActivity() {
                     RelapseDialog(
                         viewModel = viewModel,
                         onDismiss = { viewModel.toggleRelapseModal(false) }
+                    )
+                }
+
+                if (uiState.isAuthDialogVisible) {
+                    AuthDialog(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeAuthDialog() }
+                    )
+                }
+
+                if (uiState.isPaywallVisible) {
+                    PaywallDialog(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closePaywall() }
+                    )
+                }
+
+                if (uiState.isSupportContactDialogVisible) {
+                    SupportContactDialog(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeSupportContactDialog() }
                     )
                 }
             }
