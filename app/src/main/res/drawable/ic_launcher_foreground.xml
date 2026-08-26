@@ -1,113 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Group centered strictly in safe zone (within 66dp of 108dp) -->
-    <!-- Left Ceramic Vessel Shard (Warm Stone Ceramic with enhanced contrast) -->
+    <!-- Heart Shape -->
     <path
-        android:pathData="M52,24 C44,24 38,30 36,38 C34,48 33,60 38,70 C42,78 48,82 52,83 L51,68 L54,58 L49,46 L53,35 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="33"
-                android:startY="24"
-                android:endX="54"
-                android:endY="83"
-                android:type="linear">
-                <item android:color="#4A3F35" android:offset="0.0"/>
-                <item android:color="#322A23" android:offset="1.0"/>
-            </gradient>
-        </aapt:attr>
-    </path>
+        android:pathData="M 54 90 C 10 60 10 30 35 30 C 50 30 54 40 54 40 C 54 40 58 30 73 30 C 98 30 98 60 54 90 Z"
+        android:fillColor="#C62828" /> 
 
-    <!-- Right Ceramic Vessel Shard (Slightly lighter illuminated angle) -->
-    <path
-        android:pathData="M56,24 C64,24 70,30 72,38 C74,48 75,60 70,70 C66,78 60,82 56,83 L55,68 L58,58 L53,46 L57,35 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="53"
-                android:startY="24"
-                android:endX="75"
-                android:endY="83"
-                android:type="linear">
-                <item android:color="#54483C" android:offset="0.0"/>
-                <item android:color="#3A3027" android:offset="1.0"/>
-            </gradient>
-        </aapt:attr>
-    </path>
-
-    <!-- Ceramic Edge Highlights -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#55E7A94F"
-        android:strokeWidth="1"
-        android:pathData="M52,24 C44,24 38,30 36,38 C34,48 33,60 38,70 C42,78 48,82 52,83" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#44E7A94F"
-        android:strokeWidth="1"
-        android:pathData="M56,24 C64,24 70,30 72,38 C74,48 75,60 70,70 C66,78 60,82 56,83" />
-
-    <!-- KINTSUGI GOLDEN SEAM: Deep Golden Base Solder -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#8F5A1E"
-        android:strokeWidth="3.6"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M54,23 L53,35 L49,46 L58,58 L51,68 L54,84" />
-
-    <!-- KINTSUGI GOLDEN SEAM: Brilliant Amber-Gold Core -->
+    <!-- Kintsugi Seam: Gold -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#E7A94F"
-        android:strokeWidth="2.2"
+        android:strokeWidth="2.5"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M54,23 L53,35 L49,46 L58,58 L51,68 L54,84" />
-
-    <!-- KINTSUGI GOLDEN SEAM: Radiance / Pure Gold Highlight Specular -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFEAB2"
-        android:strokeWidth="1"
-        android:strokeLineCap="round"
-        android:pathData="M54,23 L53,35 M50,44 L57,56 M52,66 L54,84" />
-
-    <!-- Delicate Secondary Golden Veins / Branches -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#E7A94F"
-        android:strokeWidth="1.2"
-        android:strokeLineCap="round"
-        android:pathData="M49,46 L41,43 M58,58 L66,54 M53,35 L61,31 M51,68 L44,72" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FFEAB2"
-        android:strokeWidth="0.7"
-        android:strokeLineCap="round"
-        android:pathData="M49,46 L41,43 M58,58 L66,54" />
-
-    <!-- Solder Gold Droplets & Particles -->
-    <path
-        android:fillColor="#FFEAB2"
-        android:pathData="M54,23 A1.5,1.5 0 1 1 53.99,23 Z" />
-    <path
-        android:fillColor="#FFEAB2"
-        android:pathData="M58,58 A1.8,1.8 0 1 1 57.99,58 Z" />
-    <path
-        android:fillColor="#E7A94F"
-        android:pathData="M49,46 A1.5,1.5 0 1 1 48.99,46 Z" />
-    <path
-        android:fillColor="#FFEAB2"
-        android:pathData="M54,84 A1.6,1.6 0 1 1 53.99,84 Z" />
-    <path
-        android:fillColor="#8FE7A94F"
-        android:pathData="M41,43 A1.1,1.1 0 1 1 40.99,43 Z" />
-    <path
-        android:fillColor="#8FE7A94F"
-        android:pathData="M66,54 A1.1,1.1 0 1 1 65.99,54 Z" />
+        android:pathData="M 54 40 L 54 90" />
 </vector>

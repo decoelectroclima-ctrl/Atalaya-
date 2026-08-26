@@ -57,6 +57,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                         db.execSQL("ALTER TABLE soltar_settings ADD COLUMN userPasswordHash TEXT NOT NULL DEFAULT ''")
                     }
                 })
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
