@@ -146,6 +146,31 @@ interface RelapseDao {
 }
 
 @Dao
+interface JournalDao {
+    @Query("SELECT * FROM personal_journal ORDER BY timestamp DESC")
+    fun getAllJournalEntries(): Flow<List<JournalEntryEntity>>
+
+    @Query("SELECT * FROM personal_journal WHERE id = :id LIMIT 1")
+    fun getJournalEntryById(id: Long): Flow<JournalEntryEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertJournalEntry(entry: JournalEntryEntity): Long
+
+    @Query("UPDATE personal_journal SET aiFeedback = :feedback, aiCorePrinciple = :corePrinciple, aiSocraticQuestion = :socraticQuestion, aiConcreteAction = :concreteAction, philosophicalFramework = :framework WHERE id = :id")
+    suspend fun updateJournalFeedback(
+        id: Long,
+        feedback: String,
+        corePrinciple: String,
+        socraticQuestion: String,
+        concreteAction: String,
+        framework: String
+    )
+
+    @Query("DELETE FROM personal_journal WHERE id = :id")
+    suspend fun deleteJournalEntry(id: Long)
+}
+
+@Dao
 interface AiMessageDao {
     @Query("SELECT * FROM ai_messages ORDER BY timestamp ASC")
     fun getAllMessages(): Flow<List<AiMessageEntity>>

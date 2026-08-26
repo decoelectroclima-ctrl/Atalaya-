@@ -135,6 +135,10 @@ fun SomaticBreathingVisualizer(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val goldColor = KintsugiGold
+        val amberColor = KintsugiAmber
+        val goldLightColor = KintsugiGoldLight
+
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -149,20 +153,20 @@ fun SomaticBreathingVisualizer(
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            KintsugiGold.copy(alpha = 0.35f),
-                            KintsugiAmber.copy(alpha = 0.1f),
+                            goldColor.copy(alpha = 0.35f),
+                            amberColor.copy(alpha = 0.1f),
                             Color.Transparent
                         )
                     ),
                     radius = radius
                 )
                 drawCircle(
-                    color = KintsugiGold,
+                    color = goldColor,
                     radius = radius,
                     style = Stroke(width = 3.dp.toPx())
                 )
                 drawCircle(
-                    color = KintsugiGoldLight.copy(alpha = 0.6f),
+                    color = goldLightColor.copy(alpha = 0.6f),
                     radius = radius * 0.7f,
                     style = Stroke(width = 1.5.dp.toPx())
                 )

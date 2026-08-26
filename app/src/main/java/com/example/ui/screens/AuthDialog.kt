@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.ui.auth.AuthViewModel
@@ -84,22 +85,37 @@ fun AuthDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Introduce tu PIN de 4 dígitos para acceder a tu diario privado.",
+                    text = if (uiState.authDialogMode == "LOGIN")
+                        "Introduce tu PIN de 4 dígitos para acceder a tu diario privado."
+                    else
+                        "Crea tu PIN de 4 dígitos para proteger tu proceso y privacidad.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                if (uiState.authDialogMode == "REGISTER") {
+                    OutlinedTextField(
+                        value = uiState.authNameInput,
+                        onValueChange = { viewModel.setAuthName(it) },
+                        label = { Text("Tu Nombre o Alias") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(0.8f),
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SoltarAmber)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // PIN Input
                 OutlinedTextField(
                     value = uiState.pinInput,
                     onValueChange = { viewModel.setPin(it) },
-                    label = { Text("PIN (4 dígitos)") },
+                    label = { Text(if (uiState.authDialogMode == "LOGIN") "PIN (4 dígitos)" else "Nuevo PIN (4 dígitos)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(0.6f),
+                    modifier = Modifier.fillMaxWidth(0.8f),
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SoltarAmber)
                 )
 
@@ -111,15 +127,16 @@ fun AuthDialog(
                         label = { Text("Confirmar PIN") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(0.6f),
+                        modifier = Modifier.fillMaxWidth(0.8f),
                         colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SoltarAmber)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
                     onClick = {
+                        showMessage = null
                         if (uiState.authDialogMode == "LOGIN") {
                             viewModel.loginWithPin { success, msg ->
                                 if (success) onDismiss() else showMessage = msg
@@ -139,10 +156,39 @@ fun AuthDialog(
                         fontWeight = FontWeight.Bold
                     )
                 }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Toggle Mode Button
+                TextButton(
+                    onClick = {
+                        showMessage = null
+                        if (uiState.authDialogMode == "LOGIN") {
+                            viewModel.setAuthDialogMode("REGISTER")
+                        } else {
+                            viewModel.setAuthDialogMode("LOGIN")
+                        }
+                    }
+                ) {
+                    Text(
+                        text = if (uiState.authDialogMode == "LOGIN")
+                            "¿No tienes PIN? Crear nuevo PIN / Registrarse"
+                        else
+                            "¿Ya tienes un PIN configurado? Iniciar Sesión",
+                        color = SoltarAmber,
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
                 
                 showMessage?.let {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(it, color = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
                 }
 
                 Spacer(modifier = Modifier.weight(1f))

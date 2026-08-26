@@ -91,10 +91,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loginWithPin(onResult: (Boolean, String) -> Unit) {
         val pin = _uiState.value.pinInput
+        if (pin.length != 4) {
+            onResult(false, "Introduce los 4 dígitos del PIN.")
+            return
+        }
         viewModelScope.launch {
             val current = repository.settings.first()
 
-            if (current == null || current.pinHash != hashPin(pin)) {
+            if (current == null || current.pinHash.isBlank()) {
+                onResult(false, "No hay un PIN registrado. Pulsa 'Registrar PIN' para crearlo.")
+                return@launch
+            }
+
+            if (current.pinHash != hashPin(pin)) {
                 onResult(false, "PIN incorrecto.")
                 return@launch
             }

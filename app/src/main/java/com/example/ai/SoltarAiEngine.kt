@@ -49,6 +49,13 @@ data class SoltarAiResponse(
     val stateDetected: String = "REGULAR" // REGULAR | COMPRENDER | ACEPTAR | DEJAR_DE_PERSEGUIR | RECONSTRUIR | SEGURIDAD
 )
 
+data class JournalMentorshipResult(
+    val feedback: String,
+    val corePrinciple: String,
+    val socraticQuestion: String,
+    val concreteAction: String
+)
+
 object SoltarAiEngine {
 
     private const val TAG = "SoltarAiEngine"
@@ -399,6 +406,233 @@ $frameworkClosing
             stateDetected = "RECONSTRUIR",
             suggestedAction = "Completar el check-in diario en la pestaña HOY"
         )
+    }
+
+    suspend fun generateJournalMentorship(
+        journalContent: String,
+        moodTag: String = "Reflexión",
+        framework: SoltarFramework = SoltarFramework.ESTOICO,
+        userContext: SoltarUserContext = SoltarUserContext()
+    ): JournalMentorshipResult = withContext(Dispatchers.IO) {
+        val cleanInput = journalContent.trim()
+        if (cleanInput.isBlank()) {
+            return@withContext JournalMentorshipResult(
+                feedback = "Para recibir mentoría filosófica, escribe libremente tus pensamientos, dudas o lo que estás sintiendo hoy.",
+                corePrinciple = "«El autoconocimiento comienza con la honestidad ante la propia página en blanco.»",
+                socraticQuestion = "¿Qué verdad sobre ti mismo estás evitando mirar hoy?",
+                concreteAction = "Escribe al menos dos frases sobre lo que realmente sientes en este momento."
+            )
+        }
+
+        // Intento con Gemini API si la clave está configurada
+        val apiKey = try {
+            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+
+        if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
+            try {
+                val promptText = """
+Sos un mentor filosófico y terapeuta reflexivo en la app ADRIANA (filosofía práctica, estoicismo, teoría del apego, TCC y lucidez existencial).
+El usuario acaba de escribir la siguiente entrada en su DIARIO PERSONAL:
+---
+ESTADO/EMOCIÓN: $moodTag
+MARCO PREFERIDO: ${framework.name}
+ENTRADA DEL DIARIO:
+$cleanInput
+---
+
+Genera una retroalimentación reflexiva profunda, concisa, lúcida y compasiva en formato JSON estricto con exactamente estas 4 claves:
+{
+  "feedback": "Análisis reflexivo estructurado en 2 o 3 párrafos breves. Valida la emoción sin alimentar la ilusión ni la rumiación. Ayuda a distinguir hechos de interpretaciones o juicios. Aplica la sabiduría del marco ${framework.name}.",
+  "corePrinciple": "Una máxima o principio rector memorable atribuido a un referente clave (Marco Aurelio, Epicteto, Séneca, Viktor Frankl, Gabriel Rolón, Silvia Congost o Proverbios) según el marco.",
+  "socraticQuestion": "Una pregunta socrática de autoindagación honesta para que el usuario medite hoy.",
+  "concreteAction": "Una micro-acción práctica de soberanía personal o autocuidado para hoy."
+}
+Responde ÚNICAMENTE con el objeto JSON válido, sin bloques de código extra ni rodeos.
+                """.trimIndent()
+
+                val jsonBody = JSONObject().apply {
+                    val contents = JSONArray().apply {
+                        val contentObj = JSONObject().apply {
+                            val parts = JSONArray().apply {
+                                put(JSONObject().apply { put("text", promptText) })
+                            }
+                            put("parts", parts)
+                        }
+                        put(contentObj)
+                    }
+                    put("contents", contents)
+                }
+
+                val request = Request.Builder()
+                    .url(API_URL + "?key=$apiKey")
+                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
+                    .build()
+
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val bodyString = response.body?.string() ?: ""
+                    val root = JSONObject(bodyString)
+                    val candidates = root.optJSONArray("candidates")
+                    if (candidates != null && candidates.length() > 0) {
+                        val firstCandidate = candidates.getJSONObject(0)
+                        val text = firstCandidate.getJSONObject("content")
+                            .getJSONArray("parts")
+                            .getJSONObject(0)
+                            .getString("text")
+
+                        val cleanJson = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                        val parsed = JSONObject(cleanJson)
+                        return@withContext JournalMentorshipResult(
+                            feedback = parsed.optString("feedback", "Reflexión generada."),
+                            corePrinciple = parsed.optString("corePrinciple", "«Sé dueño de tus juicios.»"),
+                            socraticQuestion = parsed.optString("socraticQuestion", "¿Qué depende de ti en este instante?"),
+                            concreteAction = parsed.optString("concreteAction", "Tomar 5 minutos de respiración consciente.")
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Gemini API failed for journal, falling back to local engine", e)
+            }
+        }
+
+        // Motor local filosófico y clínico de alta profundidad
+        return@withContext executeLocalPhilosophicalMentorship(cleanInput, moodTag, framework, userContext)
+    }
+
+    private fun executeLocalPhilosophicalMentorship(
+        input: String,
+        moodTag: String,
+        framework: SoltarFramework,
+        userContext: SoltarUserContext
+    ): JournalMentorshipResult {
+        val lower = input.lowercase()
+
+        val isPainOrLoss = lower.contains("duele") || lower.contains("dolor") || lower.contains("triste") || lower.contains("llor") || lower.contains("falta") || moodTag.contains("Duelo", ignoreCase = true)
+        val isAngerOrInjustice = lower.contains("rabia") || lower.contains("bronca") || lower.contains("injusto") || lower.contains("mentira") || lower.contains("engañ") || moodTag.contains("Rabia", ignoreCase = true)
+        val isAnxietyOrImpulse = lower.contains("ansiedad") || lower.contains("escribir") || lower.contains("buscar") || lower.contains("redes") || moodTag.contains("Ansiedad", ignoreCase = true) || moodTag.contains("Impulso", ignoreCase = true)
+        val isGratitudeOrPeace = lower.contains("gracias") || lower.contains("paz") || lower.contains("calma") || lower.contains("bien") || moodTag.contains("Calma", ignoreCase = true) || moodTag.contains("Gratitud", ignoreCase = true)
+
+        return when (framework) {
+            SoltarFramework.ESTOICO -> {
+                when {
+                    isAnxietyOrImpulse -> JournalMentorshipResult(
+                        feedback = """
+Examinando tus líneas a la luz de la razón estoica:
+El deseo de intervenir o buscar una respuesta ajena nace de concederle a lo exterior un poder sobre tu estado interno. Todo impulso es una primera impresión (phantasia); la sabiduría radica en interponer la razón antes de convertirlo en asentimiento.
+
+No permitas que la incertidumbre derribe tu ciudadela interior. Lo que otra persona piense, haga o responda pertenece al reino de los indiferentes ajenos; tu calma y tu decoro son tu único territorio soberano.
+                        """.trimIndent(),
+                        corePrinciple = "«No son las cosas las que atormentan a los hombres, sino la opinión que se forman de ellas.» — Epicteto (Enquiridión, V)",
+                        socraticQuestion = "¿Estás buscando paz interior o estás intentando forzar un resultado que no está bajo tu control?",
+                        concreteAction = "Escribe en un papel las 3 cosas que SÍ dependen de tus manos en las próximas 3 horas y ejecútalas sin mirar atrás."
+                    )
+                    isPainOrLoss -> JournalMentorshipResult(
+                        feedback = """
+Tu texto refleja la fricción natural de aceptar la transitoriedad. Para los estoicos, el dolor por la pérdida no se niega ni se finge; se reconoce con dignidad sin sumarle juicios de catástrofe.
+
+Has amado con sinceridad, y el vacío actual es testimonio de lo vivido. Sin embargo, recordar que todo en la naturaleza es prestado te ayuda a honrar el pasado sin hacer de la nostalgia una cadena perpetua.
+                        """.trimIndent(),
+                        corePrinciple = "«Acepta las cosas a las que el destino te ha atado y ama a las personas con las que te ha tocado vivir, pero hazlo de todo corazón.» — Marco Aurelio (Meditaciones, VI, 39)",
+                        socraticQuestion = "¿Qué parte de este sufrimiento nace del hecho real y qué parte nace de tu resistencia a aceptarlo?",
+                        concreteAction = "Dedica 10 minutos a una caminata en silencio, observando el entorno con plena presencia sin consultar el teléfono."
+                    )
+                    isAngerOrInjustice -> JournalMentorshipResult(
+                        feedback = """
+La indignación en tus palabras es comprensible, pero la ira es una pasión que castiga más a quien la alberga que a quien la provocó. Séneca nos recuerda que molestarse por la falta de rectitud ajena es tan inútil como enojarse con la lluvia por mojar.
+
+Reclamar justicia al pasado no cambia los hechos. El mayor desquite contra una ofensa es no parecerte jamás a quien te dañó y resguardar tu propia nobleza de carácter.
+                        """.trimIndent(),
+                        corePrinciple = "«La mejor venganza es no ser como tu enemigo.» — Marco Aurelio (Meditaciones, VI, 6)",
+                        socraticQuestion = "Si sueltas el rencor hoy, ¿qué espacio vital y mental recuperarías de inmediato?",
+                        concreteAction = "Rompe simbólicamente o quema de forma segura una hoja con los reclamos que no tienen solución en el presente."
+                    )
+                    else -> JournalMentorshipResult(
+                        feedback = """
+Tu diario refleja un momento de autoobservación valioso. La práctica cotidiana de registrar los pensamientos permite examinarlos con la ecuanimidad de un testigo sereno en lugar de dejarse arrastrar por ellos.
+
+Mantén tu enfoque en cultivar las virtudes cardinales: prudencia para discernir, templanza para gobernar los impulsos, fortaleza para sostener el dolor necesario y justicia para tratarte a ti mismo y a los demás con ecuanimidad.
+                        """.trimIndent(),
+                        corePrinciple = "«La felicidad de tu vida depende de la calidad de tus pensamientos.» — Marco Aurelio (Meditaciones, III)",
+                        socraticQuestion = "¿En qué acción cotidiana puedes demostrar hoy tu mayor nivel de autonomía y respeto propio?",
+                        concreteAction = "Completa una tarea pendiente que hayas pospuesto para reafirmar tu disciplina personal."
+                    )
+                }
+            }
+
+            SoltarFramework.PSICOLOGIA_MODERNA -> {
+                when {
+                    isAnxietyOrImpulse -> JournalMentorshipResult(
+                        feedback = """
+Leyendo tu escrito desde la psicología del apego y la regulación emocional:
+Lo que sientes no es una señal intuitiva de que debas romper la distancia; es la alarma biológica de tu sistema nervioso protestando por el corte del circuito de recompensa y proximidad.
+
+Silvia Congost nos recuerda la importancia de distinguir el cariño de la necesidad de regular la angustia. Poner límites protectores no es frialdad, es el autocuidado indispensable para que tu mente desinflame la hiperactivación.
+                        """.trimIndent(),
+                        corePrinciple = "«El contacto cero no es para castigar al otro, es el espacio de seguridad que necesitas para sanar tu propia herida.» — Silvia Congost",
+                        socraticQuestion = "¿Qué necesitas darte a ti mismo en este momento en lugar de esperar que otra persona calme tu malestar?",
+                        concreteAction = "Aplica la técnica de estimulación somática: lava tu rostro con agua fría o realiza 4 ciclos de respiración diafragmática 4-7-8."
+                    )
+                    isPainOrLoss -> JournalMentorshipResult(
+                        feedback = """
+Tu entrada expresa la tristeza legítima del duelo vincular. Gabriel Rolón explica con maestría que el duelo no se esquiva ni se acelera mediante distracciones superficiales; es la lenta elaboración donde cada lágrima recoloca la historia en su lugar.
+
+Permítete sentir la melancolía sin concluir que tu vida se ha detenido para siempre. El dolor que sientes hoy es la medida del significado que tuvo, pero no determina el límite de tu futuro.
+                        """.trimIndent(),
+                        corePrinciple = "«El duelo no se supera olvidando, sino recordando sin que el recuerdo destruya el presente.» — Gabriel Rolón",
+                        socraticQuestion = "¿Puedes sostener tu tristeza hoy con la misma ternura y paciencia con la que cuidarías a un buen amigo?",
+                        concreteAction = "Prepárate una bebida caliente y descansa 15 minutos sin pantallas ni estímulos invasivos."
+                    )
+                    else -> JournalMentorshipResult(
+                        feedback = """
+Escribir con esta apertura es un ejercicio fundamental de defusión cognitiva y elaboración reflexiva (TCC/ACT). Al poner en palabras tus vivencias, logras que los pensamientos dejen de ser verdades absolutas y pasen a ser eventos mentales observables.
+
+Estás transitando un proceso no lineal: habrá días de claridad y días de cansancio. Valora cada paso donde eliges tu bienestar y tu coherencia interna por encima de la inercia del pasado.
+                        """.trimIndent(),
+                        corePrinciple = "«No necesitas dejar de sentir para empezar a soltar y reconstruirte.»",
+                        socraticQuestion = "¿Qué valor nuclear tuyo (dignidad, salud, creatividad, paz) quieres alimentar hoy con tus decisiones?",
+                        concreteAction = "Identifica una pequeña meta del día y anótala en tus Metas de Identidad."
+                    )
+                }
+            }
+
+            SoltarFramework.CATOLICO -> {
+                when {
+                    isAnxietyOrImpulse -> JournalMentorshipResult(
+                        feedback = """
+En tus palabras se percibe la inquietud del corazón en medio de la prueba. En momentos de incertidumbre o deseos de regresar sobre lo andado, la virtud de la paciencia y el dominio propio son tu mayor escudo.
+
+La custodia del corazón te invita a no exponerte a aquello que perturba tu paz. Confía en que este tiempo de desierto también es un tiempo de maduración y fortalecimiento interior.
+                        """.trimIndent(),
+                        corePrinciple = "«Por encima de todo lo que guardes, guarda tu corazón, porque de él brota la vida.» — Proverbios 4:23",
+                        socraticQuestion = "¿Estás dispuesto a entregar tu necesidad de control para recibir la serenidad que necesitas hoy?",
+                        concreteAction = "Haz un momento de silencio reflexivo o pausa de oración pidiendo fortaleza y serenidad."
+                    )
+                    isPainOrLoss -> JournalMentorshipResult(
+                        feedback = """
+Tu dolor es digno de respeto y consuelo. En la tradición sapiencial, el sufrimiento nunca es estéril si se atraviesa con esperanza y humildad. 
+
+Aceptar que hay un tiempo para abrazar y un tiempo para despedirse es el camino para encontrar la paz. Tu dignidad está sostenida en un amor más grande y en un propósito que trasciende esta herida temporal.
+                        """.trimIndent(),
+                        corePrinciple = "«Todo tiene su momento oportuno; hay un tiempo para plantar y un tiempo para cosechar, un tiempo para llorar y un tiempo para sanar.» — Eclesiastés 3:1-4",
+                        socraticQuestion = "¿En qué aspecto de tu vida puedes empezar a sembrar hoy nuevas semillas de bien y gratitud?",
+                        concreteAction = "Realiza un acto desinteresado de bondad o apoyo hacia un familiar o amigo en el día de hoy."
+                    )
+                    else -> JournalMentorshipResult(
+                        feedback = """
+Tu reflexión muestra sinceridad y búsqueda de bien. En el camino de la vida, cada desprendimiento es también una invitación a purificar nuestras intenciones y valorar lo que verdaderamente edifica el alma.
+
+Camina con esperanza. La paz no es la ausencia de dificultades, sino la certeza de que tu vida está llamada a la plenitud y al crecimiento en la verdad.
+                        """.trimIndent(),
+                        corePrinciple = "«La esperanza no defrauda, porque el amor ha sido derramado en nuestros corazones.» — Romanos 5:5",
+                        socraticQuestion = "¿Qué agradecimiento sincero puedes elevar hoy en medio de tus circunstancias?",
+                        concreteAction = "Escribe tres motivos de gratitud por dones cotidianos que tienes en tu presente."
+                    )
+                }
+            }
+        }
     }
 }
 

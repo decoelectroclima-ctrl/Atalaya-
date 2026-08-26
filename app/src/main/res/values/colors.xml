@@ -7,4 +7,17 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Soltar / Adriana Theme Colors -->
+    <color name="soltar_bg">#121316</color>
+    <color name="soltar_surface">#1A1C23</color>
+    <color name="soltar_surface_elevated">#242731</color>
+    <color name="soltar_amber">#E5A93C</color>
+    <color name="soltar_amber_dark">#B37D20</color>
+    <color name="soltar_sage">#7BA888</color>
+    <color name="soltar_border">#2F3341</color>
+    <color name="soltar_red">#D9534F</color>
+    <color name="text_primary">#F4F5F7</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_muted">#6B7280</color>
 </resources>

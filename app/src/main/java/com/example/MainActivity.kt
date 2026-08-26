@@ -52,14 +52,41 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Initialize Notification Channels and Daily Schedule
+        com.example.notifications.SoltarNotificationHelper.createNotificationChannels(this)
+        com.example.notifications.SoltarNotificationHelper.scheduleDailyReminder(this)
+        com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(this)
+
+        handleIntent(intent)
+
         setContent {
-            SoltarTheme {
-                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            SoltarTheme(themeMode = uiState.themeMode) {
                 val context = LocalContext.current
                 val snackbarHostState = remember { SnackbarHostState() }
                 var showExitDialog by remember { mutableStateOf(false) }
 
-                val isAnyModalOpen = uiState.isUrgeSheetVisible ||
+                // Notification runtime permission launcher for Android 13+
+                val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    if (isGranted) {
+                        viewModel.showNotification("🔔 Notificaciones de acompañamiento activadas")
+                    }
+                }
+
+                LaunchedEffect(Unit) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        if (!com.example.notifications.SoltarNotificationHelper.hasNotificationPermission(context)) {
+                            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    }
+                }
+
+                val authUiState by authViewModel.uiState.collectAsStateWithLifecycle()
+
+                val isAnyModalOpen = uiState.isNeedHelpSheetVisible ||
+                        uiState.isUrgeSheetVisible ||
                         uiState.isNoThinkingSheetVisible ||
                         uiState.isAiCompanionSheetVisible ||
                         uiState.isThoughtModalVisible ||
@@ -69,6 +96,7 @@ class MainActivity : ComponentActivity() {
                         uiState.isIdentityGoalModalVisible ||
                         uiState.isRelapseModalVisible ||
                         uiState.isAuthDialogVisible ||
+                        authUiState.isAuthDialogVisible ||
                         uiState.isPaywallVisible ||
                         uiState.isSupportContactDialogVisible ||
                         uiState.isOnboardingVisible
@@ -197,7 +225,7 @@ class MainActivity : ComponentActivity() {
                         ExtendedFloatingActionButton(
                             onClick = {
                                 viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
-                                viewModel.openUrgeSheet()
+                                viewModel.openNeedHelpSheet()
                             },
                             containerColor = UrgeAlertRed,
                             contentColor = TextPrimary,
@@ -286,6 +314,20 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Global Contextual Sheets & Dialogs
+                if (uiState.isNeedHelpSheetVisible) {
+                    NeedHelpSheet(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeNeedHelpSheet() }
+                    )
+                }
+
+                if (uiState.isJournalModalVisible) {
+                    com.example.ui.dialogs.PersonalJournalDialog(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeJournalModal() }
+                    )
+                }
+
                 if (uiState.isUrgeSheetVisible) {
                     UrgeModeDialog(
                         viewModel = viewModel,
@@ -349,10 +391,13 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                if (uiState.isAuthDialogVisible) {
+                if (uiState.isAuthDialogVisible || authUiState.isAuthDialogVisible) {
                     AuthDialog(
                         viewModel = authViewModel,
-                        onDismiss = { authViewModel.closeAuthDialog() }
+                        onDismiss = {
+                            authViewModel.closeAuthDialog()
+                            viewModel.toggleAuthDialog(false)
+                        }
                     )
                 }
 
@@ -369,6 +414,27 @@ class MainActivity : ComponentActivity() {
                         onDismiss = { viewModel.closeSupportContactDialog() }
                     )
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: android.content.Intent?) {
+        val action = intent?.getStringExtra(com.example.widget.SoltarAppWidgetProvider.EXTRA_OPEN_ACTION)
+        when (action) {
+            com.example.widget.SoltarAppWidgetProvider.ACTION_URGE_MODE -> {
+                viewModel.openUrgeMode()
+            }
+            com.example.widget.SoltarAppWidgetProvider.ACTION_JOURNAL -> {
+                viewModel.openJournalModal()
+            }
+            com.example.widget.SoltarAppWidgetProvider.ACTION_CHECKIN -> {
+                viewModel.setSelectedTab(SoltarTab.INICIO)
             }
         }
     }

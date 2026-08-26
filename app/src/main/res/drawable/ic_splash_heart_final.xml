@@ -1,0 +1,120 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="240dp"
+    android:viewportWidth="240"
+    android:viewportHeight="240">
+
+    <!-- Background Porcelain Gradient tone -->
+    <path
+        android:fillColor="#F4F0EB"
+        android:pathData="M0,0h240v240h-240z" />
+
+    <!-- Soft Halo Glow -->
+    <path
+        android:fillColor="#1A8F1825"
+        android:pathData="M120,120m-90,0a90,90 0 1,0 180,0a90,90 0 1,0 -180,0" />
+
+    <!-- Heart Shadow -->
+    <path
+        android:fillColor="#38400005"
+        android:pathData="M120,195 C65,150 40,95 75,65 C95,48 115,58 120,75 C125,58 145,48 165,65 C200,95 175,150 120,195 Z" />
+
+    <!-- Heart Main Body (Deep Wine / Red Light to Dark Red) -->
+    <path
+        android:fillColor="#8F1825"
+        android:pathData="M120,190 C65,145 40,90 75,60 C95,43 115,53 120,70 C125,53 145,43 165,60 C200,90 175,145 120,190 Z" />
+
+    <!-- Upper-left Soft Highlight -->
+    <path
+        android:fillColor="#30FFFFFF"
+        android:pathData="M78,65 C70,72 68,88 78,98 C82,88 88,75 88,68 C88,64 82,62 78,65 Z" />
+
+    <!-- Kintsugi Ceramic Cracks (Shadow + porcelain fracture) -->
+    <path
+        android:strokeColor="#55400005"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M120,68 L126,88 L114,108 L128,128 L115,150 L126,170 L120,188" />
+    <path
+        android:strokeColor="#F4F0EB"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M120,68 L126,88 L114,108 L128,128 L115,150 L126,170 L120,188" />
+
+    <!-- Branch Cracks -->
+    <path
+        android:strokeColor="#F4F0EB"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M114,108 L85,98 L65,104" />
+    <path
+        android:strokeColor="#F4F0EB"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M128,128 L155,122 L172,135" />
+    <path
+        android:strokeColor="#F4F0EB"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M115,150 L95,162 L75,158" />
+
+    <!-- Golden Resins & Stitches (Kintsugi Gold) -->
+    <path
+        android:strokeColor="#C7A24D"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M102,82 L142,88" />
+    <path
+        android:strokeColor="#C7A24D"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M98,106 L138,98" />
+    <path
+        android:strokeColor="#C7A24D"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M100,130 L146,122" />
+    <path
+        android:strokeColor="#C7A24D"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:pathData="M98,154 L138,142" />
+    <path
+        android:strokeColor="#C7A24D"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:pathData="M80,88 L90,112" />
+
+    <!-- Main Gold Seam Thread -->
+    <path
+        android:strokeColor="#EFD58A"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M120,68 L126,88 L114,108 L128,128 L115,150 L126,170 L120,188" />
+
+    <!-- Gold Knots -->
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M102,82m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M142,88m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M98,106m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M138,98m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M100,130m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M146,122m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#EFD58A"
+        android:pathData="M98,154m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+</vector>

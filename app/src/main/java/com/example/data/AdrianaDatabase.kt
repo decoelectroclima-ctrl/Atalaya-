@@ -20,9 +20,10 @@ import androidx.room.migration.Migration
         IdentityGoalEntity::class,
         RelapseEntity::class,
         AiMessageEntity::class,
+        JournalEntryEntity::class,
         SoltarSettingsEntity::class
     ],
-    version = 10,
+    version = 12,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -37,6 +38,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
     abstract fun identityGoalDao(): IdentityGoalDao
     abstract fun relapseDao(): RelapseDao
     abstract fun aiMessageDao(): AiMessageDao
+    abstract fun journalDao(): JournalDao
     abstract fun soltarSettingsDao(): SoltarSettingsDao
 
     companion object {

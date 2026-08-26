@@ -603,19 +603,277 @@ fun ProfileScreen(
         // Sound & Preferences Settings Card
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("theme_and_appearance_card"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = when (uiState.themeMode.uppercase()) {
+                                    "LIGHT" -> Icons.Default.LightMode
+                                    "DARK" -> Icons.Default.DarkMode
+                                    else -> Icons.Default.BrightnessAuto
+                                },
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Apariencia & Modo Visual",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = SoltarAmber.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = when (uiState.themeMode.uppercase()) {
+                                    "LIGHT" -> "MODO CLARO"
+                                    "DARK" -> "MODO OSCURO"
+                                    else -> "SISTEMA"
+                                },
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Preferencias de la Experiencia",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
+                        text = "Selecciona la paleta que mejor acompañe tu lectura y momento del día:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontSize = 12.sp
                     )
-                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // 3 Theme Option Selector Tiles
+                    val currentMode = uiState.themeMode.uppercase()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 1. Dark Mode Tile
+                        val isDarkSelected = currentMode == "DARK"
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { viewModel.setThemeMode("DARK") }
+                                .testTag("theme_selector_dark"),
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isDarkSelected) SoltarSurfaceHighlight else SoltarSurfaceElevated,
+                            border = BorderStroke(
+                                if (isDarkSelected) 1.5.dp else 1.dp,
+                                if (isDarkSelected) SoltarAmber else SoltarBorderSubtle
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isDarkSelected) SoltarAmber.copy(alpha = 0.2f) else SoltarSurface),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.DarkMode,
+                                        contentDescription = null,
+                                        tint = if (isDarkSelected) SoltarAmber else TextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Oscuro",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isDarkSelected) SoltarAmber else TextPrimary,
+                                    fontWeight = if (isDarkSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "Obsidiana",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+
+                        // 2. Light Mode Tile
+                        val isLightSelected = currentMode == "LIGHT"
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { viewModel.setThemeMode("LIGHT") }
+                                .testTag("theme_selector_light"),
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isLightSelected) SoltarSurfaceHighlight else SoltarSurfaceElevated,
+                            border = BorderStroke(
+                                if (isLightSelected) 1.5.dp else 1.dp,
+                                if (isLightSelected) SoltarAmber else SoltarBorderSubtle
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isLightSelected) SoltarAmber.copy(alpha = 0.2f) else SoltarSurface),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.LightMode,
+                                        contentDescription = null,
+                                        tint = if (isLightSelected) SoltarAmber else TextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Claro",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isLightSelected) SoltarAmber else TextPrimary,
+                                    fontWeight = if (isLightSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "Porcelana",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+
+                        // 3. System Mode Tile
+                        val isSystemSelected = currentMode == "SYSTEM"
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { viewModel.setThemeMode("SYSTEM") }
+                                .testTag("theme_selector_system"),
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSystemSelected) SoltarSurfaceHighlight else SoltarSurfaceElevated,
+                            border = BorderStroke(
+                                if (isSystemSelected) 1.5.dp else 1.dp,
+                                if (isSystemSelected) SoltarAmber else SoltarBorderSubtle
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isSystemSelected) SoltarAmber.copy(alpha = 0.2f) else SoltarSurface),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.BrightnessAuto,
+                                        contentDescription = null,
+                                        tint = if (isSystemSelected) SoltarAmber else TextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Automático",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isSystemSelected) SoltarAmber else TextPrimary,
+                                    fontWeight = if (isSystemSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "Sistema",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = SoltarBorderSubtle)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Direct Quick Toggle (Modo Claro / Modo Oscuro)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (currentMode == "LIGHT") Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = null,
+                                tint = SoltarAmber
+                            )
+                            Column {
+                                Text(
+                                    text = if (currentMode == "LIGHT") "Modo Claro Activado" else "Modo Oscuro Activado",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = if (currentMode == "LIGHT") "Fondo porcelana y calidez dorada" else "Fondo obsidiana y sosiego visual",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        Switch(
+                            checked = currentMode == "LIGHT",
+                            onCheckedChange = { isLight ->
+                                viewModel.setThemeMode(if (isLight) "LIGHT" else "DARK")
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = SoltarBackground,
+                                checkedTrackColor = SoltarAmber,
+                                uncheckedThumbColor = TextMuted,
+                                uncheckedTrackColor = SoltarSurfaceElevated
+                            ),
+                            modifier = Modifier.testTag("quick_light_mode_switch")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = SoltarBorderSubtle)
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Sound Toggle
                     Row(
@@ -668,6 +926,168 @@ fun ProfileScreen(
                         ) {
                             Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
                             Text("Revisar guía de inicio y filosofía", color = SoltarAmber, fontSize = 13.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Notificaciones y Widget de Escritorio
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("notifications_and_widget_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsActive,
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Notificaciones & Widget",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = SoltarAmber.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "ACTIVO",
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Acompañamiento discreto en tu dispositivo para mantener tu compromiso y tener acceso de emergencia al instante.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 17.sp,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // 1. Notificación Diaria (Check-in)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = SoltarSurfaceElevated,
+                        border = BorderStroke(1.dp, SoltarBorderSubtle)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Schedule,
+                                        contentDescription = null,
+                                        tint = SoltarAmber,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Column {
+                                        Text("Recordatorio Diario (21:00)", style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                        Text("Check-in nocturno y máxima estoica", style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
+                                    }
+                                }
+
+                                Button(
+                                    onClick = {
+                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                        com.example.notifications.SoltarNotificationHelper.sendDailyCheckinNotification(context)
+                                        viewModel.showNotification("🔔 Notificación de prueba enviada")
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarSurface),
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f)),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Probar", color = SoltarAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // 2. Widget de Pantalla de Inicio
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = SoltarSurfaceElevated,
+                        border = BorderStroke(1.dp, SoltarBorderSubtle)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Widgets,
+                                    contentDescription = null,
+                                    tint = SoltarSage,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column {
+                                    Text("Widget de Pantalla de Inicio", style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                                    Text("Racha de días, cita viva y botón SOS", style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "💡 Cómo añadirlo: Ve a la pantalla de inicio de tu teléfono, mantén presionado un espacio vacío, selecciona 'Widgets', busca 'ADRIANA' y arrástralo a tu pantalla.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMuted,
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                    com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
+                                    viewModel.showNotification("🔄 Widget sincronizado con éxito")
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, SoltarBorder)
+                            ) {
+                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Sincronizar Widget ahora", color = TextSecondary, fontSize = 12.sp)
+                            }
                         }
                     }
                 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,6 +33,13 @@ fun AiCompanionDialog(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val aiMessages by viewModel.aiMessages.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(aiMessages.size) {
+        if (aiMessages.isNotEmpty()) {
+            listState.animateScrollToItem(aiMessages.size)
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -39,41 +47,47 @@ fun AiCompanionDialog(
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            contentWindowInsets = WindowInsets.ime,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             containerColor = SoltarBackground,
             topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(SoltarSurface)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    color = SoltarSurface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorderSubtle)
                 ) {
-                    IconButton(onClick = onDismiss, modifier = Modifier.testTag("ai_dialog_close")) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextSecondary)
-                    }
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "ACOMPAÑANTE ADRIANA",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = SoltarAmber,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = "Presencia sobria • Sin juicios ni falsas promesas",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMuted
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { viewModel.clearAiMemory() },
-                        modifier = Modifier.testTag("ai_dialog_clear_memory")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = "Reiniciar conversación", tint = TextSecondary)
+                        IconButton(onClick = onDismiss, modifier = Modifier.testTag("ai_dialog_close")) {
+                            Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextSecondary)
+                        }
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "ACOMPAÑANTE ADRIANA",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = "Presencia sobria • Sin juicios ni falsas promesas",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextMuted,
+                                fontSize = 10.sp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { viewModel.clearAiMemory() },
+                            modifier = Modifier.testTag("ai_dialog_clear_memory")
+                        ) {
+                            Icon(Icons.Default.DeleteOutline, contentDescription = "Reiniciar conversación", tint = TextSecondary)
+                        }
                     }
                 }
             },
@@ -82,15 +96,18 @@ fun AiCompanionDialog(
                     color = SoltarSurface,
                     tonalElevation = 8.dp,
                     border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorder),
-                    modifier = Modifier.imePadding()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .imePadding()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+                        val focusRequester = remember { FocusRequester() }
                         OutlinedTextField(
                             value = uiState.aiInputMessage,
                             onValueChange = viewModel::setAiInputMessage,
@@ -149,12 +166,13 @@ fun AiCompanionDialog(
             }
         ) { paddingValues ->
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 20.dp)
+                contentPadding = PaddingValues(top = 12.dp, bottom = 16.dp)
             ) {
                 // Grounding & Clinical Disclaimer Card
                 item {

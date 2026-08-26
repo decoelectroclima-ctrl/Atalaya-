@@ -1,21 +1,226 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:viewportWidth="512"
+    android:viewportHeight="512">
 
-    <!-- Heart Shape -->
-    <path
-        android:pathData="M 54 90 C 10 60 10 30 35 30 C 50 30 54 40 54 40 C 54 40 58 30 73 30 C 98 30 98 60 54 90 Z"
-        android:fillColor="#C62828" /> 
+    <group
+        android:pivotX="256"
+        android:pivotY="256"
+        android:scaleX="0.84"
+        android:scaleY="0.84">
 
-    <!-- Kintsugi Seam: Gold -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#E7A94F"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M 54 40 L 54 90" />
+        <!-- Heart Drop Shadow -->
+        <path
+            android:fillColor="#473B171C"
+            android:pathData="M256,427 C235,406 120,324 91,247 C60,165 110,109 168,110 C208,111 238,134 256,165 C274,134 304,111 344,110 C402,109 452,165 421,247 C392,324 277,406 256,427 Z" />
+
+        <!-- Main Heart Silhouette with Deep Rich Wine/Red Gradient -->
+        <path
+            android:pathData="M256,405 C235,384 120,302 91,225 C60,143 110,87 168,88 C208,89 238,112 256,143 C274,112 304,89 344,88 C402,87 452,143 421,225 C392,302 277,384 256,405 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:centerX="164"
+                    android:centerY="123"
+                    android:gradientRadius="350"
+                    android:type="radial">
+                    <item android:color="#FFD94A55" android:offset="0.0" />
+                    <item android:color="#FFA91F2C" android:offset="0.35" />
+                    <item android:color="#FF76101B" android:offset="0.72" />
+                    <item android:color="#FF3E070D" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Upper-Left Light Reflection / Shine -->
+        <path
+            android:pathData="M130,153 C145,117 190,113 217,139 C190,133 162,143 143,174 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:startX="130"
+                    android:startY="113"
+                    android:endX="217"
+                    android:endY="174"
+                    android:type="linear">
+                    <item android:color="#59FFFFFF" android:offset="0.0" />
+                    <item android:color="#00FFFFFF" android:offset="1.0" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- =========================
+             CERAMIC FRACTURES (#EEE9E2)
+        ========================== -->
+
+        <!-- Main Fracture -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="12"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M260,125 L239,164 L266,187 L238,215 L267,238 L235,270 L263,294 L238,329" />
+
+        <!-- Secondary Fracture 1 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="9"
+            android:strokeLineCap="round"
+            android:pathData="M239,164 L196,145 L169,159" />
+
+        <!-- Secondary Fracture 2 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="9"
+            android:strokeLineCap="round"
+            android:pathData="M266,187 L315,163 L342,174" />
+
+        <!-- Secondary Fracture 3 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="8"
+            android:strokeLineCap="round"
+            android:pathData="M238,215 L195,207 L169,222" />
+
+        <!-- Secondary Fracture 4 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="8"
+            android:strokeLineCap="round"
+            android:pathData="M267,238 L316,230 L348,244" />
+
+        <!-- Secondary Fracture 5 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="9"
+            android:strokeLineCap="round"
+            android:pathData="M235,270 L190,286 L165,307" />
+
+        <!-- Secondary Fracture 6 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFEEE9E2"
+            android:strokeWidth="8"
+            android:strokeLineCap="round"
+            android:pathData="M263,294 L310,307 L335,330" />
+
+        <!-- =========================
+             GOLDEN STITCHES (Costura Dorada)
+        ========================== -->
+
+        <!-- Main Stitch 1 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M232,153 L267,169" />
+
+        <!-- Main Stitch 2 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFF0D487"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M245,181 L276,198" />
+
+        <!-- Main Stitch 3 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M230,211 L263,228" />
+
+        <!-- Main Stitch 4 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFF0D487"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M242,239 L273,255" />
+
+        <!-- Main Stitch 5 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M227,269 L260,285" />
+
+        <!-- Main Stitch 6 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFF0D487"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:pathData="M239,300 L269,315" />
+
+        <!-- Lateral Stitch 1 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="6"
+            android:strokeLineCap="round"
+            android:pathData="M205,150 L188,168" />
+
+        <!-- Lateral Stitch 2 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="6"
+            android:strokeLineCap="round"
+            android:pathData="M307,165 L324,182" />
+
+        <!-- Lateral Stitch 3 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="6"
+            android:strokeLineCap="round"
+            android:pathData="M196,207 L185,226" />
+
+        <!-- Lateral Stitch 4 -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFC39A45"
+            android:strokeWidth="6"
+            android:strokeLineCap="round"
+            android:pathData="M312,231 L327,249" />
+
+        <!-- =========================
+             GOLDEN KNOTS
+        ========================== -->
+        <path
+            android:fillColor="#FFF0D487"
+            android:pathData="M232,153m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#FFF0D487"
+            android:pathData="M245,181m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#FFF0D487"
+            android:pathData="M230,211m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#FFF0D487"
+            android:pathData="M242,239m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#FFF0D487"
+            android:pathData="M227,269m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0" />
+        <path
+            android:fillColor="#FFF0D487"
+            android:pathData="M239,300m-6,0a6,6 0 1,0 12,0a6,6 0 1,0 -12,0" />
+
+        <!-- Central Sparkle Glow -->
+        <path
+            android:fillColor="#CCFFF1BD"
+            android:pathData="M247,157m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0" />
+
+    </group>
 </vector>

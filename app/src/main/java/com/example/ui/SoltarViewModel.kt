@@ -62,6 +62,14 @@ data class SoltarUiState(
     val selectedFeeling: String = "",
     
     // Contextual Modals & Dialogs
+    val isNeedHelpSheetVisible: Boolean = false,
+    val isJournalModalVisible: Boolean = false,
+    val selectedJournalEntry: JournalEntryEntity? = null,
+    val isGeneratingJournalMentorship: Boolean = false,
+    val journalInputTitle: String = "",
+    val journalInputContent: String = "",
+    val journalInputMood: String = "Reflexión",
+    val journalInputFramework: SoltarFramework = SoltarFramework.ESTOICO,
     val isThoughtModalVisible: Boolean = false,
     val isAuditModalVisible: Boolean = false,
     val isIdealizationModalVisible: Boolean = false,
@@ -124,6 +132,7 @@ data class SoltarUiState(
     // Onboarding & Sound UI State
     val isOnboardingVisible: Boolean = false,
     val isSoundEnabled: Boolean = true,
+    val themeMode: String = "DARK", // "DARK" | "LIGHT" | "SYSTEM"
 
     // Reference Framework & Wisdom Cards
     val preferredFramework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
@@ -188,6 +197,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val relapses: StateFlow<List<RelapseEntity>> = repository.allRelapses
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val journalEntries: StateFlow<List<JournalEntryEntity>> = repository.allJournalEntries
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val aiMessages: StateFlow<List<AiMessageEntity>> = repository.allAiMessages
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -221,12 +233,16 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                         currentCard
                     }
 
-                    // Auth persistence
-                    val shouldShowAuth = !currentSettings.isLoggedIn
+                    // Auth persistence - only trigger lockdown if a PIN is actually configured and lock enabled
+                    val shouldShowAuth = !currentSettings.isLoggedIn && 
+                            currentSettings.onboardingCompleted && 
+                            currentSettings.pinHash.isNotBlank() && 
+                            currentSettings.biometricLockEnabled
 
                     _uiState.update {
                         it.copy(
                             isSoundEnabled = currentSettings.soundEnabled,
+                            themeMode = currentSettings.themeMode,
                             isOnboardingVisible = !currentSettings.onboardingCompleted,
                             preferredFramework = framework,
                             currentWisdomCard = newCard,
@@ -300,6 +316,25 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(themeMode = mode))
+            _uiState.update { it.copy(themeMode = mode) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            val modeLabel = when (mode.uppercase()) {
+                "LIGHT" -> "Modo Claro (Porcelana Cálida)"
+                "DARK" -> "Modo Oscuro (Obsidiana Kintsugi)"
+                else -> "Modo Automático (Sistema)"
+            }
+            showNotification("🎨 Apariencia: $modeLabel")
+        }
+    }
+
+    fun toggleDarkMode(isDarkMode: Boolean) {
+        setThemeMode(if (isDarkMode) "DARK" else "LIGHT")
+    }
+
     fun setOnboardingCompleted(completed: Boolean) {
         viewModelScope.launch {
             val current = settings.value ?: SoltarSettingsEntity()
@@ -314,6 +349,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             repository.saveSettings(current.copy(breakupDateTimestamp = timestamp))
             showNotification("⏱️ Fecha de Contacto Cero actualizada correctamente.")
             playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+            com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())
         }
     }
 
@@ -323,8 +359,12 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             repository.saveSettings(current.copy(breakupDateTimestamp = System.currentTimeMillis()))
             showNotification("🌱 Contador reiniciado con compasión. Cada nuevo minuto es una victoria.")
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())
         }
     }
+
+    fun openUrgeMode() = openUrgeSheet()
+    fun setSelectedTab(tab: SoltarTab) = setTab(tab)
 
     private fun getTodayDateKey(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -785,6 +825,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             }
             playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
             showNotification("🤝 Registro completado sin juicios. Tu dignidad sigue intacta y volvemos a empezar.")
+            com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())
         }
     }
 
@@ -889,6 +930,145 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setSelectedFeeling(f: String) = _uiState.update { it.copy(selectedFeeling = f) }
     
+    fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
+    fun openNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = true) }
+    fun closeNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = false) }
+    fun toggleJournalModal(visible: Boolean) = _uiState.update { it.copy(isJournalModalVisible = visible) }
+    fun openJournalModal(entry: JournalEntryEntity? = null) {
+        _uiState.update {
+            it.copy(
+                isJournalModalVisible = true,
+                selectedJournalEntry = entry,
+                journalInputTitle = entry?.title ?: "",
+                journalInputContent = entry?.content ?: "",
+                journalInputMood = entry?.moodTag ?: "Reflexión",
+                journalInputFramework = try {
+                    SoltarFramework.valueOf(entry?.philosophicalFramework ?: it.preferredFramework.name)
+                } catch (_: Exception) {
+                    it.preferredFramework
+                }
+            )
+        }
+    }
+    fun closeJournalModal() = _uiState.update { it.copy(isJournalModalVisible = false, selectedJournalEntry = null) }
+    fun setJournalInputTitle(text: String) = _uiState.update { it.copy(journalInputTitle = text) }
+    fun setJournalInputContent(text: String) = _uiState.update { it.copy(journalInputContent = text) }
+    fun setJournalInputMood(mood: String) = _uiState.update { it.copy(journalInputMood = mood) }
+    fun setJournalInputFramework(framework: SoltarFramework) = _uiState.update { it.copy(journalInputFramework = framework) }
+    fun selectJournalEntry(entry: JournalEntryEntity?) = _uiState.update { it.copy(selectedJournalEntry = entry) }
+
+    fun saveJournalEntry(
+        title: String,
+        content: String,
+        moodTag: String,
+        framework: SoltarFramework,
+        requestMentorship: Boolean
+    ) {
+        val cleanContent = content.trim()
+        if (cleanContent.isBlank()) {
+            showNotification("⚠️ Escribe algo en tu diario antes de guardar.")
+            return
+        }
+
+        viewModelScope.launch {
+            val entryId = repository.saveJournalEntry(
+                JournalEntryEntity(
+                    title = title.trim(),
+                    content = cleanContent,
+                    moodTag = moodTag,
+                    philosophicalFramework = framework.name,
+                    aiFeedback = "",
+                    aiCorePrinciple = "",
+                    aiSocraticQuestion = "",
+                    aiConcreteAction = "",
+                    timestamp = System.currentTimeMillis()
+                )
+            )
+
+            if (requestMentorship) {
+                _uiState.update { it.copy(isGeneratingJournalMentorship = true) }
+                try {
+                    val result = SoltarAiEngine.generateJournalMentorship(
+                        journalContent = cleanContent,
+                        moodTag = moodTag,
+                        framework = framework,
+                        userContext = buildUserPersonalizationContext()
+                    )
+                    repository.updateJournalFeedback(
+                        id = entryId,
+                        feedback = result.feedback,
+                        corePrinciple = result.corePrinciple,
+                        socraticQuestion = result.socraticQuestion,
+                        concreteAction = result.concreteAction,
+                        framework = framework.name
+                    )
+                    // Update current selected entry if viewing
+                    val updated = repository.getJournalEntryById(entryId).firstOrNull()
+                    if (updated != null) {
+                        _uiState.update { it.copy(selectedJournalEntry = updated) }
+                    }
+                    showNotification("✨ Mentoría filosófica generada con éxito.")
+                } catch (e: Exception) {
+                    showNotification("⚠️ Entrada guardada. No se pudo conectar con el mentor.")
+                } finally {
+                    _uiState.update { it.copy(isGeneratingJournalMentorship = false) }
+                }
+            } else {
+                showNotification("📖 Entrada guardada en tu diario personal.")
+            }
+
+            // Reset inputs
+            _uiState.update {
+                it.copy(
+                    journalInputTitle = "",
+                    journalInputContent = "",
+                    journalInputMood = "Reflexión"
+                )
+            }
+        }
+    }
+
+    fun requestMentorshipForExistingEntry(entry: JournalEntryEntity, framework: SoltarFramework) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingJournalMentorship = true) }
+            try {
+                val result = SoltarAiEngine.generateJournalMentorship(
+                    journalContent = entry.content,
+                    moodTag = entry.moodTag,
+                    framework = framework,
+                    userContext = buildUserPersonalizationContext()
+                )
+                repository.updateJournalFeedback(
+                    id = entry.id,
+                    feedback = result.feedback,
+                    corePrinciple = result.corePrinciple,
+                    socraticQuestion = result.socraticQuestion,
+                    concreteAction = result.concreteAction,
+                    framework = framework.name
+                )
+                val updated = repository.getJournalEntryById(entry.id).firstOrNull()
+                if (updated != null) {
+                    _uiState.update { it.copy(selectedJournalEntry = updated) }
+                }
+                showNotification("✨ Nueva perspectiva filosófica generada.")
+            } catch (e: Exception) {
+                showNotification("⚠️ No se pudo regenerar la mentoría.")
+            } finally {
+                _uiState.update { it.copy(isGeneratingJournalMentorship = false) }
+            }
+        }
+    }
+
+    fun deleteJournalEntry(id: Long) {
+        viewModelScope.launch {
+            repository.deleteJournalEntry(id)
+            if (_uiState.value.selectedJournalEntry?.id == id) {
+                _uiState.update { it.copy(selectedJournalEntry = null) }
+            }
+            showNotification("🗑️ Entrada de diario eliminada.")
+        }
+    }
+
     fun toggleThoughtModal(visible: Boolean) = _uiState.update { it.copy(isThoughtModalVisible = visible) }
     fun toggleAuditModal(visible: Boolean) = _uiState.update { it.copy(isAuditModalVisible = visible) }
     fun toggleIdealizationModal(visible: Boolean) = _uiState.update { it.copy(isIdealizationModalVisible = visible) }
@@ -896,6 +1076,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleRelapseModal(visible: Boolean) = _uiState.update { it.copy(isRelapseModalVisible = visible) }
     fun toggleIdentityGoalModal(visible: Boolean) = _uiState.update { it.copy(isIdentityGoalModalVisible = visible) }
     fun toggleAiCompanionSheet(visible: Boolean) = _uiState.update { it.copy(isAiCompanionSheetVisible = visible) }
+    fun toggleAuthDialog(visible: Boolean) = _uiState.update { it.copy(isAuthDialogVisible = visible) }
 
     fun clearAiMemory() {
         viewModelScope.launch {

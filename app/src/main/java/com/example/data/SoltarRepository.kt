@@ -134,6 +134,34 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         return database.relapseDao().insertRelapse(relapse)
     }
 
+    // Personal Journal & Philosophical Mentorship
+    val allJournalEntries: Flow<List<JournalEntryEntity>> = database.journalDao().getAllJournalEntries()
+
+    fun getJournalEntryById(id: Long): Flow<JournalEntryEntity?> {
+        return database.journalDao().getJournalEntryById(id)
+    }
+
+    suspend fun saveJournalEntry(entry: JournalEntryEntity): Long {
+        return database.journalDao().insertJournalEntry(entry)
+    }
+
+    suspend fun updateJournalFeedback(
+        id: Long,
+        feedback: String,
+        corePrinciple: String,
+        socraticQuestion: String,
+        concreteAction: String,
+        framework: String
+    ) {
+        database.journalDao().updateJournalFeedback(
+            id, feedback, corePrinciple, socraticQuestion, concreteAction, framework
+        )
+    }
+
+    suspend fun deleteJournalEntry(id: Long) {
+        database.journalDao().deleteJournalEntry(id)
+    }
+
     // AI Messages
     val allAiMessages: Flow<List<AiMessageEntity>> = database.aiMessageDao().getAllMessages()
 

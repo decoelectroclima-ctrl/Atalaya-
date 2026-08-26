@@ -45,9 +45,10 @@ fun ProcessScreen(
     val idealizations by viewModel.idealizations.collectAsState()
     val letters by viewModel.letters.collectAsState()
     val relapses by viewModel.relapses.collectAsState()
+    val journalEntries by viewModel.journalEntries.collectAsState()
 
     var selectedFilter by remember { mutableStateOf("Todos") }
-    val filterOptions = listOf("Todos", "Impulsos", "Pensamientos", "Auditorías", "Cartas", "Idealización", "Recaídas")
+    val filterOptions = listOf("Todos", "Diario", "Impulsos", "Pensamientos", "Auditorías", "Cartas", "Idealización", "Recaídas")
 
     var selectedMetricDays by remember { mutableStateOf(7) }
 
@@ -56,6 +57,7 @@ fun ProcessScreen(
     val totalAuditsSaved = audits.size
     val totalLettersStored = letters.size
     val totalRelapses = relapses.size
+    val totalJournalEntries = journalEntries.size
 
     LazyColumn(
         modifier = modifier
@@ -282,6 +284,95 @@ fun ProcessScreen(
                             if (relapse.learning.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("💡 Aprendizaje: ${relapse.learning}", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 0. Diario Personal & Mentorías Filosóficas
+        if (selectedFilter == "Todos" || selectedFilter == "Diario") {
+            if (journalEntries.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "📖 Diario Personal & Mentorías",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = SoltarAmber,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(onClick = { viewModel.openJournalModal() }) {
+                            Text("Abrir diario", color = SoltarAmber, fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                items(journalEntries) { entry ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                viewModel.openJournalModal(entry)
+                            },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                        border = BorderStroke(1.dp, if (entry.aiFeedback.isNotBlank()) SoltarAmber.copy(alpha = 0.4f) else SoltarBorder)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = SoltarSurfaceElevated
+                                ) {
+                                    Text(
+                                        text = entry.moodTag,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                                IconButton(onClick = { viewModel.deleteJournalEntry(entry.id) }) {
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = "Eliminar", tint = TextMuted, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                            if (entry.title.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = entry.title,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = entry.content,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                maxLines = 2,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            if (entry.aiCorePrinciple.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "«${entry.aiCorePrinciple}»",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = SoltarAmber,
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
                             }
                         }
                     }
@@ -652,6 +743,13 @@ private fun EvolutionLineChart(
         )
     }
 
+    val gridColor = SoltarBorderSubtle
+    val painColor = UrgeAlertRed
+    val anxietyColor = SoltarTerracotta
+    val nostalgiaColor = SoltarAmber
+    val urgeColor = UrgeAlertRed.copy(alpha = 0.6f)
+    val autonomyColor = SoltarSage
+
     Canvas(modifier = modifier) {
         val width = size.width
         val height = size.height
@@ -667,7 +765,7 @@ private fun EvolutionLineChart(
         for (i in 0..2) {
             val y = paddingTop + (usableHeight / 2) * i
             drawLine(
-                color = SoltarBorderSubtle,
+                color = gridColor,
                 start = Offset(paddingLeft, y),
                 end = Offset(width - paddingRight, y),
                 strokeWidth = 1f
@@ -706,10 +804,10 @@ private fun EvolutionLineChart(
         }
 
         // Draw the 5 emotional dimensions
-        drawMetricPath(dataPoints.map { it.pain }, UrgeAlertRed)
-        drawMetricPath(dataPoints.map { it.anxiety }, SoltarTerracotta)
-        drawMetricPath(dataPoints.map { it.nostalgia }, SoltarAmber)
-        drawMetricPath(dataPoints.map { it.urgeToContact }, UrgeAlertRed.copy(alpha = 0.6f))
-        drawMetricPath(dataPoints.map { it.autonomy }, SoltarSage, strokeWidth = 3f)
+        drawMetricPath(dataPoints.map { it.pain }, painColor)
+        drawMetricPath(dataPoints.map { it.anxiety }, anxietyColor)
+        drawMetricPath(dataPoints.map { it.nostalgia }, nostalgiaColor)
+        drawMetricPath(dataPoints.map { it.urgeToContact }, urgeColor)
+        drawMetricPath(dataPoints.map { it.autonomy }, autonomyColor, strokeWidth = 3f)
     }
 }

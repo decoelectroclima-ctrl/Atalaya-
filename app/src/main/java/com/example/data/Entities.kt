@@ -140,6 +140,20 @@ data class RelapseEntity(
     val learning: String
 )
 
+@Entity(tableName = "personal_journal")
+data class JournalEntryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String = "",
+    val content: String,
+    val moodTag: String = "Reflexión", // Calma, Nostalgia, Ansiedad, Claridad, Duelo, Gratitud, Valentía, Confusión
+    val philosophicalFramework: String = "ESTOICO", // ESTOICO, PSICOLOGIA_MODERNA, CATOLICO, SOCRATICO
+    val aiFeedback: String = "", // Retroalimentación reflexiva / mentoría filosófica
+    val aiCorePrinciple: String = "", // Máxima / Principio rector citado
+    val aiSocraticQuestion: String = "", // Pregunta socrática de autoindagación
+    val aiConcreteAction: String = "", // Micro-acción sugerida
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 @Entity(tableName = "ai_messages")
 data class AiMessageEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -158,6 +172,7 @@ data class SoltarSettingsEntity(
     val breakupDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Default 2 weeks ago
     val biometricLockEnabled: Boolean = false,
     val soundEnabled: Boolean = true,
+    val themeMode: String = "DARK", // "DARK" | "LIGHT" | "SYSTEM"
     val onboardingCompleted: Boolean = false,
     val preferredFramework: String = "PSICOLOGIA_MODERNA",
     val recentCardIds: String = "",

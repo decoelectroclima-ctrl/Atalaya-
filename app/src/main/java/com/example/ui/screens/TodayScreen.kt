@@ -316,6 +316,66 @@ fun TodayScreen(
             }
         }
 
+        // Quick Journal Access
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.openJournalModal()
+                    }
+                    .testTag("journal_quick_access_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(SoltarAmber.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EditNote,
+                            contentDescription = null,
+                            tint = SoltarAmber,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "DIARIO PERSONAL & MENTORÍA",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SoltarAmber,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "Registra tus pensamientos y recibe sabiduría reflexiva",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
         // 3. Core Question: "¿Cómo estás ahora?"
         item {
             Card(
@@ -537,6 +597,15 @@ fun TodayScreen(
                 familyTitle = "Cuando estoy en calma",
                 accentColor = SoltarSage,
                 tools = listOf(
+                    ToolItem(
+                        title = "Diario Personal & Mentoría",
+                        subtitle = "Escribe tus pensamientos y recibe guía estoica y clínica",
+                        icon = Icons.Default.AutoAwesome,
+                        onClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.openJournalModal()
+                        }
+                    ),
                     ToolItem(
                         title = "Metas de Identidad y Valores",
                         subtitle = "Quién elijo ser hoy y mis límites",
