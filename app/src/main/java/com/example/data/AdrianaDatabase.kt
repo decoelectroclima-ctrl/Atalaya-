@@ -62,7 +62,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                     AdrianaDatabase::class.java,
                     "adriana_database"
                 )
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
@@ -73,14 +73,36 @@ abstract class AdrianaDatabase : RoomDatabase() {
             try {
                 val settings = database.soltarSettingsDao().getSettingsOnce()
                 if (settings == null) {
-                    populateInitialData(database)
+                    populateCleanData(database)
                 }
             } catch (_: Exception) {
                 // Ignore gracefully if tables are still initializing
             }
         }
 
-        private suspend fun populateInitialData(database: AdrianaDatabase) {
+        suspend fun populateCleanData(database: AdrianaDatabase) {
+            // Initial Settings - Clean, No User
+            database.soltarSettingsDao().saveSettings(
+                SoltarSettingsEntity(
+                    id = 1,
+                    memoryEnabled = true,
+                    userName = "",
+                    userEmail = "",
+                    isLoggedIn = false,
+                    authProvider = "local",
+                    breakupDateTimestamp = System.currentTimeMillis(),
+                    biometricLockEnabled = false,
+                    soundEnabled = true,
+                    onboardingCompleted = false,
+                    preferredFramework = "PSICOLOGIA_MODERNA",
+                    subscriptionTier = "FREE",
+                    isTrialActive = false
+                )
+            )
+        }
+
+        // Keep original for "See Example" feature
+        suspend fun populateExampleData(database: AdrianaDatabase) {
             // Initial Check-in
             database.checkinDao().insertOrUpdateCheckin(
                 CheckinEntity(
