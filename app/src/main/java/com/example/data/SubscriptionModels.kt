@@ -16,19 +16,12 @@ enum class SubscriptionPlan(
         periodLabel = "Para siempre",
         billingDetail = "Acceso esencial a herramientas de contención y contador diario"
     ),
-    PREMIUM_MONTHLY(
-        tierKey = "PREMIUM_MONTHLY",
-        title = "ADRIANA Premium Mensual",
-        priceDisplay = "7,99 €",
-        periodLabel = "al mes",
-        billingDetail = "Facturación mensual recurrente. Cancela en cualquier momento."
-    ),
-    PREMIUM_ANNUAL(
-        tierKey = "PREMIUM_ANNUAL",
-        title = "ADRIANA Premium Anual",
-        priceDisplay = "59,99 €",
-        periodLabel = "al año",
-        billingDetail = "7 días de prueba gratis. Luego 59,99 €/año."
+    PREMIUM_ONE_TIME(
+        tierKey = "PREMIUM_ONE_TIME",
+        title = "ADRIANA Premium",
+        priceDisplay = "19,99 €",
+        periodLabel = "pago único",
+        billingDetail = "Acceso completo de por vida a todas las herramientas, sonidos y chat avanzado."
     )
 }
 
@@ -47,11 +40,10 @@ data class UserEntitlements(
         fun fromSettings(settings: SoltarSettingsEntity?): UserEntitlements {
             val tierKey = settings?.subscriptionTier ?: "FREE"
             val isTrial = settings?.isTrialActive == true
-            val isPrem = tierKey.startsWith("PREMIUM") || isTrial
+            val isPrem = tierKey == "PREMIUM_ONE_TIME" || isTrial
 
             val plan = when (tierKey) {
-                "PREMIUM_MONTHLY" -> SubscriptionPlan.PREMIUM_MONTHLY
-                "PREMIUM_ANNUAL" -> SubscriptionPlan.PREMIUM_ANNUAL
+                "PREMIUM_ONE_TIME" -> SubscriptionPlan.PREMIUM_ONE_TIME
                 else -> SubscriptionPlan.FREE
             }
 

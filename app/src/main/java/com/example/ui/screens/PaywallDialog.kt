@@ -121,18 +121,11 @@ fun PaywallDialog(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    // Plan Annual (Recommended)
+                    // Plan Premium
                     PlanCard(
-                        plan = SubscriptionPlan.PREMIUM_ANNUAL,
-                        isSelected = uiState.selectedSubscriptionPlan == SubscriptionPlan.PREMIUM_ANNUAL,
-                        onSelect = { viewModel.selectSubscriptionPlan(SubscriptionPlan.PREMIUM_ANNUAL) }
-                    )
-
-                    // Plan Monthly
-                    PlanCard(
-                        plan = SubscriptionPlan.PREMIUM_MONTHLY,
-                        isSelected = uiState.selectedSubscriptionPlan == SubscriptionPlan.PREMIUM_MONTHLY,
-                        onSelect = { viewModel.selectSubscriptionPlan(SubscriptionPlan.PREMIUM_MONTHLY) }
+                        plan = SubscriptionPlan.PREMIUM_ONE_TIME,
+                        isSelected = uiState.selectedSubscriptionPlan == SubscriptionPlan.PREMIUM_ONE_TIME,
+                        onSelect = { viewModel.selectSubscriptionPlan(SubscriptionPlan.PREMIUM_ONE_TIME) }
                     )
                 }
 
@@ -189,11 +182,7 @@ fun PaywallDialog(
                 // Primary CTA Button
                 Button(
                     onClick = {
-                        if (uiState.selectedSubscriptionPlan == SubscriptionPlan.PREMIUM_ANNUAL) {
-                            viewModel.startFreeTrial()
-                        } else {
-                            viewModel.purchaseSubscription(uiState.selectedSubscriptionPlan)
-                        }
+                        viewModel.purchaseSubscription(uiState.selectedSubscriptionPlan)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -210,14 +199,10 @@ fun PaywallDialog(
                             strokeWidth = 2.5.dp
                         )
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Procesando suscripción...", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                        Text("Procesando...", color = SoltarBackground, fontWeight = FontWeight.Bold)
                     } else {
                         Text(
-                            text = if (uiState.selectedSubscriptionPlan == SubscriptionPlan.PREMIUM_ANNUAL) {
-                                "Iniciar 7 días gratis"
-                            } else {
-                                "Suscribirme por ${uiState.selectedSubscriptionPlan.priceDisplay} / mes"
-                            },
+                            text = "Suscribirme por ${uiState.selectedSubscriptionPlan.priceDisplay}",
                             color = SoltarBackground,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium

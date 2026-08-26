@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,7 +38,8 @@ fun AiCompanionDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Scaffold(
-            modifier = Modifier.fillMaxSize().imePadding(),
+            modifier = Modifier.fillMaxSize(),
+            contentWindowInsets = WindowInsets.ime,
             containerColor = SoltarBackground,
             topBar = {
                 Row(
@@ -78,7 +81,8 @@ fun AiCompanionDialog(
                 Surface(
                     color = SoltarSurface,
                     tonalElevation = 8.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorder)
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorder),
+                    modifier = Modifier.imePadding()
                 ) {
                     Row(
                         modifier = Modifier
@@ -86,6 +90,7 @@ fun AiCompanionDialog(
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
                         OutlinedTextField(
                             value = uiState.aiInputMessage,
                             onValueChange = viewModel::setAiInputMessage,
@@ -98,7 +103,8 @@ fun AiCompanionDialog(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .testTag("ai_input_field"),
+                                .testTag("ai_input_field")
+                                .focusRequester(focusRequester),
                             maxLines = 4,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SoltarAmber,
@@ -109,6 +115,9 @@ fun AiCompanionDialog(
                             ),
                             shape = RoundedCornerShape(16.dp)
                         )
+                        LaunchedEffect(Unit) {
+                            focusRequester.requestFocus()
+                        }
 
                         Spacer(modifier = Modifier.width(8.dp))
 

@@ -137,7 +137,7 @@ data class SoltarUiState(
 
     // Paywall & Monetization
     val isPaywallVisible: Boolean = false,
-    val selectedSubscriptionPlan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ANNUAL,
+    val selectedSubscriptionPlan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ONE_TIME,
     val isProcessingPayment: Boolean = false,
 
     // Support Network Contact Editor Dialog
@@ -219,12 +219,16 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                         currentCard
                     }
 
+                    // Auth persistence
+                    val shouldShowAuth = !currentSettings.isLoggedIn || !currentSettings.authRememberMe
+
                     _uiState.update {
                         it.copy(
                             isSoundEnabled = currentSettings.soundEnabled,
                             isOnboardingVisible = !currentSettings.onboardingCompleted,
                             preferredFramework = framework,
-                            currentWisdomCard = newCard
+                            currentWisdomCard = newCard,
+                            isAuthDialogVisible = shouldShowAuth
                         )
                     }
                 }
@@ -852,7 +856,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         
         if (!entitlements.isPremium && messagesToday >= entitlements.maxDailyCoachMessages) {
              _uiState.update { it.copy(isPaywallVisible = true, isAiTyping = false) }
-             return@launch
+             return
         }
 
         viewModelScope.launch {
@@ -938,32 +942,28 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun setAuthRememberMe(b: Boolean) = _uiState.update { it.copy(authRememberMe = b) }
     fun setAuthDialogMode(mode: String) = _uiState.update { it.copy(authDialogMode = mode) }
 
+    private fun hashPassword(password: String): String {
+        return java.security.MessageDigest.getInstance("SHA-256")
+            .digest(password.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+    }
+
     fun loginWithEmailPassword() {
         val email = _uiState.value.authEmailInput.trim()
         val password = _uiState.value.authPasswordInput.trim()
-        if (email.isBlank() || !email.contains("@")) {
-            showNotification("⚠️ Por favor, introduce un correo electrónico válido.")
-            return
-        }
-        if (password.length < 6) {
-            showNotification("⚠️ La contraseña debe tener al menos 6 caracteres.")
+        val current = settings.value
+
+        val passwordHash = hashPassword(password)
+
+        if (current == null || current.userEmail != email || current.userPasswordHash != passwordHash) {
+            showNotification("⚠️ Email o contraseña incorrectos.")
             return
         }
 
         viewModelScope.launch {
-            val current = settings.value ?: SoltarSettingsEntity()
-            val derivedName = if (current.userName.isNotBlank() && current.userName != "Viajero") current.userName else email.substringBefore("@").replaceFirstChar { it.uppercase() }
-            repository.saveSettings(
-                current.copy(
-                    isLoggedIn = true,
-                    userEmail = email,
-                    userName = derivedName,
-                    authProvider = "email"
-                )
-            )
+            repository.saveSettings(current.copy(isLoggedIn = true))
             closeAuthDialog()
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("✨ Sesión iniciada como $derivedName. Bienvenido/a de nuevo a ADRIANA.")
+            showNotification("✨ Sesión iniciada. Bienvenido/a de nuevo a ADRIANA.")
         }
     }
 
@@ -973,30 +973,22 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         val password = _uiState.value.authPasswordInput.trim()
         val confirm = _uiState.value.authConfirmPasswordInput.trim()
 
-        if (name.isBlank()) {
-            showNotification("⚠️ Por favor, introduce tu nombre.")
-            return
-        }
-        if (email.isBlank() || !email.contains("@")) {
-            showNotification("⚠️ Por favor, introduce un correo electrónico válido.")
-            return
-        }
-        if (password.length < 6) {
-            showNotification("⚠️ La contraseña debe tener al menos 6 caracteres.")
-            return
-        }
-        if (password != confirm) {
-            showNotification("⚠️ Las contraseñas no coinciden.")
+        if (name.isBlank() || email.isBlank() || password.length < 6 || password != confirm) {
+            showNotification("⚠️ Revisa los campos de registro.")
             return
         }
 
+        val passwordHash = hashPassword(password)
+
         viewModelScope.launch {
+            resetAppData()
             val current = settings.value ?: SoltarSettingsEntity()
             repository.saveSettings(
                 current.copy(
                     isLoggedIn = true,
                     userName = name,
                     userEmail = email,
+                    userPasswordHash = passwordHash,
                     authProvider = "email",
                     accountCreatedAt = System.currentTimeMillis()
                 )
@@ -1163,7 +1155,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     // ==========================================
     // MONETIZATION, SUBSCRIPTION & PAYWALL
     // ==========================================
-    fun openPaywall(plan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ANNUAL) {
+    fun openPaywall(plan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ONE_TIME) {
         _uiState.update {
             it.copy(
                 isPaywallVisible = true,
@@ -1188,7 +1180,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             delay(1200) // Realistic secure billing transaction handshake
             val current = settings.value ?: SoltarSettingsEntity()
-            val expiry = System.currentTimeMillis() + if (plan == SubscriptionPlan.PREMIUM_ANNUAL) (365L * 24 * 3600 * 1000) else (30L * 24 * 3600 * 1000)
+            val expiry = 0L
             repository.saveSettings(
                 current.copy(
                     subscriptionTier = plan.tierKey,
@@ -1210,7 +1202,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             val expiry = System.currentTimeMillis() + (7L * 24 * 3600 * 1000)
             repository.saveSettings(
                 current.copy(
-                    subscriptionTier = SubscriptionPlan.PREMIUM_ANNUAL.tierKey,
+                    subscriptionTier = "PREMIUM_ONE_TIME",
                     isTrialActive = true,
                     subscriptionExpiryTimestamp = expiry
                 )

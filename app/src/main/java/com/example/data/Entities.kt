@@ -176,9 +176,12 @@ data class SoltarSettingsEntity(
     val contact3Phone: String = "",
     val contact3Relationship: String = "",
     // Subscription & Monetization
-    val subscriptionTier: String = "FREE", // "FREE" | "PREMIUM_MONTHLY" | "PREMIUM_ANNUAL"
+    val subscriptionTier: String = "FREE", // "FREE" | "PREMIUM_ONE_TIME"
     val isTrialActive: Boolean = false,
     val subscriptionExpiryTimestamp: Long = 0L,
+    // Password Hash
+    val userPasswordHash: String = "",
+    val authRememberMe: Boolean = true,
     // Perspectives
     val faithPerspectiveActive: Boolean = false,
     val stoicPerspectiveActive: Boolean = false,

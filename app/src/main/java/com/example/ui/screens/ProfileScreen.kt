@@ -344,7 +344,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
-                        onClick = { viewModel.openPaywall(SubscriptionPlan.PREMIUM_ANNUAL) },
+                        onClick = { viewModel.openPaywall(SubscriptionPlan.PREMIUM_ONE_TIME) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp)

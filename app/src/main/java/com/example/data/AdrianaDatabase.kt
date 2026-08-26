@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
         JournalEntryEntity::class,
         UserProfileEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -251,7 +251,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                     memoryEnabled = true,
                     userName = "Santiago",
                     userEmail = "santiago.recuperacion@adriana.app",
-                    isLoggedIn = true,
+                    isLoggedIn = false,
                     authProvider = "email",
                     breakupDateTimestamp = System.currentTimeMillis() - (21L * 24 * 3600 * 1000),
                     biometricLockEnabled = false,
