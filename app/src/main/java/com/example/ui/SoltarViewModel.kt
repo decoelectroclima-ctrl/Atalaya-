@@ -836,7 +836,24 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         val text = _uiState.value.aiInputMessage.trim()
         if (text.isBlank() || _uiState.value.isAiTyping) return
 
+        if (SoltarAiEngine.checkSelfHarmTrigger(text)) {
+            showNotification("⚠️ **MENSAJE DE APOYO Y SEGURIDAD**\n\nADRIANA detecta una situación de sufrimiento extremo. Por favor, contacta con profesionales:\n• España: 024 o 112\n• EE.UU./Latam: 988 o 911")
+            return
+        }
+
         _uiState.update { it.copy(aiInputMessage = "", isAiTyping = true) }
+
+        // Daily limit check
+        val entitlements = UserEntitlements.fromSettings(settings.value)
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val messagesToday = aiMessages.value.filter { 
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timestamp)) == today 
+        }.size
+        
+        if (!entitlements.isPremium && messagesToday >= entitlements.maxDailyCoachMessages) {
+             _uiState.update { it.copy(isPaywallVisible = true, isAiTyping = false) }
+             return@launch
+        }
 
         viewModelScope.launch {
             repository.saveAiMessage(

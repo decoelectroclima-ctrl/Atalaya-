@@ -16,12 +16,19 @@ enum class SubscriptionPlan(
         periodLabel = "Para siempre",
         billingDetail = "Acceso esencial a herramientas de contención y contador diario"
     ),
-    PREMIUM_ONE_TIME(
-        tierKey = "PREMIUM_ONE_TIME",
-        title = "ADRIANA Premium",
-        priceDisplay = "19,99 €",
-        periodLabel = "pago único",
-        billingDetail = "Acceso completo de por vida a todas las herramientas, sonidos y chat avanzado."
+    PREMIUM_MONTHLY(
+        tierKey = "PREMIUM_MONTHLY",
+        title = "ADRIANA Premium Mensual",
+        priceDisplay = "7,99 €",
+        periodLabel = "al mes",
+        billingDetail = "Facturación mensual recurrente. Cancela en cualquier momento."
+    ),
+    PREMIUM_ANNUAL(
+        tierKey = "PREMIUM_ANNUAL",
+        title = "ADRIANA Premium Anual",
+        priceDisplay = "59,99 €",
+        periodLabel = "al año",
+        billingDetail = "7 días de prueba gratis. Luego 59,99 €/año."
     )
 }
 
@@ -43,7 +50,8 @@ data class UserEntitlements(
             val isPrem = tierKey.startsWith("PREMIUM") || isTrial
 
             val plan = when (tierKey) {
-                "PREMIUM_ONE_TIME" -> SubscriptionPlan.PREMIUM_ONE_TIME
+                "PREMIUM_MONTHLY" -> SubscriptionPlan.PREMIUM_MONTHLY
+                "PREMIUM_ANNUAL" -> SubscriptionPlan.PREMIUM_ANNUAL
                 else -> SubscriptionPlan.FREE
             }
 
@@ -52,7 +60,7 @@ data class UserEntitlements(
                 tier = plan,
                 isTrial = isTrial,
                 maxDailyCoachMessages = if (isPrem) 9999 else 5,
-                canAccessAllLabs = true, // Basic labs accessible, deep audit unlimited in Prem
+                canAccessAllLabs = isPrem,
                 canAccessDeepMemory = isPrem,
                 canExportDataReport = isPrem,
                 canAccessEmergencySpeedDial = true, // Emergency safety is always open for human dignity

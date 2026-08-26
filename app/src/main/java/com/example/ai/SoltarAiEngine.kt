@@ -173,7 +173,7 @@ ${userContext.toClinicalSummary()}
         return "$SYSTEM_PROMPT_SOLTAR\n\n$frameworkBlock\n\n$contextBlock"
     }
 
-    private fun checkSelfHarmTrigger(input: String): Boolean {
+    fun checkSelfHarmTrigger(input: String): Boolean {
         val lower = input.lowercase()
         val keywords = listOf(
             "suicidio", "suicidarme", "quitarme la vida", "morir", "matarme",
