@@ -449,7 +449,7 @@ fun ProfileScreen(
                         relationship = c1Rel,
                         onEdit = { viewModel.openSupportContactDialog(1) },
                         onCall = { triggerPhoneCall(context, c1Phone) },
-                        onWhatsApp = { triggerWhatsApp(context, c1Phone) }
+                        onSMS = { triggerSms(context, c1Phone) }
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -461,7 +461,7 @@ fun ProfileScreen(
                         relationship = c2Rel,
                         onEdit = { viewModel.openSupportContactDialog(2) },
                         onCall = { triggerPhoneCall(context, c2Phone) },
-                        onWhatsApp = { triggerWhatsApp(context, c2Phone) }
+                        onSMS = { triggerSms(context, c2Phone) }
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -473,7 +473,7 @@ fun ProfileScreen(
                         relationship = c3Rel,
                         onEdit = { viewModel.openSupportContactDialog(3) },
                         onCall = { triggerPhoneCall(context, c3Phone) },
-                        onWhatsApp = { triggerWhatsApp(context, c3Phone) }
+                        onSMS = { triggerSms(context, c3Phone) }
                     )
                 }
             }
@@ -851,7 +851,7 @@ private fun SupportContactItem(
     relationship: String,
     onEdit: () -> Unit,
     onCall: () -> Unit,
-    onWhatsApp: () -> Unit
+    onSMS: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -910,8 +910,8 @@ private fun SupportContactItem(
                     IconButton(onClick = onCall) {
                         Icon(Icons.Default.Phone, contentDescription = "Llamar", tint = SoltarSage, modifier = Modifier.size(20.dp))
                     }
-                    IconButton(onClick = onWhatsApp) {
-                        Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "WhatsApp", tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                    IconButton(onClick = onSMS) {
+                        Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "SMS", tint = SoltarAmber, modifier = Modifier.size(20.dp))
                     }
                 }
                 IconButton(onClick = onEdit) {
@@ -939,14 +939,15 @@ private fun triggerPhoneCall(context: Context, phone: String) {
     }
 }
 
-private fun triggerWhatsApp(context: Context, phone: String) {
+private fun triggerSms(context: Context, phone: String) {
     if (phone.isBlank()) return
     try {
-        val cleanNumber = phone.replace("+", "").replace(" ", "").replace("-", "").trim()
-        val url = "https://wa.me/$cleanNumber"
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:${phone.trim()}")
+            putExtra("sms_body", "Hola, necesito apoyo en este momento.")
+        }
         context.startActivity(intent)
     } catch (e: Exception) {
-        Toast.makeText(context, "No se pudo abrir WhatsApp", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "No se pudo abrir la app de SMS", Toast.LENGTH_SHORT).show()
     }
 }
