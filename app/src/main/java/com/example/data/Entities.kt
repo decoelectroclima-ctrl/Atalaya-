@@ -156,7 +156,9 @@ data class SoltarSettingsEntity(
     val memoryEnabled: Boolean = true,
     val userName: String = "Viajero",
     val breakupDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Default 2 weeks ago
-    val biometricLockEnabled: Boolean = false
+    val biometricLockEnabled: Boolean = false,
+    val soundEnabled: Boolean = true,
+    val onboardingCompleted: Boolean = false
 )
 
 // Legacy entity backwards compatibility

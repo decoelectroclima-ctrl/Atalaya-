@@ -1,8 +1,10 @@
 package com.example
 
+import android.app.Activity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -25,7 +27,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.audio.SoltarSoundManager
 import com.example.ui.SoltarTab
 import com.example.ui.SoltarViewModel
 import com.example.ui.screens.*
@@ -42,6 +46,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: SoltarViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -50,6 +55,71 @@ class MainActivity : ComponentActivity() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val context = LocalContext.current
                 val snackbarHostState = remember { SnackbarHostState() }
+                var showExitDialog by remember { mutableStateOf(false) }
+
+                val isAnyModalOpen = uiState.isUrgeSheetVisible ||
+                        uiState.isNoThinkingSheetVisible ||
+                        uiState.isAiCompanionSheetVisible ||
+                        uiState.isThoughtModalVisible ||
+                        uiState.isAuditModalVisible ||
+                        uiState.isIdealizationModalVisible ||
+                        uiState.isLetterModalVisible ||
+                        uiState.isIdentityGoalModalVisible ||
+                        uiState.isRelapseModalVisible ||
+                        uiState.isOnboardingVisible
+
+                // Root Exit Confirmation BackHandler
+                BackHandler(enabled = !isAnyModalOpen) {
+                    showExitDialog = true
+                }
+
+                if (showExitDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showExitDialog = false },
+                        title = {
+                            Text(
+                                text = "¿Seguro que quieres salir?",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = "Tu progreso y tiempo en Contacto Cero quedan guardados con total seguridad. Vuelve cuando lo necesites.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                lineHeight = 20.sp
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showExitDialog = false
+                                    (context as? Activity)?.finish()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = SoltarSurfaceElevated),
+                                border = BorderStroke(1.dp, SoltarBorder)
+                            ) {
+                                Text("Salir", color = TextMuted, fontSize = 13.sp)
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = {
+                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                    showExitDialog = false
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                            ) {
+                                Text("Quedarme", color = SoltarBackground, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                        },
+                        containerColor = SoltarSurface,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.testTag("exit_confirmation_dialog")
+                    )
+                }
 
                 LaunchedEffect(uiState.notificationMessage) {
                     uiState.notificationMessage?.let { msg ->
@@ -98,7 +168,10 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 IconButton(
-                                    onClick = { viewModel.toggleAiCompanionSheet(true) },
+                                    onClick = {
+                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                        viewModel.toggleAiCompanionSheet(true)
+                                    },
                                     modifier = Modifier
                                         .size(38.dp)
                                         .clip(CircleShape)
@@ -117,7 +190,10 @@ class MainActivity : ComponentActivity() {
                     },
                     floatingActionButton = {
                         ExtendedFloatingActionButton(
-                            onClick = { viewModel.openUrgeSheet() },
+                            onClick = {
+                                viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
+                                viewModel.openUrgeSheet()
+                            },
                             containerColor = UrgeAlertRed,
                             contentColor = TextPrimary,
                             shape = RoundedCornerShape(16.dp),
@@ -151,7 +227,12 @@ class MainActivity : ComponentActivity() {
                                 val selected = uiState.currentTab == item.tab
                                 NavigationBarItem(
                                     selected = selected,
-                                    onClick = { viewModel.setTab(item.tab) },
+                                    onClick = {
+                                        if (!selected) {
+                                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                            viewModel.setTab(item.tab)
+                                        }
+                                    },
                                     icon = {
                                         Icon(
                                             item.icon,
@@ -189,6 +270,14 @@ class MainActivity : ComponentActivity() {
                             SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel)
                         }
                     }
+                }
+
+                // First Launch Onboarding Flow
+                if (uiState.isOnboardingVisible) {
+                    OnboardingScreen(
+                        viewModel = viewModel,
+                        onComplete = { viewModel.setOnboardingCompleted(true) }
+                    )
                 }
 
                 // Global Contextual Sheets & Dialogs
@@ -245,6 +334,13 @@ class MainActivity : ComponentActivity() {
                     IdentityGoalDialog(
                         viewModel = viewModel,
                         onDismiss = { viewModel.toggleIdentityGoalModal(false) }
+                    )
+                }
+
+                if (uiState.isRelapseModalVisible) {
+                    RelapseDialog(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.toggleRelapseModal(false) }
                     )
                 }
             }

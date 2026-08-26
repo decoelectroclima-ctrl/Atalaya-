@@ -115,7 +115,11 @@ data class SoltarUiState(
     
     // AI Chat Inputs
     val aiInputMessage: String = "",
-    val isAiTyping: Boolean = false
+    val isAiTyping: Boolean = false,
+
+    // Onboarding & Sound UI State
+    val isOnboardingVisible: Boolean = false,
+    val isSoundEnabled: Boolean = true
 )
 
 class SoltarViewModel(application: Application) : AndroidViewModel(application) {
@@ -166,6 +170,65 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         loadTodayCheckin()
+        observeSettings()
+    }
+
+    private fun observeSettings() {
+        viewModelScope.launch {
+            repository.settings.collect { currentSettings ->
+                if (currentSettings != null) {
+                    com.example.audio.SoltarSoundManager.isSoundEnabled = currentSettings.soundEnabled
+                    _uiState.update {
+                        it.copy(
+                            isSoundEnabled = currentSettings.soundEnabled,
+                            isOnboardingVisible = !currentSettings.onboardingCompleted
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun playSound(type: com.example.audio.SoltarSoundManager.SoundType) {
+        com.example.audio.SoltarSoundManager.playSound(type)
+    }
+
+    fun toggleSoundEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(soundEnabled = enabled))
+            com.example.audio.SoltarSoundManager.isSoundEnabled = enabled
+            _uiState.update { it.copy(isSoundEnabled = enabled) }
+            if (enabled) {
+                playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            }
+        }
+    }
+
+    fun setOnboardingCompleted(completed: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(onboardingCompleted = completed))
+            _uiState.update { it.copy(isOnboardingVisible = !completed) }
+        }
+    }
+
+    fun updateNoContactStartDate(timestamp: Long) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(breakupDateTimestamp = timestamp))
+            showNotification("⏱️ Fecha de Contacto Cero actualizada correctamente.")
+            playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+        }
+    }
+
+    fun resetNoContactCounter() {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(breakupDateTimestamp = System.currentTimeMillis()))
+            showNotification("🌱 Contador reiniciado con compasión. Cada nuevo minuto es una victoria.")
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+        }
     }
 
     private fun getTodayDateKey(): String {
@@ -609,6 +672,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     learning = s.relapseLearningInput.ifBlank { "Una recaída no borra mi progreso, me da información sobre mis detonantes." }
                 )
             )
+            // Reset no-contact timestamp with compassion
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(current.copy(breakupDateTimestamp = System.currentTimeMillis()))
+
             _uiState.update {
                 it.copy(
                     relapseWhatHappenedInput = "",
@@ -617,10 +684,12 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     relapseThoughtInput = "",
                     relapseBehaviorInput = "",
                     relapseConsequenceInput = "",
-                    relapseLearningInput = ""
+                    relapseLearningInput = "",
+                    isRelapseModalVisible = false
                 )
             }
-            showNotification("🤝 Información registrada sin juicios. Volvemos al presente.")
+            playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+            showNotification("🤝 Registro completado sin juicios. Tu dignidad sigue intacta y volvemos a empezar.")
         }
     }
 
