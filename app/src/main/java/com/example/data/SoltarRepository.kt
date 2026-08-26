@@ -151,43 +151,4 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     suspend fun saveSettings(settings: SoltarSettingsEntity) {
         database.soltarSettingsDao().saveSettings(settings)
     }
-
-    // Legacy & Compatibility Methods
-    val allFacts: Flow<List<FactEntity>> = database.factDao().getAllFacts()
-    val activeVaultMessages: Flow<List<CryptoVaultEntity>> = database.cryptoVaultDao().getActiveVaultMessages()
-    val allJournalEntries: Flow<List<JournalEntryEntity>> = database.journalDao().getAllJournalEntries()
-    val userProfile: Flow<UserProfileEntity?> = database.userProfileDao().getUserProfile()
-
-    suspend fun addFact(text: String, category: String) {
-        database.factDao().insertFact(FactEntity(factText = text, category = category))
-    }
-
-    suspend fun deleteFact(id: Long) {
-        database.factDao().deleteFact(id)
-    }
-
-    suspend fun saveJournalReflection(
-        reflectionText: String,
-        aiInsightText: String = "",
-        moodTag: String = "Reflexión Personal",
-        actionTag: String = "Escritura Terapéutica"
-    ) {
-        database.journalDao().insertEntry(
-            JournalEntryEntity(
-                userQuery = reflectionText,
-                aiResponse = aiInsightText,
-                stateDetected = moodTag,
-                actionTaken = actionTag,
-                timestamp = System.currentTimeMillis()
-            )
-        )
-    }
-
-    suspend fun deleteJournalEntry(id: Long) {
-        database.journalDao().deleteEntry(id)
-    }
-
-    suspend fun saveUserProfile(profile: UserProfileEntity) {
-        database.userProfileDao().saveUserProfile(profile)
-    }
 }

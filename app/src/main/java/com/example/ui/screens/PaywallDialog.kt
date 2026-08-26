@@ -28,6 +28,9 @@ import com.example.data.SubscriptionPlan
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 
+import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
+
 @Composable
 fun PaywallDialog(
     viewModel: SoltarViewModel,
@@ -37,6 +40,10 @@ fun PaywallDialog(
     val settings by viewModel.settings.collectAsState()
     val currentTier = settings?.subscriptionTier ?: "FREE"
     val isTrial = settings?.isTrialActive == true
+    
+    val premiumProductDetails by viewModel.premiumProductDetails.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -182,13 +189,17 @@ fun PaywallDialog(
                 // Primary CTA Button
                 Button(
                     onClick = {
-                        viewModel.purchaseSubscription(uiState.selectedSubscriptionPlan)
+                        activity?.let {
+                            premiumProductDetails?.let { details ->
+                                viewModel.launchPurchase(it, details)
+                            }
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
                         .testTag("paywall_purchase_button"),
-                    enabled = !uiState.isProcessingPayment,
+                    enabled = !uiState.isProcessingPayment && premiumProductDetails != null,
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
                 ) {
@@ -202,7 +213,9 @@ fun PaywallDialog(
                         Text("Procesando...", color = SoltarBackground, fontWeight = FontWeight.Bold)
                     } else {
                         Text(
-                            text = "Suscribirme por ${uiState.selectedSubscriptionPlan.priceDisplay}",
+                            text = premiumProductDetails?.oneTimePurchaseOfferDetails?.formattedPrice
+                                ?: premiumProductDetails?.subscriptionOfferDetails?.get(0)?.pricingPhases?.pricingPhaseList?.get(0)?.formattedPrice
+                                ?: "Suscribirme",
                             color = SoltarBackground,
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium

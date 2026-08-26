@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.audio.SoltarSoundManager
 import com.example.ui.SoltarTab
 import com.example.ui.SoltarViewModel
+import com.example.ui.auth.AuthViewModel
 import com.example.ui.screens.*
 import com.example.ui.theme.*
 
@@ -44,6 +45,7 @@ sealed class SoltarNavItem(val tab: SoltarTab, val label: String, val icon: Imag
 class MainActivity : ComponentActivity() {
 
     private val viewModel: SoltarViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -270,7 +272,7 @@ class MainActivity : ComponentActivity() {
                         when (uiState.currentTab) {
                             SoltarTab.INICIO -> TodayScreen(viewModel = viewModel)
                             SoltarTab.PROCESO -> ProcessScreen(viewModel = viewModel)
-                            SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel)
+                            SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel, authViewModel = authViewModel)
                         }
                     }
                 }
@@ -349,8 +351,8 @@ class MainActivity : ComponentActivity() {
 
                 if (uiState.isAuthDialogVisible) {
                     AuthDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closeAuthDialog() }
+                        viewModel = authViewModel,
+                        onDismiss = { authViewModel.closeAuthDialog() }
                     )
                 }
 

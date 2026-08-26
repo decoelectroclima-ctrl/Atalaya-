@@ -35,11 +35,13 @@ import com.example.data.SoltarFramework
 import com.example.data.SubscriptionPlan
 import com.example.data.UserEntitlements
 import com.example.ui.SoltarViewModel
+import com.example.ui.auth.AuthViewModel
 import com.example.ui.theme.*
 
 @Composable
 fun ProfileScreen(
     viewModel: SoltarViewModel,
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -98,7 +100,7 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.deleteAccount()
+                        authViewModel.deleteAccount()
                         showDeleteAccountConfirmDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = UrgeAlertRed)
@@ -226,7 +228,7 @@ fun ProfileScreen(
                     ) {
                         if (settings?.isLoggedIn == true) {
                             OutlinedButton(
-                                onClick = { viewModel.logout() },
+                                onClick = { authViewModel.logout() },
                                 modifier = Modifier.weight(1f).height(42.dp),
                                 shape = RoundedCornerShape(10.dp),
                                 border = BorderStroke(1.dp, SoltarBorder)
@@ -248,7 +250,7 @@ fun ProfileScreen(
                             }
                         } else {
                             Button(
-                                onClick = { viewModel.openAuthDialog("LOGIN") },
+                                onClick = { authViewModel.openAuthDialog("LOGIN") },
                                 modifier = Modifier.weight(1f).height(42.dp).testTag("profile_login_button"),
                                 shape = RoundedCornerShape(10.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
@@ -257,7 +259,7 @@ fun ProfileScreen(
                             }
 
                             OutlinedButton(
-                                onClick = { viewModel.openAuthDialog("REGISTER") },
+                                onClick = { authViewModel.openAuthDialog("REGISTER") },
                                 modifier = Modifier.weight(1f).height(42.dp).testTag("profile_register_button"),
                                 shape = RoundedCornerShape(10.dp),
                                 border = BorderStroke(1.dp, SoltarAmber)

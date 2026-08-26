@@ -155,10 +155,6 @@ data class SoltarSettingsEntity(
     @PrimaryKey val id: Int = 1,
     val memoryEnabled: Boolean = true,
     val userName: String = "Viajero",
-    val userEmail: String = "",
-    val isLoggedIn: Boolean = false,
-    val authProvider: String = "guest", // "email" | "google" | "guest"
-    val accountCreatedAt: Long = System.currentTimeMillis(),
     val breakupDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Default 2 weeks ago
     val biometricLockEnabled: Boolean = false,
     val soundEnabled: Boolean = true,
@@ -179,52 +175,14 @@ data class SoltarSettingsEntity(
     val subscriptionTier: String = "FREE", // "FREE" | "PREMIUM_ONE_TIME"
     val isTrialActive: Boolean = false,
     val subscriptionExpiryTimestamp: Long = 0L,
-    // Password Hash
+    // Authentication
+    val isLoggedIn: Boolean = false,
+    val userEmail: String = "",
     val userPasswordHash: String = "",
-    val authRememberMe: Boolean = true,
+    // PIN Hash (Local Lockdown)
+    val pinHash: String = "",
     // Perspectives
     val faithPerspectiveActive: Boolean = false,
     val stoicPerspectiveActive: Boolean = false,
     val modernPsychologyPerspectiveActive: Boolean = true
-)
-
-// Legacy entity backwards compatibility
-@Entity(tableName = "facts")
-data class FactEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val factText: String,
-    val category: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-@Entity(tableName = "crypto_vault")
-data class CryptoVaultEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val messageText: String,
-    val recipient: String,
-    val createdTimestamp: Long = System.currentTimeMillis(),
-    val scheduledDestructionTimestamp: Long = System.currentTimeMillis() + (60 * 1000),
-    val isDestroyed: Boolean = false
-)
-
-@Entity(tableName = "journal_entries")
-data class JournalEntryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val userQuery: String,
-    val aiResponse: String,
-    val stateDetected: String,
-    val actionTaken: String,
-    val timestamp: Long = System.currentTimeMillis(),
-    val isSosIntervention: Boolean = false
-)
-
-@Entity(tableName = "user_profile")
-data class UserProfileEntity(
-    @PrimaryKey val id: Int = 1,
-    val demographics: String = "Adulto (18+), En reconstrucción de identidad",
-    val hasAdhd: Boolean = true,
-    val hasAsd: Boolean = false,
-    val hrvLevel: Int = 38,
-    val restingHeartRate: Int = 85,
-    val isLateLutealPhase: Boolean = false
 )

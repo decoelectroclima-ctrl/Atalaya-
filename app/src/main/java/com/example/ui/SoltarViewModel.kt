@@ -1,10 +1,13 @@
 package com.example.ui
 
+import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.billingclient.api.ProductDetails
 import com.example.ai.SoltarAiEngine
 import com.example.ai.SoltarUserContext
+import com.example.billing.BillingManager
 import com.example.data.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -128,12 +131,6 @@ data class SoltarUiState(
 
     // Authentication & Account Management
     val isAuthDialogVisible: Boolean = false,
-    val authDialogMode: String = "LOGIN", // "LOGIN" | "REGISTER" | "FORGOT"
-    val authEmailInput: String = "",
-    val authPasswordInput: String = "",
-    val authNameInput: String = "",
-    val authConfirmPasswordInput: String = "",
-    val authRememberMe: Boolean = true,
 
     // Paywall & Monetization
     val isPaywallVisible: Boolean = false,
@@ -151,6 +148,11 @@ data class SoltarUiState(
 class SoltarViewModel(application: Application) : AndroidViewModel(application) {
 
     val repository: SoltarRepository = SoltarRepository(AdrianaDatabase.getDatabase(application))
+    val billingManager = BillingManager(application)
+    val premiumProductDetails = billingManager.premiumProductDetails
+    fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
+        billingManager.launchBillingFlow(activity, productDetails)
+    }
 
     private val _uiState = MutableStateFlow(SoltarUiState())
     val uiState: StateFlow<SoltarUiState> = _uiState.asStateFlow()
@@ -220,7 +222,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     }
 
                     // Auth persistence
-                    val shouldShowAuth = !currentSettings.isLoggedIn || !currentSettings.authRememberMe
+                    val shouldShowAuth = !currentSettings.isLoggedIn
 
                     _uiState.update {
                         it.copy(
@@ -913,143 +915,6 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun fullDataReset() {
         resetAppData()
         showNotification("🧹 Todos los registros locales han sido reiniciados.")
-    }
-
-    // ==========================================
-    // AUTHENTICATION & USER MANAGEMENT
-    // ==========================================
-    fun openAuthDialog(mode: String = "LOGIN") {
-        _uiState.update {
-            it.copy(
-                isAuthDialogVisible = true,
-                authDialogMode = mode,
-                authEmailInput = settings.value?.userEmail ?: "",
-                authPasswordInput = "",
-                authConfirmPasswordInput = "",
-                authNameInput = settings.value?.userName ?: ""
-            )
-        }
-    }
-
-    fun closeAuthDialog() {
-        _uiState.update { it.copy(isAuthDialogVisible = false) }
-    }
-
-    fun setAuthEmail(email: String) = _uiState.update { it.copy(authEmailInput = email) }
-    fun setAuthPassword(pwd: String) = _uiState.update { it.copy(authPasswordInput = pwd) }
-    fun setAuthName(name: String) = _uiState.update { it.copy(authNameInput = name) }
-    fun setAuthConfirmPassword(pwd: String) = _uiState.update { it.copy(authConfirmPasswordInput = pwd) }
-    fun setAuthRememberMe(b: Boolean) = _uiState.update { it.copy(authRememberMe = b) }
-    fun setAuthDialogMode(mode: String) = _uiState.update { it.copy(authDialogMode = mode) }
-
-    private fun hashPassword(password: String): String {
-        return java.security.MessageDigest.getInstance("SHA-256")
-            .digest(password.toByteArray())
-            .joinToString("") { "%02x".format(it) }
-    }
-
-    fun loginWithEmailPassword() {
-        val email = _uiState.value.authEmailInput.trim()
-        val password = _uiState.value.authPasswordInput.trim()
-        val current = settings.value
-
-        val passwordHash = hashPassword(password)
-
-        if (current == null || current.userEmail != email || current.userPasswordHash != passwordHash) {
-            showNotification("⚠️ Email o contraseña incorrectos.")
-            return
-        }
-
-        viewModelScope.launch {
-            repository.saveSettings(current.copy(isLoggedIn = true))
-            closeAuthDialog()
-            showNotification("✨ Sesión iniciada. Bienvenido/a de nuevo a ADRIANA.")
-        }
-    }
-
-    fun registerWithEmailPassword() {
-        val name = _uiState.value.authNameInput.trim()
-        val email = _uiState.value.authEmailInput.trim()
-        val password = _uiState.value.authPasswordInput.trim()
-        val confirm = _uiState.value.authConfirmPasswordInput.trim()
-
-        if (name.isBlank() || email.isBlank() || password.length < 6 || password != confirm) {
-            showNotification("⚠️ Revisa los campos de registro.")
-            return
-        }
-
-        val passwordHash = hashPassword(password)
-
-        viewModelScope.launch {
-            resetAppData()
-            val current = settings.value ?: SoltarSettingsEntity()
-            repository.saveSettings(
-                current.copy(
-                    isLoggedIn = true,
-                    userName = name,
-                    userEmail = email,
-                    userPasswordHash = passwordHash,
-                    authProvider = "email",
-                    accountCreatedAt = System.currentTimeMillis()
-                )
-            )
-            closeAuthDialog()
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("🌱 Cuenta creada con éxito para $name. Tu espacio seguro está listo.")
-        }
-    }
-
-    fun sendPasswordResetEmail() {
-        val email = _uiState.value.authEmailInput.trim()
-        if (email.isBlank() || !email.contains("@")) {
-            showNotification("⚠️ Introduce el correo asociado a tu cuenta para restablecer la clave.")
-            return
-        }
-        closeAuthDialog()
-        playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
-        showNotification("📩 Hemos enviado las instrucciones de recuperación a $email.")
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            val current = settings.value ?: SoltarSettingsEntity()
-            repository.saveSettings(
-                current.copy(
-                    isLoggedIn = false,
-                    authProvider = "guest"
-                )
-            )
-            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-            showNotification("🔒 Has cerrado sesión. Tus datos locales se conservan protegidos.")
-        }
-    }
-
-    fun deleteAccount() {
-        viewModelScope.launch {
-            val current = settings.value ?: SoltarSettingsEntity()
-            repository.saveSettings(
-                current.copy(
-                    isLoggedIn = false,
-                    userName = "Viajero",
-                    userEmail = "",
-                    authProvider = "guest",
-                    contact1Name = "",
-                    contact1Phone = "",
-                    contact1Relationship = "",
-                    contact2Name = "",
-                    contact2Phone = "",
-                    contact2Relationship = "",
-                    contact3Name = "",
-                    contact3Phone = "",
-                    contact3Relationship = "",
-                    subscriptionTier = "FREE",
-                    isTrialActive = false
-                )
-            )
-            repository.clearAiMemory()
-            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-            showNotification("🛡️ Cuenta y datos identificativos eliminados. Respeto absoluto a tu privacidad.")
-        }
     }
 
     // ==========================================
