@@ -133,7 +133,7 @@ fun TodayScreen(
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = "Rotar sabiduría",
-                                tint = SoltarAmberLight,
+                                tint = SoltarAmber,
                                 modifier = Modifier.size(16.dp)
                             )
                         }

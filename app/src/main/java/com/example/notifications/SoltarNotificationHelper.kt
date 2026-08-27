@@ -27,13 +27,16 @@ object SoltarNotificationHelper {
     const val CHANNEL_DAILY = "soltar_daily_reflection"
     const val CHANNEL_SUPPORT = "soltar_support_channel"
     const val CHANNEL_MILESTONES = "soltar_milestones"
+    const val CHANNEL_INACTIVITY = "soltar_inactivity_empathy"
 
     const val NOTIFICATION_ID_DAILY = 1001
     const val NOTIFICATION_ID_SUPPORT = 1002
     const val NOTIFICATION_ID_MILESTONE = 1003
+    const val NOTIFICATION_ID_INACTIVITY = 1004
 
     const val ACTION_DAILY_REMINDER = "com.example.soltar.ACTION_DAILY_REMINDER"
     const val REQUEST_CODE_DAILY_ALARM = 2001
+    val MILESTONE_DAYS = setOf(1, 3, 7, 14, 21, 30, 60, 90, 180, 365)
 
     private val stoicDailyQuotes = listOf(
         "«Tienes poder sobre tu mente, no sobre los acontecimientos externos. Comprende esto y hallarás tu fuerza.» — Marco Aurelio",
@@ -104,9 +107,19 @@ object SoltarNotificationHelper {
                 description = "Celebración sobria de tus hitos en Contacto Cero."
             }
 
+            val inactivityChannel = NotificationChannel(
+                CHANNEL_INACTIVITY,
+                "Acompañamiento Empático",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Recordatorios cariñosos y sin juicio tras periodos de inactividad."
+                enableVibration(true)
+            }
+
             notificationManager.createNotificationChannel(dailyChannel)
             notificationManager.createNotificationChannel(supportChannel)
             notificationManager.createNotificationChannel(milestonesChannel)
+            notificationManager.createNotificationChannel(inactivityChannel)
         }
     }
 
@@ -180,6 +193,94 @@ object SoltarNotificationHelper {
         )
         if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent)
+        }
+    }
+
+    fun rescheduleFromSettings(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = AdrianaDatabase.getDatabase(context)
+                val settings = db.soltarSettingsDao().getSettingsOnce()
+                if (settings != null && settings.notificationsEnabled) {
+                    scheduleDailyReminder(context, settings.reminderHour, settings.reminderMinute)
+                } else if (settings != null && !settings.notificationsEnabled) {
+                    cancelDailyReminder(context)
+                } else {
+                    scheduleDailyReminder(context, 21, 0)
+                }
+            } catch (_: Exception) {
+                scheduleDailyReminder(context, 21, 0)
+            }
+        }
+    }
+
+    fun checkAndTriggerScheduledReminders(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = AdrianaDatabase.getDatabase(context)
+                val settings = db.soltarSettingsDao().getSettingsOnce()
+
+                if (settings != null && !settings.notificationsEnabled) {
+                    return@launch
+                }
+
+                val framework = try {
+                    SoltarFramework.valueOf(settings?.preferredFramework ?: "PSICOLOGIA_MODERNA")
+                } catch (_: Exception) {
+                    SoltarFramework.PSICOLOGIA_MODERNA
+                }
+                val userName = settings?.userName?.ifBlank { "Viajero" } ?: "Viajero"
+
+                // 1. Check for Contact Cero Milestones
+                val breakupTimestamp = settings?.breakupDateTimestamp ?: (System.currentTimeMillis() - (14L * 24 * 3600 * 1000))
+                val elapsedMillis = (System.currentTimeMillis() - breakupTimestamp).coerceAtLeast(0L)
+                val daysElapsed = (elapsedMillis / (1000L * 3600 * 24)).toInt()
+                val lastCelebrated = settings?.lastMilestoneCelebrated ?: 0
+
+                val isMilestone = MILESTONE_DAYS.contains(daysElapsed) && daysElapsed > lastCelebrated
+
+                if (isMilestone) {
+                    sendMilestoneNotification(context, daysElapsed, framework, userName)
+                    if (settings != null) {
+                        db.soltarSettingsDao().saveSettings(settings.copy(lastMilestoneCelebrated = daysElapsed))
+                    }
+                    scheduleDailyReminder(context, settings?.reminderHour ?: 21, settings?.reminderMinute ?: 0)
+                    return@launch
+                }
+
+                // 2. Check for 3+ Days Inactivity
+                val latestCheckin = db.checkinDao().getLatestCheckin()
+                val lastInactivityNotice = settings?.lastInactivityNoticeSentTimestamp ?: 0L
+                val inactivityAlertsEnabled = settings?.inactivityAlertsEnabled ?: true
+
+                val daysSinceLastCheckin = if (latestCheckin != null) {
+                    ((System.currentTimeMillis() - latestCheckin.timestamp) / (1000L * 3600 * 24)).toInt()
+                } else {
+                    daysElapsed.coerceAtLeast(0)
+                }
+
+                val hoursSinceLastNotice = (System.currentTimeMillis() - lastInactivityNotice) / (1000L * 3600)
+
+                if (daysSinceLastCheckin >= 3 && inactivityAlertsEnabled && hoursSinceLastNotice >= 48) {
+                    sendInactivityEmpatheticNotification(context, daysSinceLastCheckin, userName, framework)
+                    if (settings != null) {
+                        db.soltarSettingsDao().saveSettings(
+                            settings.copy(lastInactivityNoticeSentTimestamp = System.currentTimeMillis())
+                        )
+                    }
+                    scheduleDailyReminder(context, settings?.reminderHour ?: 21, settings?.reminderMinute ?: 0)
+                    return@launch
+                }
+
+                // 3. Regular Daily Check-in & Wisdom Reminder
+                sendDailyCheckinNotification(context)
+
+                // Schedule for the next day
+                scheduleDailyReminder(context, settings?.reminderHour ?: 21, settings?.reminderMinute ?: 0)
+            } catch (_: Exception) {
+                sendDailyCheckinNotification(context)
+                scheduleDailyReminder(context, 21, 0)
+            }
         }
     }
 
@@ -326,13 +427,95 @@ object SoltarNotificationHelper {
         } catch (_: SecurityException) {}
     }
 
-    fun sendMilestoneNotification(context: Context, days: Int) {
+    fun sendInactivityEmpatheticNotification(
+        context: Context,
+        daysInactive: Int,
+        userName: String = "Viajero",
+        framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA
+    ) {
+        if (!hasNotificationPermission(context)) return
+
+        createNotificationChannels(context)
+
+        val (title, bodyMessage) = when (framework) {
+            SoltarFramework.ESTOICO -> Pair(
+                "🌿 ADRIANA • Regreso al centro interior",
+                "Hola $userName. Llevas $daysInactive días sin registrar cómo estás. Recuerda que no hay juicio: la virtud es la paciencia de volver a la calma sin reproches. ¿Hacemos 1 minuto de pausa consciente hoy?"
+            )
+            SoltarFramework.CATOLICO -> Pair(
+                "🌿 ADRIANA • Un remanso de paz y escucha",
+                "Querido/a $userName, hace $daysInactive días que no pasas por aquí. 'Venid a mí los que estéis cansados...' Tu camino de sanación sigue vivo. Aquí tienes un espacio sin prisas cuando lo necesites."
+            )
+            SoltarFramework.PSICOLOGIA_MODERNA -> Pair(
+                "🌿 ADRIANA • Aquí estoy contigo, $userName",
+                "Llevas $daysInactive días sin registrar datos. Sanar no es un proceso lineal y no hay nada que reprocharte. Si hoy sientes pesadez o nostalgia, regálate un minuto de autocompasión."
+            )
+        }
+
+        val checkinIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(SoltarAppWidgetProvider.EXTRA_OPEN_ACTION, SoltarAppWidgetProvider.ACTION_CHECKIN)
+        }
+        val checkinPendingIntent = PendingIntent.getActivity(
+            context,
+            3101,
+            checkinIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val coachIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(SoltarAppWidgetProvider.EXTRA_OPEN_ACTION, SoltarAppWidgetProvider.ACTION_COACH)
+        }
+        val coachPendingIntent = PendingIntent.getActivity(
+            context,
+            3102,
+            coachIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val sosIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(SoltarAppWidgetProvider.EXTRA_OPEN_ACTION, SoltarAppWidgetProvider.ACTION_URGE_MODE)
+        }
+        val sosPendingIntent = PendingIntent.getActivity(
+            context,
+            3103,
+            sosIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_INACTIVITY)
+            .setSmallIcon(R.drawable.ic_stat_soltar)
+            .setContentTitle(title)
+            .setContentText(bodyMessage)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bodyMessage))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(checkinPendingIntent)
+            .addAction(0, "✨ Check-in Rápido", checkinPendingIntent)
+            .addAction(0, "💬 Hablar con ADRIANA", coachPendingIntent)
+            .addAction(0, "🧘 Respirar", sosPendingIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_INACTIVITY, notification)
+        } catch (_: SecurityException) {}
+    }
+
+    fun sendMilestoneNotification(
+        context: Context,
+        days: Int,
+        framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
+        userName: String = "Viajero"
+    ) {
         if (!hasNotificationPermission(context)) return
 
         createNotificationChannels(context)
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(SoltarAppWidgetProvider.EXTRA_OPEN_ACTION, SoltarAppWidgetProvider.ACTION_CHECKIN)
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
@@ -345,9 +528,14 @@ object SoltarNotificationHelper {
             .setSmallIcon(R.drawable.ic_stat_soltar)
             .setContentTitle("🎉 Hito Alcanzado: $days Días de Contacto Cero")
             .setContentText("Has sostenido tu decisión con valentía. Tu sistema nervioso se está reconfigurando hacia la paz.")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText("Has sostenido $days días de Contacto Cero con valentía.\n\n$userName, cada segundo sostenido es una victoria de tu soberanía personal.")
+            )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .addAction(0, "✨ Ver mi Proceso", pendingIntent)
             .build()
 
         try {

@@ -10,15 +10,15 @@ class SoltarAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             SoltarNotificationHelper.ACTION_DAILY_REMINDER -> {
-                SoltarNotificationHelper.sendDailyCheckinNotification(context)
-                // Schedule for the next day at 21:00
-                SoltarNotificationHelper.scheduleDailyReminder(context, 21, 0)
-                // Update widget
+                // Check milestones, inactivity or standard daily wisdom check-in
+                SoltarNotificationHelper.checkAndTriggerScheduledReminders(context)
+                // Refresh home screen widget
                 SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
             }
-            Intent.ACTION_BOOT_COMPLETED -> {
-                // Re-schedule alarms after device reboot
-                SoltarNotificationHelper.scheduleDailyReminder(context, 21, 0)
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED -> {
+                // Re-schedule alarms after device reboot according to user's saved time
+                SoltarNotificationHelper.rescheduleFromSettings(context)
                 // Refresh home screen widget
                 SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
             }

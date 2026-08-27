@@ -9,6 +9,8 @@
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_soltar_layout"
+    android:configure="com.example.widget.SoltarAppWidgetConfigureActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional"
     android:description="@string/app_name"
     android:previewImage="@mipmap/ic_launcher"
     android:widgetCategory="home_screen">

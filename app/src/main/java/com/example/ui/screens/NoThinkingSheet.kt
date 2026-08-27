@@ -158,7 +158,7 @@ fun NoThinkingDialog(
                         Text(
                             text = breathingPhase,
                             style = MaterialTheme.typography.labelLarge,
-                            color = SoltarSageLight,
+                            color = SoltarSage,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )

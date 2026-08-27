@@ -588,7 +588,8 @@ fun ProcessScreen(
                                         Text(
                                             text = "Sellada 🕯️",
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                            color = SoltarSageLight,
+                                            color = SoltarSage,
+                                            fontWeight = FontWeight.SemiBold,
                                             fontSize = 11.sp
                                         )
                                     }

@@ -53,6 +53,48 @@ object ThinkerRefugeData {
             author = "Sigmund Freud (Duelo y Melancolía)",
             category = "Psicoanálisis",
             textBody = "«En el duelo, el mundo se ha vuelto pobre y vacío; en la melancolía, es el propio yo el que se siente empobrecido hasta recuperar su soberanía.»"
+        ),
+        ReadingPill(
+            id = "p9",
+            author = "Leo Quins (Desapego y Soberanía)",
+            category = "Dinámicas de Desapego",
+            textBody = "«Tu mayor superpoder es tu capacidad de retirarte en silencio cuando no eres valorado. La necesidad de aprobación ahuyenta; la autonomía y la retirada digna imponen respeto.»"
+        ),
+        ReadingPill(
+            id = "p10",
+            author = "El Temach / T Mach (Modo Guerra)",
+            category = "Soberanía y Disciplina",
+            textBody = "«Bájale del pedestal y súbete tú a tu propio trono. Jamás ruegues por amor ni mendigues atención; entra en Modo Guerra y canaliza el dolor en disciplina, hierro y proyectos.»"
+        ),
+        ReadingPill(
+            id = "p11",
+            author = "El Rincón del Trillo (David Trillo)",
+            category = "Psicología de la Ruptura",
+            textBody = "«Las migajas de atención y los tanteos ambiguos no son amor; son la confirmación de que te quieren disponible. El silencio sereno y la cero reacción desarman toda manipulación.»"
+        ),
+        ReadingPill(
+            id = "p12",
+            author = "Robert Barrett (Dinámicas Relacionales)",
+            category = "Atracción y No-Reactividad",
+            textBody = "«La disponibilidad infinita abarata tu presencia. Cuando frenas la persecución en seco, devuelves a la otra persona todo el peso y las consecuencias de su propia decisión.»"
+        ),
+        ReadingPill(
+            id = "p13",
+            author = "Dr. Leo Buscaglia (El Arte de Amar)",
+            category = "Amor Auténtico y Plenitud",
+            textBody = "«Amar significa permitir que la otra persona sea exactamente quien decida ser, sin nuestras demandas ni cadenas. El amor no se mendiga; es un regalo libre que nace de la propia plenitud.»"
+        ),
+        ReadingPill(
+            id = "p14",
+            author = "Thich Nhat Hanh (Mindfulness y Compasión)",
+            category = "Presencia y Soltar",
+            textBody = "«Tienes que amar de tal manera que la persona que amas se sienta libre. Soltar nos da libertad, y la libertad es la única condición para la felicidad. Abraza tu dolor con ternura consciente.»"
+        ),
+        ReadingPill(
+            id = "p15",
+            author = "El Temach / T Mach (Disciplina y Auto-posesión)",
+            category = "Forja y Modo Guerra",
+            textBody = "«El valor personal no se mendiga ni se debate; se demuestra con acciones, carácter y metas conquistadas. Deja de mirar atrás y conviértete en tu propia prioridad.»"
         )
     )
 
@@ -148,6 +190,85 @@ Aun en la más profunda noche de soledad, la luz de la conciencia y la integrida
 - Mi dignidad no depende de la aprobación de quien decidió soltar mi mano.
             """.trimIndent(),
             isCoreOnly = true
+        ),
+        ReadingChapter(
+            id = "c5",
+            title = "Modo Guerra: Dejar de Rogar y Forjar la Propia Corona",
+            author = "El Temach & Leo Quins",
+            estimatedReadTimeMin = 4,
+            category = "Soberanía y Valor Propio",
+            textBody = """
+## MODO GUERRA: DEJAR DE ROGAR Y RECUPERAR EL TRONO
+
+### I. El Fin de la Mendicidad Emocional
+La necesidad desesperada de validación es el mayor veneno de la dignidad humana. Quien persigue, ruega explicaciones o suplica migajas de cariño está gritándole al mundo que no se considera valioso por sí mismo.
+
+### II. La Ley de la Retirada y la Forja
+El dolor de una ruptura tiene dos destinos posibles: o te hunde en el lamento pasivo o se convierte en el combustible más potente de tu transformación. El Modo Guerra no es odio hacia nadie; es un pacto de lealtad indestructible contigo mismo.
+- **Bájale del pedestal:** Nadie que dude de estar contigo merece que paralices tu vida por esa persona.
+- **Entrena el cuerpo y la mente:** Convierte la angustia en repeticiones de gimnasio, lectura y construcción de metas.
+
+***«Un hombre o una mujer con honor jamás suplica por un lugar en la mesa de quien no sabe valorar su presencia.» — El Temach / Leo Quins***
+
+### III. Mandamientos de Soberanía
+1. Contacto cero estricto: no se vigilan redes, no se mandan indirectas y no se responde a migajas.
+2. Cada vez que sientas el impulso de escribir, haz 20 flexiones o lee 10 páginas de un libro.
+            """.trimIndent(),
+            isCoreOnly = false
+        ),
+        ReadingChapter(
+            id = "c6",
+            title = "Desarmar la Persecución y las Migajas de Atención",
+            author = "David Trillo & Robert Barrett",
+            estimatedReadTimeMin = 4,
+            category = "Dinámicas del Desapego",
+            textBody = """
+## DESARMAR LA PERSECUCIÓN Y LAS MIGAJAS DE ATENCIÓN
+
+### I. La Dinámica Perseguidor-Perseguido
+Cuando una persona se aleja y la otra insiste, se genera una polaridad tóxica: la insistencia del perseguidor solo refuerza la sensación de asfixia o superioridad en quien se alejó. Al frenar la persecución en seco, la dinámica de poder colapsa y devuelves a la otra persona las consecuencias reales de su partida.
+
+### II. La Trampa del Breadcrumbing (Migajas)
+Los tanteos esporádicos ("¿cómo estás?", un 'like' tras semanas de silencio, historias vistas) son intentos de comprobar si sigues disponible como opción de reserva. 
+- La respuesta no es el enojo ni el reclamo emocional (que demuestran que sigues enganchado).
+- La respuesta es la neutralidad absoluta o el silencio sereno.
+
+***«La disponibilidad infinita abarata tu presencia. Quien te pierde debe sentir el peso real de tu ausencia.» — Robert Barrett & David Trillo***
+
+### III. Claves Prácticas
+1. No interpretes señales ambiguas como arrepentimiento sincero.
+2. Mantén tu energía y tu tiempo enfocados exclusivamente en tu círculo de control.
+            """.trimIndent(),
+            isCoreOnly = false
+        ),
+        ReadingChapter(
+            id = "c7",
+            title = "El Arte de Amar en Libertad y la Compasión Consciente",
+            author = "Leo Buscaglia & Thich Nhat Hanh",
+            estimatedReadTimeMin = 5,
+            category = "Amor Consciente y Mindfulness",
+            textBody = """
+## EL ARTE DE AMAR EN LIBERTAD Y LA COMPASIÓN CONSCIENTE
+
+### I. El Amor Auténtico Nunca Encadena (Leo Buscaglia)
+El amor maduro no es un contrato de posesión ni una búsqueda desesperada de completud externa. Quien ama verdaderamente celebra la libertad del otro, entendiendo que obligar a alguien a quedarse destruye la esencia misma del amor.
+- **La fuente interior:** El amor incondicional nace de la autoaceptación. Cuando te sabes completo/a, no mendigas migajas ni temes la partida de nadie.
+- **Soltar es el acto supremo de amor:** Dejar ir a quien decide tomar otro rumbo no es una derrota, es el reconocimiento sagrado de su libre albedrío y de tu propia dignidad.
+
+***«Amar significa permitir que la persona amada sea quien decida ser, sin nuestras demandas ni cadenas.» — Dr. Leo Buscaglia***
+
+### II. Abrazar el Sufrimiento con Mindfulness (Thich Nhat Hanh)
+Cuando sobreviene el desamor o la pérdida, la reacción automática suele ser luchar contra el dolor o ahogarlo en rumiación. El maestro Thich Nhat Hanh nos enseña un camino radicalmente distinto:
+- **Acoger el dolor:** Sostén tu angustia como una madre mece a su bebé en llanto. No juzgues tu tristeza ni te castigues por sentirla.
+- **La libertad como condición de felicidad:** Soltar el apego posesivo es la única vía para sanar el corazón. Al inhalar, calmas tu mente; al exhalar, sonríes y devuelves la libertad al mundo.
+
+***«Tienes que amar de tal manera que la persona que amas se sienta libre. Soltar nos da libertad, y la libertad es la única condición para la felicidad.» — Thich Nhat Hanh***
+
+### III. Práctica Diaria de Integración
+1. Respira conscientemente 3 minutos cada vez que sientas nostalgia o vacío.
+2. Recuerda que tu capacidad de amar sigue intacta y comienza hoy por ti.
+            """.trimIndent(),
+            isCoreOnly = false
         )
     )
 }

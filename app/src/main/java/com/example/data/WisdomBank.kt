@@ -36,6 +36,43 @@ enum class SoltarFramework(
     }
 }
 
+enum class UserGender(
+    val key: String,
+    val title: String,
+    val emoji: String,
+    val subtitle: String,
+    val clinicalGuidance: String,
+    val description: String = subtitle
+) {
+    MAN(
+        key = "MAN",
+        title = "Hombre",
+        emoji = "👨",
+        subtitle = "Enfoque adaptado a la psicología, dinámicas y desapego masculino.",
+        clinicalGuidance = "El usuario es hombre. Utiliza concordancia gramatical masculina en español (ej. 'fuerte, centrado, enfocado, preparado, soberano, dueño de tus decisiones'). Aborda los patrones de rumiación, orgullo herido, impulsos de rescate/proveedor y canalización de energía (Modo Guerra, disciplina física y mental, respeto inquebrantable a su propio valor, cero mendicidad)."
+    ),
+    WOMAN(
+        key = "WOMAN",
+        title = "Mujer",
+        emoji = "👩",
+        subtitle = "Enfoque adaptado a la psicología, dinámicas y desapego femenino.",
+        clinicalGuidance = "La usuaria es mujer. Utiliza concordancia gramatical femenina en español (ej. 'fuerte, centrada, enfocada, preparada, soberana, dueña de tus decisiones'). Aborda los patrones de hiperresponsabilidad afectiva, culpa internalizada, idealización del potencial del otro, desmantelamiento de la sumisión y recuperación de su trono y autonomía emocional."
+    ),
+    NOT_SPECIFIED(
+        key = "NOT_SPECIFIED",
+        title = "Sin especificar",
+        emoji = "⚪",
+        subtitle = "Acompañamiento neutral y universal.",
+        clinicalGuidance = "El usuario no ha especificado su género. Emplea un lenguaje respetuoso, equilibrado y adaptable."
+    );
+
+    companion object {
+        fun fromKey(key: String?): UserGender {
+            return entries.firstOrNull { it.key.equals(key, ignoreCase = true) } ?: NOT_SPECIFIED
+        }
+    }
+}
+
 data class WisdomCard(
     val id: String,
     val framework: SoltarFramework,
@@ -182,6 +219,62 @@ object WisdomBank {
             quote = "«La soledad temida se transforma en serenidad cuando descubres que puedes ser tu propio lugar seguro.»",
             author = "Clínica de la Dependencia Emocional",
             reflection = "Aprender a estar en paz en tu propia compañía es la mayor garantía de que no volverás a elegir por desesperación."
+        ),
+        WisdomCard(
+            id = "psi_bus_card_1",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "AMOR SIN POSESIVIDAD",
+            quote = "«Amar significa permitir que la persona amada sea quien decida ser, sin nuestras demandas ni cadenas. El amor empieza por la propia plenitud y se entrega como un don libre.»",
+            author = "Dr. Leo Buscaglia (El Arte de Amar)",
+            reflection = "No mendigues afecto ni intentes retener a quien quiere marcharse. El amor que ata no es amor; soltar en libertad es el mayor homenaje al amor y a tu propia vida."
+        ),
+        WisdomCard(
+            id = "psi_tnh_card_1",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "ABRAZAR EL SUFRIMIENTO",
+            quote = "«Tienes que amar de tal manera que la persona que amas se sienta libre. Soltar nos da libertad, y la libertad es la única condición para la felicidad. Abraza tu dolor como una madre sostiene a su hijo que llora.»",
+            author = "Thich Nhat Hanh (Mindfulness y Compasión)",
+            reflection = "Inhala calma y acoge la tristeza en tu pecho sin juicio. Cuando dejas de pelear contra lo que sientes, el dolor se transforma en profunda sabiduría."
+        ),
+        WisdomCard(
+            id = "psi_leo_card_1",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "EL PODER DE LA RETIRADA",
+            quote = "«Tu mayor fuerza reside en saber retirarte en silencio cuando no te valoran. La necesidad ahuyenta; la soberanía personal inspira respeto innegociable.»",
+            author = "Leo Quins (Desapego y Soberanía)",
+            reflection = "No compitas por la atención de quien duda de ti. Retira tu presencia y devuélvete el valor que estabas regalando."
+        ),
+        WisdomCard(
+            id = "psi_tem_card_1",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "MODO GUERRA Y CERO RUEGOS",
+            quote = "«Una persona con dignidad jamás ruega por amor. Bájale del pedestal, súbete a tu propio trono y transforma ese dolor en disciplina, hierro y metas.»",
+            author = "El Temach / T Mach (Modo Guerra)",
+            reflection = "El contacto cero es sagrado: no se vigila, no se pide perdón por existir y no se suplica. Hoy tu único proyecto eres tú."
+        ),
+        WisdomCard(
+            id = "psi_tem_card_2",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "LA FORJA DEL VALOR Y LA DISCIPLINA",
+            quote = "«El valor no se pide prestado, se forja cada día en el gimnasio, en tus libros y en tus proyectos. No compitas con palabras; sé un ejemplo viviente de honor y progreso.»",
+            author = "El Temach / T Mach (Disciplina y Enfoque)",
+            reflection = "Canaliza toda la energía de la frustración en construir la versión más fuerte y admirable de ti mismo. Tu futuro no espera."
+        ),
+        WisdomCard(
+            id = "psi_tri_card_1",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "CERO REACCIÓN A LAS MIGAJAS",
+            quote = "«Las migajas de atención y los mensajes vacíos no son interés real: son la prueba de que te quieren disponible en su banco de suplentes. El silencio sereno es tu victoria.»",
+            author = "El Rincón del Trillo (David Trillo)",
+            reflection = "No reacciones ante tanteos tibios. Quien decidió marcharse debe asumir el peso de la ausencia total."
+        ),
+        WisdomCard(
+            id = "psi_bar_card_1",
+            framework = SoltarFramework.PSICOLOGIA_MODERNA,
+            title = "EL VALOR NO NEGOCIABLE",
+            quote = "«La disponibilidad infinita abarata tu presencia. Cuando dejas de perseguir, devuelves a la otra persona la responsabilidad de sus actos y recuperas tu centro.»",
+            author = "Robert Barrett (Dinámicas Relacionales)",
+            reflection = "Frenar la persecución desarma la dinámica de poder. Tu valor nunca se demuestra insistiendo, sino sosteniéndote en tu propia calma."
         ),
 
         // ==========================================

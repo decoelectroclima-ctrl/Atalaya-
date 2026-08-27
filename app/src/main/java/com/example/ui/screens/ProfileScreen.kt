@@ -118,6 +118,192 @@ fun ProfileScreen(
         )
     }
 
+    // Modal para Configurar Hora de Recordatorio Diario
+    if (uiState.isTimePickerDialogVisible) {
+        var tempHour by remember(uiState.reminderHourInput) { mutableIntStateOf(uiState.reminderHourInput) }
+        var tempMinute by remember(uiState.reminderMinuteInput) { mutableIntStateOf(uiState.reminderMinuteInput) }
+
+        AlertDialog(
+            onDismissRequest = { viewModel.toggleReminderTimeDialog(false) },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.Alarm, contentDescription = null, tint = SoltarAmber)
+                    Text("Hora del Recordatorio", color = TextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Selecciona la hora a la que prefieres recibir tu cita inspiradora y llamado al check-in diario:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Digital Clock Display Box
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = SoltarSurface,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, SoltarBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = String.format(java.util.Locale.getDefault(), "%02d:%02d", tempHour, tempMinute),
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = SoltarAmber,
+                                letterSpacing = 2.sp
+                            )
+                            Text(
+                                text = if (tempHour in 5..11) "🌅 Mañana"
+                                else if (tempHour in 12..18) "🌤️ Tarde"
+                                else if (tempHour in 19..22) "🌙 Noche (Recomendado)"
+                                else "🌌 Madrugada",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Steppers for Hour & Minute
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Hour Stepper
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            color = SoltarSurfaceElevated,
+                            border = BorderStroke(1.dp, SoltarBorderSubtle)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Hora", fontSize = 11.sp, color = TextSecondary)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    IconButton(
+                                        onClick = { tempHour = (tempHour - 1 + 24) % 24 },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    }
+                                    Text(
+                                        text = String.format(java.util.Locale.getDefault(), "%02d", tempHour),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = TextPrimary
+                                    )
+                                    IconButton(
+                                        onClick = { tempHour = (tempHour + 1) % 24 },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Minute Stepper
+                        Surface(
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            color = SoltarSurfaceElevated,
+                            border = BorderStroke(1.dp, SoltarBorderSubtle)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Minuto", fontSize = 11.sp, color = TextSecondary)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    IconButton(
+                                        onClick = { tempMinute = (tempMinute - 5 + 60) % 60 },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    }
+                                    Text(
+                                        text = String.format(java.util.Locale.getDefault(), "%02d", tempMinute),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = TextPrimary
+                                    )
+                                    IconButton(
+                                        onClick = { tempMinute = (tempMinute + 5) % 60 },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text("Opciones rápidas:", fontSize = 11.sp, color = TextSecondary)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Quick Chips
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        SuggestionChip(
+                            onClick = { tempHour = 8; tempMinute = 30 },
+                            label = { Text("08:30", fontSize = 11.sp) }
+                        )
+                        SuggestionChip(
+                            onClick = { tempHour = 14; tempMinute = 0 },
+                            label = { Text("14:00", fontSize = 11.sp) }
+                        )
+                        SuggestionChip(
+                            onClick = { tempHour = 21; tempMinute = 0 },
+                            label = { Text("21:00 ⭐", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                        )
+                        SuggestionChip(
+                            onClick = { tempHour = 22; tempMinute = 30 },
+                            label = { Text("22:30", fontSize = 11.sp) }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.saveReminderSchedule(tempHour, tempMinute)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                ) {
+                    Text("Guardar y Programar", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { viewModel.toggleReminderTimeDialog(false) }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -992,14 +1178,15 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // 1. Notificación Diaria (Check-in)
+                    // 1. Notificaciones y Alarmas Programadas
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         color = SoltarSurfaceElevated,
                         border = BorderStroke(1.dp, SoltarBorderSubtle)
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            // Encabezado Recordatorio Diario
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1007,32 +1194,214 @@ fun ProfileScreen(
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Schedule,
+                                        imageVector = Icons.Default.Alarm,
                                         contentDescription = null,
                                         tint = SoltarAmber,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                     Column {
-                                        Text("Recordatorio Diario (21:00)", style = MaterialTheme.typography.bodyMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                                        Text("Check-in nocturno y máxima estoica", style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 11.sp)
+                                        val timeStr = String.format(
+                                            java.util.Locale.getDefault(),
+                                            "%02d:%02d hs",
+                                            uiState.reminderHourInput,
+                                            uiState.reminderMinuteInput
+                                        )
+                                        Text(
+                                            "Recordatorio Diario ($timeStr)",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            "Cita inspiradora y llamada al check-in",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary,
+                                            fontSize = 11.sp
+                                        )
                                     }
                                 }
 
+                                Switch(
+                                    checked = uiState.notificationsEnabled,
+                                    onCheckedChange = { viewModel.toggleNotificationsEnabled(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = SoltarAmber,
+                                        checkedTrackColor = SoltarAmber.copy(alpha = 0.3f),
+                                        uncheckedThumbColor = TextMuted,
+                                        uncheckedTrackColor = SoltarSurface
+                                    )
+                                )
+                            }
+
+                            if (uiState.notificationsEnabled) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Surface(
+                                        color = SoltarAmber.copy(alpha = 0.12f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.3f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(Icons.Default.AccessTime, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+                                            Text(
+                                                text = String.format(java.util.Locale.getDefault(), "%02d:%02d hs", uiState.reminderHourInput, uiState.reminderMinuteInput),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = SoltarAmber
+                                            )
+                                        }
+                                    }
+
+                                    OutlinedButton(
+                                        onClick = { viewModel.toggleReminderTimeDialog(true) },
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.6f)),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(14.dp), tint = SoltarAmber)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Cambiar Hora", color = SoltarAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 12.dp),
+                                color = SoltarBorderSubtle
+                            )
+
+                            // 2. Acompañamiento Empático (3 días sin registro)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.VolunteerActivism,
+                                        contentDescription = null,
+                                        tint = SoltarSage,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            "Acompañamiento tras 3 días",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            "Mensaje empático sin juicio si no registras datos",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                }
+
+                                Switch(
+                                    checked = uiState.inactivityAlertsEnabled,
+                                    onCheckedChange = { viewModel.toggleInactivityAlertsEnabled(it) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = SoltarSage,
+                                        checkedTrackColor = SoltarSage.copy(alpha = 0.3f),
+                                        uncheckedThumbColor = TextMuted,
+                                        uncheckedTrackColor = SoltarSurface
+                                    )
+                                )
+                            }
+
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 12.dp),
+                                color = SoltarBorderSubtle
+                            )
+
+                            // 3. Celebración de Hitos de Contacto Cero
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.EmojiEvents,
+                                    contentDescription = null,
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Column {
+                                    Text(
+                                        "Hitos de Soberanía y Contacto Cero",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        "Notificaciones automáticas en los días 1, 3, 7, 14, 21, 30, 60, 90, 180 y 365",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Prueba de canales de notificación en vivo:",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Button(
-                                    onClick = {
-                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                        com.example.notifications.SoltarNotificationHelper.sendDailyCheckinNotification(context)
-                                        viewModel.showNotification("🔔 Notificación de prueba enviada")
-                                    },
+                                    onClick = { viewModel.triggerTestDailyReminder() },
+                                    modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(8.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = SoltarSurface),
-                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f)),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f)),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                                 ) {
-                                    Text("Probar", color = SoltarAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text("🔔 Diario", color = SoltarAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                Button(
+                                    onClick = { viewModel.triggerTestInactivityReminder() },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarSurface),
+                                    border = BorderStroke(1.dp, SoltarSage.copy(alpha = 0.4f)),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                ) {
+                                    Text("🌿 Empatía (3d)", color = SoltarSage, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                Button(
+                                    onClick = { viewModel.triggerTestMilestoneReminder(7) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarSurface),
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f)),
+                                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                ) {
+                                    Text("🎉 Hito (7d)", color = SoltarAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -1073,20 +1442,40 @@ fun ProfileScreen(
                                 lineHeight = 16.sp
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedButton(
-                                onClick = {
-                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                    com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
-                                    viewModel.showNotification("🔄 Widget sincronizado con éxito")
-                                },
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp),
-                                border = BorderStroke(1.dp, SoltarBorder)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Sincronizar Widget ahora", color = TextSecondary, fontSize = 12.sp)
+                                Button(
+                                    onClick = {
+                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                        val intent = Intent(context, com.example.widget.SoltarAppWidgetConfigureActivity::class.java)
+                                        context.startActivity(intent)
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                                ) {
+                                    Icon(Icons.Default.Tune, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Black)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Personalizar", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                        com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
+                                        viewModel.showNotification("🔄 Widget sincronizado con éxito")
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, SoltarBorder)
+                                ) {
+                                    Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextSecondary)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Sincronizar", color = TextSecondary, fontSize = 12.sp)
+                                }
                             }
                         }
                     }

@@ -33,6 +33,7 @@ import com.example.ui.theme.*
 
 sealed class OnboardingPage {
     data object IntroHero : OnboardingPage()
+    data object FrameworkSelector : OnboardingPage()
 
     data class Info(
         val badge: String,
@@ -42,8 +43,6 @@ sealed class OnboardingPage {
         val icon: ImageVector,
         val accentColor: androidx.compose.ui.graphics.Color
     ) : OnboardingPage()
-
-    data object FrameworkSelector : OnboardingPage()
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -222,7 +221,7 @@ fun OnboardingScreen(
                                     Text(
                                         text = page.quote,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = SoltarAmberLight,
+                                        color = SoltarAmber,
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.padding(16.dp),
                                         lineHeight = 20.sp

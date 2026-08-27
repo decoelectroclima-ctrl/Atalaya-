@@ -11,6 +11,14 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         return database.checkinDao().getCheckinByDate(dateKey)
     }
 
+    suspend fun getLatestCheckin(): CheckinEntity? {
+        return database.checkinDao().getLatestCheckin()
+    }
+
+    suspend fun getCheckinCount(): Int {
+        return database.checkinDao().getCheckinCount()
+    }
+
     suspend fun saveCheckin(checkin: CheckinEntity): Long {
         return database.checkinDao().insertOrUpdateCheckin(checkin)
     }

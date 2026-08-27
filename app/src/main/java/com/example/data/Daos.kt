@@ -15,6 +15,12 @@ interface CheckinDao {
     @Query("SELECT * FROM daily_checkins WHERE dateKey = :dateKey LIMIT 1")
     fun getCheckinByDate(dateKey: String): Flow<CheckinEntity?>
 
+    @Query("SELECT * FROM daily_checkins ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLatestCheckin(): CheckinEntity?
+
+    @Query("SELECT COUNT(*) FROM daily_checkins")
+    suspend fun getCheckinCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateCheckin(checkin: CheckinEntity): Long
 

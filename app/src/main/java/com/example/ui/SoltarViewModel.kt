@@ -151,7 +151,14 @@ data class SoltarUiState(
     val editingContactIndex: Int = 1,
     val contactNameInput: String = "",
     val contactPhoneInput: String = "",
-    val contactRelationshipInput: String = ""
+    val contactRelationshipInput: String = "",
+
+    // Scheduled Reminders & Notification Settings
+    val isTimePickerDialogVisible: Boolean = false,
+    val reminderHourInput: Int = 21,
+    val reminderMinuteInput: Int = 0,
+    val notificationsEnabled: Boolean = true,
+    val inactivityAlertsEnabled: Boolean = true
 )
 
 class SoltarViewModel(application: Application) : AndroidViewModel(application) {
@@ -246,7 +253,11 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                             isOnboardingVisible = !currentSettings.onboardingCompleted,
                             preferredFramework = framework,
                             currentWisdomCard = newCard,
-                            isAuthDialogVisible = shouldShowAuth
+                            isAuthDialogVisible = shouldShowAuth,
+                            reminderHourInput = currentSettings.reminderHour,
+                            reminderMinuteInput = currentSettings.reminderMinute,
+                            notificationsEnabled = currentSettings.notificationsEnabled,
+                            inactivityAlertsEnabled = currentSettings.inactivityAlertsEnabled
                         )
                     }
                 }
@@ -1286,5 +1297,118 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 showNotification("ℹ️ No se encontraron compras previas activas en esta cuenta.")
             }
         }
+    }
+
+    // ==========================================
+    // NOTIFICATIONS & SCHEDULED REMINDERS
+    // ==========================================
+    fun toggleReminderTimeDialog(show: Boolean) {
+        _uiState.update { it.copy(isTimePickerDialogVisible = show) }
+        playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+    }
+
+    fun setReminderHourInput(hour: Int) {
+        _uiState.update { it.copy(reminderHourInput = hour.coerceIn(0, 23)) }
+    }
+
+    fun setReminderMinuteInput(min: Int) {
+        _uiState.update { it.copy(reminderMinuteInput = min.coerceIn(0, 59)) }
+    }
+
+    fun saveReminderSchedule(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            val clampedHour = hour.coerceIn(0, 23)
+            val clampedMin = minute.coerceIn(0, 59)
+            val current = settings.value ?: SoltarSettingsEntity()
+            val updated = current.copy(
+                reminderHour = clampedHour,
+                reminderMinute = clampedMin,
+                notificationsEnabled = true
+            )
+            repository.saveSettings(updated)
+            com.example.notifications.SoltarNotificationHelper.scheduleDailyReminder(
+                getApplication(),
+                clampedHour,
+                clampedMin
+            )
+            _uiState.update {
+                it.copy(
+                    isTimePickerDialogVisible = false,
+                    reminderHourInput = clampedHour,
+                    reminderMinuteInput = clampedMin,
+                    notificationsEnabled = true
+                )
+            }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+            val formattedTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", clampedHour, clampedMin)
+            showNotification("⏰ Recordatorio diario programado para las $formattedTime hs.")
+        }
+    }
+
+    fun toggleNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val updated = current.copy(notificationsEnabled = enabled)
+            repository.saveSettings(updated)
+            if (enabled) {
+                com.example.notifications.SoltarNotificationHelper.scheduleDailyReminder(
+                    getApplication(),
+                    current.reminderHour,
+                    current.reminderMinute
+                )
+                val formattedTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", current.reminderHour, current.reminderMinute)
+                showNotification("🔔 Recordatorios diarios activados ($formattedTime hs)")
+            } else {
+                com.example.notifications.SoltarNotificationHelper.cancelDailyReminder(getApplication())
+                showNotification("🔕 Recordatorios diarios desactivados")
+            }
+            _uiState.update { it.copy(notificationsEnabled = enabled) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        }
+    }
+
+    fun toggleInactivityAlertsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val updated = current.copy(inactivityAlertsEnabled = enabled)
+            repository.saveSettings(updated)
+            _uiState.update { it.copy(inactivityAlertsEnabled = enabled) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification(if (enabled) "🌿 Acompañamiento empático tras 3 días activado" else "Acompañamiento por inactividad desactivado")
+        }
+    }
+
+    fun triggerTestDailyReminder() {
+        com.example.notifications.SoltarNotificationHelper.sendDailyCheckinNotification(getApplication())
+        playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        showNotification("🔔 Notificación de recordatorio diario enviada")
+    }
+
+    fun triggerTestInactivityReminder() {
+        val s = settings.value
+        val userName = s?.userName?.ifBlank { "Viajero" } ?: "Viajero"
+        val framework = s?.let { SoltarFramework.fromKey(it.preferredFramework) } ?: SoltarFramework.PSICOLOGIA_MODERNA
+        com.example.notifications.SoltarNotificationHelper.sendInactivityEmpatheticNotification(
+            getApplication(),
+            daysInactive = 3,
+            userName = userName,
+            framework = framework
+        )
+        playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        showNotification("🌿 Notificación empática (3 días sin registro) enviada")
+    }
+
+    fun triggerTestMilestoneReminder(days: Int = 7) {
+        val s = settings.value
+        val userName = s?.userName?.ifBlank { "Viajero" } ?: "Viajero"
+        val framework = s?.let { SoltarFramework.fromKey(it.preferredFramework) } ?: SoltarFramework.PSICOLOGIA_MODERNA
+        com.example.notifications.SoltarNotificationHelper.sendMilestoneNotification(
+            getApplication(),
+            days = days,
+            framework = framework,
+            userName = userName
+        )
+        playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+        showNotification("🎉 Notificación de celebración de hito ($days días) enviada")
     }
 }

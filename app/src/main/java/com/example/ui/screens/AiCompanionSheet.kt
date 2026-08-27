@@ -409,24 +409,26 @@ fun AiCompanionDialog(
                                     Surface(
                                         shape = RoundedCornerShape(8.dp),
                                         color = SoltarSage.copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, SoltarSage.copy(alpha = 0.3f))
+                                        border = BorderStroke(1.dp, SoltarSage.copy(alpha = 0.35f))
                                     ) {
                                         Row(
-                                            modifier = Modifier.padding(8.dp),
+                                            modifier = Modifier.padding(10.dp),
                                             verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
                                             Icon(
                                                 Icons.Default.CheckCircleOutline,
                                                 contentDescription = null,
                                                 tint = SoltarSage,
-                                                modifier = Modifier.size(14.dp)
+                                                modifier = Modifier.size(16.dp)
                                             )
                                             Text(
                                                 text = "Paso sugerido: $action",
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = SoltarSageLight,
-                                                fontSize = 11.sp
+                                                color = TextPrimary,
+                                                fontWeight = FontWeight.Medium,
+                                                fontSize = 12.sp,
+                                                lineHeight = 16.sp
                                             )
                                         }
                                     }

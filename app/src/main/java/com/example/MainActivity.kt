@@ -52,9 +52,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize Notification Channels and Daily Schedule
+        // Initialize Notification Channels and Daily Schedule from User Settings
         com.example.notifications.SoltarNotificationHelper.createNotificationChannels(this)
-        com.example.notifications.SoltarNotificationHelper.scheduleDailyReminder(this)
+        com.example.notifications.SoltarNotificationHelper.rescheduleFromSettings(this)
         com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(this)
 
         handleIntent(intent)

@@ -31,6 +31,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Widget Configuration Activity -->
+        <activity
+            android:name=".widget.SoltarAppWidgetConfigureActivity"
+            android:exported="true"
+            android:label="Configurar Widget ADRIANA"
+            android:theme="@style/Theme.MyApplication">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- Home Screen App Widget -->
         <receiver
             android:name=".widget.SoltarAppWidgetProvider"
@@ -50,6 +61,7 @@
             <intent-filter>
                 <action android:name="com.example.soltar.ACTION_DAILY_REMINDER" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

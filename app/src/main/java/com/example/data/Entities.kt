@@ -199,5 +199,12 @@ data class SoltarSettingsEntity(
     // Perspectives
     val faithPerspectiveActive: Boolean = false,
     val stoicPerspectiveActive: Boolean = false,
-    val modernPsychologyPerspectiveActive: Boolean = true
+    val modernPsychologyPerspectiveActive: Boolean = true,
+    // Scheduled Notifications & Empathetic Reminders
+    val notificationsEnabled: Boolean = true,
+    val reminderHour: Int = 21,
+    val reminderMinute: Int = 0,
+    val lastMilestoneCelebrated: Int = 0,
+    val inactivityAlertsEnabled: Boolean = true,
+    val lastInactivityNoticeSentTimestamp: Long = 0L
 )
