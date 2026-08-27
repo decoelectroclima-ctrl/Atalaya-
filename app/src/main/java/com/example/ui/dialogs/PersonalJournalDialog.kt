@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -65,9 +67,15 @@ fun PersonalJournalDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
         Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding(),
             topBar = {
                 TopAppBar(
                     title = {
@@ -466,7 +474,7 @@ private fun JournalHistoryListView(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.MenuBook,
+                imageVector = Icons.AutoMirrored.Filled.MenuBook,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = SoltarAmber.copy(alpha = 0.6f)
@@ -540,7 +548,7 @@ private fun JournalEntryCard(
     onClick: () -> Unit
 ) {
     val dateStr = remember(entry.timestamp) {
-        SimpleDateFormat("d MMM yyyy, HH:mm", Locale("es", "ES")).format(Date(entry.timestamp))
+        SimpleDateFormat("d MMM yyyy, HH:mm", Locale.forLanguageTag("es-ES")).format(Date(entry.timestamp))
     }
 
     val hasMentorship = entry.aiFeedback.isNotBlank()
@@ -642,7 +650,7 @@ private fun JournalEntryDetailView(
     onCopy: (String) -> Unit
 ) {
     val dateStr = remember(entry.timestamp) {
-        SimpleDateFormat("d 'de' MMMM 'de' yyyy, HH:mm", Locale("es", "ES")).format(Date(entry.timestamp))
+        SimpleDateFormat("d 'de' MMMM 'de' yyyy, HH:mm", Locale.forLanguageTag("es-ES")).format(Date(entry.timestamp))
     }
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -857,7 +865,7 @@ private fun JournalEntryDetailView(
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            Icons.Default.HelpOutline,
+                                            Icons.AutoMirrored.Filled.HelpOutline,
                                             contentDescription = null,
                                             tint = SoltarSage,
                                             modifier = Modifier.size(16.dp)

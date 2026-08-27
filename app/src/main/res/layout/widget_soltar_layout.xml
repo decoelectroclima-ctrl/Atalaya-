@@ -5,9 +5,9 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="12dp">
 
-    <!-- Header Row -->
+    <!-- Header Row: Title + Framework & Phase Badges -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,12 +15,26 @@
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/widget_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ADRIANA • CONTACTO CERO"
+            android:text="ADRIANA"
             android:textColor="@color/soltar_amber"
-            android:textSize="11sp"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_framework_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/widget_action_button_bg"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:text="🧠 Psicología"
+            android:textColor="@color/soltar_amber"
+            android:textSize="9sp"
             android:textStyle="bold" />
 
         <TextView
@@ -32,7 +46,7 @@
             android:paddingVertical="2dp"
             android:text="🛡️ Soberanía"
             android:textColor="@color/soltar_sage"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -40,7 +54,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -50,80 +64,121 @@
             android:layout_height="wrap_content"
             android:text="14"
             android:textColor="@color/text_primary"
-            android:textSize="32sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/widget_days_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DÍAS DE LIBERTAD"
+                android:text="DÍAS DE SOBERANÍA"
                 android:textColor="@color/text_primary"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/widget_days_subtext"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="Cuidando tu dignidad y paz"
                 android:textColor="@color/text_secondary"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Quote / Daily Reflection -->
+    <!-- Quote / Daily Reflection Tailored to Framework -->
     <TextView
         android:id="@+id/widget_quote_text"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="6dp"
         android:layout_weight="1"
         android:ellipsize="end"
         android:maxLines="2"
-        android:text="«Sé dueño de tus juicios y serás dueño de tu paz.» — Epicteto"
+        android:text="«Sé dueño de tus decisiones y custodio de tu paz hoy.»"
         android:textColor="@color/text_secondary"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:textStyle="italic" />
 
-    <!-- Action Buttons Row -->
+    <!-- 4 Functional Action Buttons Grid -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="36dp"
+        android:layout_height="32dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- 1. SOS Button -->
         <Button
             android:id="@+id/widget_btn_sos"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginEnd="6dp"
+            android:layout_marginEnd="3dp"
             android:layout_weight="1"
             android:background="@drawable/widget_sos_button_bg"
-            android:paddingHorizontal="4dp"
-            android:text="🚨 SOS IMPULSO"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:text="🚨 SOS"
             android:textColor="@color/white"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
+        <!-- 2. Coach ADRIANA Button -->
+        <Button
+            android:id="@+id/widget_btn_coach"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_action_button_bg"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:text="💬 Coach"
+            android:textColor="@color/soltar_amber"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <!-- 3. Personal Journal Button -->
         <Button
             android:id="@+id/widget_btn_journal"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="6dp"
+            android:layout_marginHorizontal="3dp"
             android:layout_weight="1"
             android:background="@drawable/widget_action_button_bg"
-            android:paddingHorizontal="4dp"
-            android:text="📖 DIARIO"
-            android:textColor="@color/soltar_amber"
-            android:textSize="11sp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:text="📖 Diario"
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <!-- 4. Check-in Button -->
+        <Button
+            android:id="@+id/widget_btn_checkin"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="3dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_action_button_bg"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:padding="0dp"
+            android:text="✨ Check-in"
+            android:textColor="@color/soltar_sage"
+            android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>

@@ -172,7 +172,7 @@ data class SoltarSettingsEntity(
     val breakupDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Default 2 weeks ago
     val biometricLockEnabled: Boolean = false,
     val soundEnabled: Boolean = true,
-    val themeMode: String = "DARK", // "DARK" | "LIGHT" | "SYSTEM"
+    val themeMode: String = "LIGHT", // "LIGHT" | "DARK" | "SYSTEM"
     val onboardingCompleted: Boolean = false,
     val preferredFramework: String = "PSICOLOGIA_MODERNA",
     val recentCardIds: String = "",

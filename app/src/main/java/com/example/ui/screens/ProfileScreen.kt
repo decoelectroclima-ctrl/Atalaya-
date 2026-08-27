@@ -673,56 +673,7 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // 1. Dark Mode Tile
-                        val isDarkSelected = currentMode == "DARK"
-                        Surface(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { viewModel.setThemeMode("DARK") }
-                                .testTag("theme_selector_dark"),
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isDarkSelected) SoltarSurfaceHighlight else SoltarSurfaceElevated,
-                            border = BorderStroke(
-                                if (isDarkSelected) 1.5.dp else 1.dp,
-                                if (isDarkSelected) SoltarAmber else SoltarBorderSubtle
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isDarkSelected) SoltarAmber.copy(alpha = 0.2f) else SoltarSurface),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.DarkMode,
-                                        contentDescription = null,
-                                        tint = if (isDarkSelected) SoltarAmber else TextMuted,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = "Oscuro",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (isDarkSelected) SoltarAmber else TextPrimary,
-                                    fontWeight = if (isDarkSelected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize = 12.sp
-                                )
-                                Text(
-                                    text = "Obsidiana",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextMuted,
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-
-                        // 2. Light Mode Tile
+                        // 1. Light Mode Tile (Default)
                         val isLightSelected = currentMode == "LIGHT"
                         Surface(
                             modifier = Modifier
@@ -764,6 +715,55 @@ fun ProfileScreen(
                                 )
                                 Text(
                                     text = "Porcelana",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextMuted,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+
+                        // 2. Dark Mode Tile
+                        val isDarkSelected = currentMode == "DARK"
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { viewModel.setThemeMode("DARK") }
+                                .testTag("theme_selector_dark"),
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isDarkSelected) SoltarSurfaceHighlight else SoltarSurfaceElevated,
+                            border = BorderStroke(
+                                if (isDarkSelected) 1.5.dp else 1.dp,
+                                if (isDarkSelected) SoltarAmber else SoltarBorderSubtle
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isDarkSelected) SoltarAmber.copy(alpha = 0.2f) else SoltarSurface),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.DarkMode,
+                                        contentDescription = null,
+                                        tint = if (isDarkSelected) SoltarAmber else TextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "Oscuro",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isDarkSelected) SoltarAmber else TextPrimary,
+                                    fontWeight = if (isDarkSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "Obsidiana",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted,
                                     fontSize = 10.sp

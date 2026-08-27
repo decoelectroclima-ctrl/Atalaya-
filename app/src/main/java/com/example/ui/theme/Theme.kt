@@ -58,14 +58,14 @@ val SoltarLightColorScheme = lightColorScheme(
 
 @Composable
 fun SoltarTheme(
-  themeMode: String = "DARK",
+  themeMode: String = "LIGHT",
   content: @Composable () -> Unit
 ) {
   val isSystemDark = isSystemInDarkTheme()
   val isDark = when (themeMode.uppercase()) {
-    "LIGHT" -> false
+    "DARK" -> true
     "SYSTEM" -> isSystemDark
-    else -> true // "DARK" is default
+    else -> false // "LIGHT" is default
   }
 
   val colorScheme = if (isDark) SoltarDarkColorScheme else SoltarLightColorScheme

@@ -167,252 +167,258 @@ class MainActivity : ComponentActivity() {
                     SoltarNavItem.Perfil
                 )
 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = SoltarBackground,
-                    topBar = {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = SoltarBackground,
-                            border = BorderStroke(1.dp, SoltarBorderSubtle)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .statusBarsPadding()
-                                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(SoltarBackground)
+                ) {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = SoltarBackground,
+                        topBar = {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = SoltarBackground,
+                                border = BorderStroke(1.dp, SoltarBorderSubtle)
                             ) {
-                                Column {
-                                    Text(
-                                        text = "ADRIANA",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = SoltarAmber,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 2.sp
-                                    )
-                                    Text(
-                                        text = "Acompañamiento sobrio y regulación emocional",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = TextMuted,
-                                        fontSize = 10.sp
-                                    )
-                                }
-
-                                IconButton(
-                                    onClick = {
-                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                        viewModel.toggleAiCompanionSheet(true)
-                                    },
+                                Row(
                                     modifier = Modifier
-                                        .size(38.dp)
-                                        .clip(CircleShape)
-                                        .background(SoltarSurfaceElevated)
-                                        .testTag("topbar_ai_button")
+                                        .fillMaxWidth()
+                                        .statusBarsPadding()
+                                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(
-                                        Icons.Default.Psychology,
-                                        contentDescription = "ADRIANA Coach",
-                                        tint = SoltarAmber,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    Column {
+                                        Text(
+                                            text = "ADRIANA",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = SoltarAmber,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            letterSpacing = 2.sp
+                                        )
+                                        Text(
+                                            text = "Acompañamiento sobrio y regulación emocional",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TextMuted,
+                                            fontSize = 10.sp
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                            viewModel.toggleAiCompanionSheet(true)
+                                        },
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(CircleShape)
+                                            .background(SoltarSurfaceElevated)
+                                            .testTag("topbar_ai_button")
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Psychology,
+                                            contentDescription = "ADRIANA Coach",
+                                            tint = SoltarAmber,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
-                        }
-                    },
-                    floatingActionButton = {
-                        ExtendedFloatingActionButton(
-                            onClick = {
-                                viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
-                                viewModel.openNeedHelpSheet()
-                            },
-                            containerColor = UrgeAlertRed,
-                            contentColor = TextPrimary,
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
-                            modifier = Modifier
-                                .padding(bottom = 12.dp)
-                                .testTag("fab_need_help")
-                        ) {
-                            Icon(
-                                Icons.Default.Bolt,
-                                contentDescription = null,
-                                tint = TextPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "NECESITO AYUDA",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    },
-                    bottomBar = {
-                        NavigationBar(
-                            containerColor = SoltarSurface,
-                            contentColor = SoltarAmberLight,
-                            tonalElevation = 8.dp
-                        ) {
-                            navItems.forEach { item ->
-                                val selected = uiState.currentTab == item.tab
-                                NavigationBarItem(
-                                    selected = selected,
-                                    onClick = {
-                                        if (!selected) {
-                                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                            viewModel.setTab(item.tab)
-                                        }
-                                    },
-                                    icon = {
-                                        Icon(
-                                            item.icon,
-                                            contentDescription = item.label,
-                                            tint = if (selected) SoltarAmber else TextMuted
-                                        )
-                                    },
-                                    label = {
-                                        Text(
-                                            text = item.label,
-                                            fontSize = 11.sp,
-                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (selected) SoltarAmber else TextMuted
-                                        )
-                                    },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        indicatorColor = SoltarSurfaceElevated
-                                    ),
-                                    modifier = Modifier.testTag("nav_${item.label.lowercase()}")
+                        },
+                        floatingActionButton = {
+                            ExtendedFloatingActionButton(
+                                onClick = {
+                                    viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
+                                    viewModel.openNeedHelpSheet()
+                                },
+                                containerColor = UrgeAlertRed,
+                                contentColor = TextPrimary,
+                                shape = RoundedCornerShape(16.dp),
+                                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp),
+                                modifier = Modifier
+                                    .padding(bottom = 12.dp)
+                                    .testTag("fab_need_help")
+                            ) {
+                                Icon(
+                                    Icons.Default.Bolt,
+                                    contentDescription = null,
+                                    tint = TextPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "NECESITO AYUDA",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    letterSpacing = 1.sp
                                 )
                             }
-                        }
-                    },
-                    snackbarHost = { SnackbarHost(snackbarHostState) }
-                ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(SoltarBackground)
-                            .padding(innerPadding)
-                    ) {
-                        when (uiState.currentTab) {
-                            SoltarTab.INICIO -> TodayScreen(viewModel = viewModel)
-                            SoltarTab.PROCESO -> ProcessScreen(viewModel = viewModel)
-                            SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel, authViewModel = authViewModel)
+                        },
+                        bottomBar = {
+                            NavigationBar(
+                                containerColor = SoltarSurface,
+                                contentColor = SoltarAmberLight,
+                                tonalElevation = 8.dp
+                            ) {
+                                navItems.forEach { item ->
+                                    val selected = uiState.currentTab == item.tab
+                                    NavigationBarItem(
+                                        selected = selected,
+                                        onClick = {
+                                            if (!selected) {
+                                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                viewModel.setTab(item.tab)
+                                            }
+                                        },
+                                        icon = {
+                                            Icon(
+                                                item.icon,
+                                                contentDescription = item.label,
+                                                tint = if (selected) SoltarAmber else TextMuted
+                                            )
+                                        },
+                                        label = {
+                                            Text(
+                                                text = item.label,
+                                                fontSize = 11.sp,
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (selected) SoltarAmber else TextMuted
+                                            )
+                                        },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            indicatorColor = SoltarSurfaceElevated
+                                        ),
+                                        modifier = Modifier.testTag("nav_${item.label.lowercase()}")
+                                    )
+                                }
+                            }
+                        },
+                        snackbarHost = { SnackbarHost(snackbarHostState) }
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(SoltarBackground)
+                                .padding(innerPadding)
+                        ) {
+                            when (uiState.currentTab) {
+                                SoltarTab.INICIO -> TodayScreen(viewModel = viewModel)
+                                SoltarTab.PROCESO -> ProcessScreen(viewModel = viewModel)
+                                SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel, authViewModel = authViewModel)
+                            }
                         }
                     }
-                }
 
-                // First Launch Onboarding Flow
-                if (uiState.isOnboardingVisible) {
-                    OnboardingScreen(
-                        viewModel = viewModel,
-                        onComplete = { viewModel.setOnboardingCompleted(true) }
-                    )
-                }
+                    // First Launch Onboarding Flow
+                    if (uiState.isOnboardingVisible) {
+                        OnboardingScreen(
+                            viewModel = viewModel,
+                            onComplete = { viewModel.setOnboardingCompleted(true) }
+                        )
+                    }
 
-                // Global Contextual Sheets & Dialogs
-                if (uiState.isNeedHelpSheetVisible) {
-                    NeedHelpSheet(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closeNeedHelpSheet() }
-                    )
-                }
+                    // Global Contextual Sheets & Dialogs
+                    if (uiState.isNeedHelpSheetVisible) {
+                        NeedHelpSheet(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeNeedHelpSheet() }
+                        )
+                    }
 
-                if (uiState.isJournalModalVisible) {
-                    com.example.ui.dialogs.PersonalJournalDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closeJournalModal() }
-                    )
-                }
+                    if (uiState.isJournalModalVisible) {
+                        com.example.ui.dialogs.PersonalJournalDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeJournalModal() }
+                        )
+                    }
 
-                if (uiState.isUrgeSheetVisible) {
-                    UrgeModeDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closeUrgeSheet() }
-                    )
-                }
+                    if (uiState.isUrgeSheetVisible) {
+                        UrgeModeDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeUrgeSheet() }
+                        )
+                    }
 
-                if (uiState.isNoThinkingSheetVisible) {
-                    NoThinkingDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closeNoThinkingSheet() }
-                    )
-                }
+                    if (uiState.isNoThinkingSheetVisible) {
+                        NoThinkingDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeNoThinkingSheet() }
+                        )
+                    }
 
-                if (uiState.isAiCompanionSheetVisible) {
-                    AiCompanionDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleAiCompanionSheet(false) }
-                    )
-                }
+                    if (uiState.isAiCompanionSheetVisible) {
+                        AiCompanionDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleAiCompanionSheet(false) }
+                        )
+                    }
 
-                if (uiState.isThoughtModalVisible) {
-                    ThoughtLabDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleThoughtModal(false) }
-                    )
-                }
+                    if (uiState.isThoughtModalVisible) {
+                        ThoughtLabDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleThoughtModal(false) }
+                        )
+                    }
 
-                if (uiState.isAuditModalVisible) {
-                    RelationshipAuditDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleAuditModal(false) }
-                    )
-                }
+                    if (uiState.isAuditModalVisible) {
+                        RelationshipAuditDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleAuditModal(false) }
+                        )
+                    }
 
-                if (uiState.isIdealizationModalVisible) {
-                    IdealizationDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleIdealizationModal(false) }
-                    )
-                }
+                    if (uiState.isIdealizationModalVisible) {
+                        IdealizationDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleIdealizationModal(false) }
+                        )
+                    }
 
-                if (uiState.isLetterModalVisible) {
-                    UnsentLetterDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleLetterModal(false) }
-                    )
-                }
+                    if (uiState.isLetterModalVisible) {
+                        UnsentLetterDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleLetterModal(false) }
+                        )
+                    }
 
-                if (uiState.isIdentityGoalModalVisible) {
-                    IdentityGoalDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleIdentityGoalModal(false) }
-                    )
-                }
+                    if (uiState.isIdentityGoalModalVisible) {
+                        IdentityGoalDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleIdentityGoalModal(false) }
+                        )
+                    }
 
-                if (uiState.isRelapseModalVisible) {
-                    RelapseDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.toggleRelapseModal(false) }
-                    )
-                }
+                    if (uiState.isRelapseModalVisible) {
+                        RelapseDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleRelapseModal(false) }
+                        )
+                    }
 
-                if (uiState.isAuthDialogVisible || authUiState.isAuthDialogVisible) {
-                    AuthDialog(
-                        viewModel = authViewModel,
-                        onDismiss = {
-                            authViewModel.closeAuthDialog()
-                            viewModel.toggleAuthDialog(false)
-                        }
-                    )
-                }
+                    if (uiState.isAuthDialogVisible || authUiState.isAuthDialogVisible) {
+                        AuthDialog(
+                            viewModel = authViewModel,
+                            onDismiss = {
+                                authViewModel.closeAuthDialog()
+                                viewModel.toggleAuthDialog(false)
+                            }
+                        )
+                    }
 
-                if (uiState.isPaywallVisible) {
-                    PaywallDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closePaywall() }
-                    )
-                }
+                    if (uiState.isPaywallVisible) {
+                        PaywallDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closePaywall() }
+                        )
+                    }
 
-                if (uiState.isSupportContactDialogVisible) {
-                    SupportContactDialog(
-                        viewModel = viewModel,
-                        onDismiss = { viewModel.closeSupportContactDialog() }
-                    )
+                    if (uiState.isSupportContactDialogVisible) {
+                        SupportContactDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeSupportContactDialog() }
+                        )
+                    }
                 }
             }
         }
@@ -435,6 +441,9 @@ class MainActivity : ComponentActivity() {
             }
             com.example.widget.SoltarAppWidgetProvider.ACTION_CHECKIN -> {
                 viewModel.setSelectedTab(SoltarTab.INICIO)
+            }
+            com.example.widget.SoltarAppWidgetProvider.ACTION_COACH -> {
+                viewModel.toggleAiCompanionSheet(true)
             }
         }
     }

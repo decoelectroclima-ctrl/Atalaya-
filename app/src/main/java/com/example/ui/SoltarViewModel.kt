@@ -132,7 +132,7 @@ data class SoltarUiState(
     // Onboarding & Sound UI State
     val isOnboardingVisible: Boolean = false,
     val isSoundEnabled: Boolean = true,
-    val themeMode: String = "DARK", // "DARK" | "LIGHT" | "SYSTEM"
+    val themeMode: String = "LIGHT", // "LIGHT" | "DARK" | "SYSTEM"
 
     // Reference Framework & Wisdom Cards
     val preferredFramework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
