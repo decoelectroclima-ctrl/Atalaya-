@@ -236,8 +236,8 @@ fun PaywallDialog(
                     }
 
                     if (currentTier.startsWith("PREMIUM") || isTrial) {
-                        TextButton(onClick = { viewModel.cancelSubscription() }) {
-                            Text("Cancelar suscripción", color = UrgeAlertRed, style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = { viewModel.manageSubscriptionInGooglePlay(context) }) {
+                            Text("Gestionar suscripción en Google Play", color = UrgeAlertRed, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

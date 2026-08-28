@@ -1,6 +1,6 @@
 {
   "name": "ADRIANA",
-  "description": "Aplicación de acompañamiento emocional para rupturas, desapego, contacto cero, regulación emocional y reconstrucción de autonomía.",
+  "description": "Acompañamiento reflexivo y ético durante duelo y rupturas, basado en triple marco de sabiduría (Estoicismo, Psicología Moderna y Tradición Católica).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

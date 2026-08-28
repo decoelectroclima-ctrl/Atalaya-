@@ -24,7 +24,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = RobolectricDeviceQualifiers.Pixel8, sdk = [36])
+@Config(qualifiers = RobolectricDeviceQualifiers.Pixel8, sdk = [34])
 class GreetingScreenshotTest {
 
   @get:Rule val composeTestRule = createComposeRule()
@@ -37,12 +37,11 @@ class GreetingScreenshotTest {
           modifier = Modifier.fillMaxSize().background(SoltarBackground).padding(16.dp),
           contentAlignment = Alignment.Center
         ) {
-          Text("ADRIANA", color = TextPrimary)
+          Text("Atalaya", color = TextPrimary)
         }
       }
     }
 
-    composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/greeting.png")
+    composeTestRule.onRoot().captureRoboImage()
   }
 }
-

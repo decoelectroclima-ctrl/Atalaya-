@@ -33,6 +33,9 @@ import androidx.compose.ui.unit.sp
 import com.example.audio.SoltarSoundManager
 import com.example.data.WisdomBank
 import com.example.ui.SoltarViewModel
+import com.example.ui.managers.ProgressManager
+import com.example.ui.components.KintsugiHeart
+import com.example.ui.components.ProgressiveLandscape
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -81,6 +84,7 @@ fun TodayScreen(
             else -> Triple("Reconstrucción Kintsugi • Plena Autonomía", 180, 1.0f)
         }
     }
+    val progressStage = remember(days) { ProgressManager.calculateProgressStage(days.toInt()) }
 
     var isThermometerExpanded by remember { mutableStateOf(false) }
 
@@ -93,6 +97,12 @@ fun TodayScreen(
         contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
     ) {
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                KintsugiHeart(progressStage = progressStage)
+                ProgressiveLandscape(progressStage = progressStage)
+            }
+        }
         item {
             val wisdomCard = uiState.currentWisdomCard ?: WisdomBank.getRandomCard(uiState.preferredFramework, emptyList())
 
@@ -124,18 +134,37 @@ fun TodayScreen(
                             )
                         }
 
-                        IconButton(
-                            onClick = {
-                                viewModel.rotateWisdomCard(uiState.preferredFramework)
-                            },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Rotar sabiduría",
-                                tint = SoltarAmber,
-                                modifier = Modifier.size(16.dp)
-                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = {
+                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "${wisdomCard.quote} — ${wisdomCard.author}")
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir sabiduría"))
+                                },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Compartir sabiduría",
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    viewModel.rotateWisdomCard(uiState.preferredFramework)
+                                },
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Rotar sabiduría",
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
 
@@ -547,6 +576,24 @@ fun TodayScreen(
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                             viewModel.toggleLetterModal(true)
                         }
+                    ),
+                    ToolItem(
+                        title = "Simulacro de Encuentro",
+                        subtitle = "Practica conversaciones y límites",
+                        icon = Icons.Default.People,
+                        onClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.toggleEncounterSimulator(true)
+                        }
+                    ),
+                    ToolItem(
+                        title = "Cápsula del Tiempo",
+                        subtitle = "Carta al yo futuro con fecha de desbloqueo",
+                        icon = Icons.Default.HourglassBottom,
+                        onClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.toggleTimeCapsuleModal(true)
+                        }
                     )
                 )
             )
@@ -686,8 +733,14 @@ fun TodayScreen(
             }
         }
 
+        // Support Hub (B1, B2, B3, B5)
+        item {
+            com.example.ui.components.SupportHubComponent(viewModel = viewModel)
+        }
+
         // 6. Termómetro Emocional Diario (Colapsable / Limpio)
         item {
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

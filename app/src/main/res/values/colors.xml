@@ -20,4 +20,20 @@
     <color name="text_primary">#F4F5F7</color>
     <color name="text_secondary">#9CA3AF</color>
     <color name="text_muted">#6B7280</color>
+
+    <!-- Widget Specific Colors -->
+    <color name="widget_bg_dark">#16181F</color>
+    <color name="widget_bg_light">#FFFFFFFF</color>
+    <color name="widget_surface_dark">#222530</color>
+    <color name="widget_surface_light">#F1F5F9</color>
+    <color name="widget_border_dark">#2F3341</color>
+    <color name="widget_border_light">#CBD5E1</color>
+    <color name="widget_text_primary_dark">#F8FAFC</color>
+    <color name="widget_text_primary_light">#0F172A</color>
+    <color name="widget_text_secondary_dark">#94A3B8</color>
+    <color name="widget_text_secondary_light">#475569</color>
+    <color name="widget_amber_dark">#E5A93C</color>
+    <color name="widget_amber_light">#B45309</color>
+    <color name="widget_sage_dark">#7BA888</color>
+    <color name="widget_sage_light">#15803D</color>
 </resources>

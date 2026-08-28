@@ -2,16 +2,22 @@ package com.example.ui
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.billingclient.api.ProductDetails
 import com.example.ai.SoltarAiEngine
+import com.example.ai.SoltarAiResponse
 import com.example.ai.SoltarUserContext
 import com.example.billing.BillingManager
 import com.example.data.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -60,9 +66,6 @@ data class SoltarUiState(
     
     // Contextual State Selection ("¿Cómo estás ahora?")
     val selectedFeeling: String = "",
-    
-    // Contextual Modals & Dialogs
-    val isNeedHelpSheetVisible: Boolean = false,
     val isJournalModalVisible: Boolean = false,
     val selectedJournalEntry: JournalEntryEntity? = null,
     val isGeneratingJournalMentorship: Boolean = false,
@@ -79,6 +82,11 @@ data class SoltarUiState(
     val isAiCompanionSheetVisible: Boolean = false,
     val isNoThinkingSheetVisible: Boolean = false,
     val isMemoryModalVisible: Boolean = false,
+    val isTimeCapsuleModalVisible: Boolean = false,
+    val isEncounterSimulatorVisible: Boolean = false,
+    val isNeedHelpSheetVisible: Boolean = false,
+    val isFounderExperienceVisible: Boolean = false,
+    val isConversationAnalyzerVisible: Boolean = false,
     
     // Thought Laboratory Inputs
     val thoughtOriginalInput: String = "",
@@ -222,6 +230,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         loadTodayCheckin()
         observeSettings()
     }
+
+    fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
+    fun openNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = true) }
+    fun closeNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = false) }
 
     private fun observeSettings() {
         viewModelScope.launch {
@@ -848,9 +860,55 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     // ==========================================
     // AI CHAT & MEMORY CONTROLS
-    // ==========================================
+    // C3: Progreso Lingüístico
+    val linguisticProgress: StateFlow<String> = repository.allJournalEntries
+        .map { entries ->
+            if (entries.size < 3) "Necesitas registrar más entradas para ver tu evolución."
+            else {
+                val first = entries.last().content
+                val last = entries.first().content
+                // Análisis básico de palabras clave (autonomía vs dependencia)
+                val posWords = listOf("yo", "puedo", "decido", "libertad", "paz")
+                val negWords = listOf("él", "ella", "sin", "esperando", "culpa")
+                
+                fun score(text: String): Double {
+                    val words = text.lowercase().split(Regex("\\s+"))
+                    return words.count { it in posWords }.toDouble() / (words.count { it in negWords } + 1)
+                }
+                
+                val evolution = score(last) - score(first)
+                when {
+                    evolution > 0.5 -> "Has ganado mucha autonomía y perspectiva."
+                    evolution < -0.5 -> "Parece que estás en un momento de mayor dependencia o rumiación."
+                    else -> "Tu lenguaje muestra estabilidad y reflexión."
+                }
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Analizando...")
+
     fun setAiInputMessage(t: String) = _uiState.update { it.copy(aiInputMessage = t) }
+
+    // AI Engine exposed for Encounter Simulator
+    suspend fun sendEncounterMessage(message: String, history: List<Pair<String, String>>, scenario: String): SoltarAiResponse {
+        val systemInstruction = "Actúa como el personaje en el siguiente escenario: $scenario. Mantén un tono realista, no diagnóstico, y practica la comunicación saludable."
+        return SoltarAiEngine.generateResponse(message, history, SoltarFramework.PSICOLOGIA_MODERNA, SoltarUserContext(), systemInstruction = systemInstruction)
+    }
+    
     fun toggleMemoryModal(visible: Boolean) = _uiState.update { it.copy(isMemoryModalVisible = visible) }
+    fun toggleTimeCapsuleModal(visible: Boolean) = _uiState.update { it.copy(isTimeCapsuleModalVisible = visible) }
+    fun toggleEncounterSimulator(visible: Boolean) = _uiState.update { it.copy(isEncounterSimulatorVisible = visible) }
+    
+    fun saveTimeCapsule(title: String, content: String, unlockAt: Long) {
+        viewModelScope.launch {
+            repository.saveTimeCapsule(
+                TimeCapsuleEntity(
+                    title = title,
+                    content = content,
+                    unlockAtTimestamp = unlockAt
+                )
+            )
+            showNotification("⏳ Cápsula del tiempo sellada. Nos vemos en el futuro.")
+        }
+    }
 
     fun buildUserPersonalizationContext(): SoltarUserContext {
         val currentSettings = settings.value
@@ -894,14 +952,33 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         val text = _uiState.value.aiInputMessage.trim()
         if (text.isBlank() || _uiState.value.isAiTyping) return
 
+        _uiState.update { it.copy(aiInputMessage = "", isAiTyping = true) }
+
+        // Critical safety protocol: Crisis / Self-harm bypasses paywalls and responds immediately in chat
         if (SoltarAiEngine.checkSelfHarmTrigger(text)) {
-            showNotification("⚠️ **MENSAJE DE APOYO Y SEGURIDAD**\n\nADRIANA detecta una situación de sufrimiento extremo. Por favor, contacta con profesionales:\n• España: 024 o 112\n• EE.UU./Latam: 988 o 911")
+            viewModelScope.launch {
+                repository.saveAiMessage(
+                    AiMessageEntity(
+                        sender = "user",
+                        content = text
+                    )
+                )
+                val response = SoltarAiEngine.generateResponse(text)
+                repository.saveAiMessage(
+                    AiMessageEntity(
+                        sender = "soltar_ai",
+                        content = response.replyText,
+                        detectedRumination = false,
+                        suggestedAction = response.suggestedAction
+                    )
+                )
+                _uiState.update { it.copy(isAiTyping = false) }
+                showNotification("⚠️ Líneas de ayuda y apoyo registradas en tu chat")
+            }
             return
         }
 
-        _uiState.update { it.copy(aiInputMessage = "", isAiTyping = true) }
-
-        // Daily limit check
+        // Daily limit check for normal conversational coaching
         val entitlements = UserEntitlements.fromSettings(settings.value)
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val messagesToday = aiMessages.value.filter { 
@@ -914,37 +991,42 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         viewModelScope.launch {
-            repository.saveAiMessage(
-                AiMessageEntity(
-                    sender = "user",
-                    content = text
+            try {
+                repository.saveAiMessage(
+                    AiMessageEntity(
+                        sender = "user",
+                        content = text
+                    )
                 )
-            )
 
-            val currentMessages = aiMessages.value.map { it.sender to it.content }
-            val framework = _uiState.value.preferredFramework
-            val userContext = buildUserPersonalizationContext()
-            val response = SoltarAiEngine.generateResponse(text, currentMessages, framework, userContext)
+                val currentMessages = aiMessages.value.map { it.sender to it.content }
+                val framework = _uiState.value.preferredFramework
+                val userContext = buildUserPersonalizationContext()
+                val response = SoltarAiEngine.generateResponse(text, currentMessages, framework, userContext)
 
-            repository.saveAiMessage(
-                AiMessageEntity(
-                    sender = "soltar_ai",
-                    content = response.replyText,
-                    detectedRumination = response.isRuminationDetected,
-                    suggestedAction = response.suggestedAction
+                repository.saveAiMessage(
+                    AiMessageEntity(
+                        sender = "soltar_ai",
+                        content = response.replyText,
+                        detectedRumination = response.isRuminationDetected,
+                        suggestedAction = response.suggestedAction
+                    )
                 )
-            )
-
-            _uiState.update { it.copy(isAiTyping = false) }
+            } catch (e: Exception) {
+                repository.saveAiMessage(
+                    AiMessageEntity(
+                        sender = "soltar_ai",
+                        content = "Ha ocurrido un problema al procesar la respuesta. Por favor, respira hondo e inténtalo de nuevo en unos momentos.",
+                        detectedRumination = false
+                    )
+                )
+            } finally {
+                _uiState.update { it.copy(isAiTyping = false) }
+            }
         }
     }
 
     fun setSelectedFeeling(f: String) = _uiState.update { it.copy(selectedFeeling = f) }
-    
-    fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
-    fun openNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = true) }
-    fun closeNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = false) }
-    fun toggleJournalModal(visible: Boolean) = _uiState.update { it.copy(isJournalModalVisible = visible) }
     fun openJournalModal(entry: JournalEntryEntity? = null) {
         _uiState.update {
             it.copy(
@@ -1086,6 +1168,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleLetterModal(visible: Boolean) = _uiState.update { it.copy(isLetterModalVisible = visible) }
     fun toggleRelapseModal(visible: Boolean) = _uiState.update { it.copy(isRelapseModalVisible = visible) }
     fun toggleIdentityGoalModal(visible: Boolean) = _uiState.update { it.copy(isIdentityGoalModalVisible = visible) }
+    fun toggleFounderExperience(visible: Boolean) = _uiState.update { it.copy(isFounderExperienceVisible = visible) }
     fun toggleAiCompanionSheet(visible: Boolean) = _uiState.update { it.copy(isAiCompanionSheetVisible = visible) }
     fun toggleAuthDialog(visible: Boolean) = _uiState.update { it.copy(isAuthDialogVisible = visible) }
 
@@ -1287,15 +1370,27 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     fun restorePurchases() {
         _uiState.update { it.copy(isProcessingPayment = true) }
-        viewModelScope.launch {
-            delay(1000)
-            val current = settings.value ?: SoltarSettingsEntity()
+        billingManager.restorePurchases { success, message ->
             _uiState.update { it.copy(isProcessingPayment = false) }
-            if (current.subscriptionTier != "FREE" || current.isTrialActive) {
-                showNotification("✅ Suscripción restaurada con éxito: ${current.subscriptionTier}")
-            } else {
-                showNotification("ℹ️ No se encontraron compras previas activas en esta cuenta.")
+            if (success) {
+                // Update local settings if needed based on billing result
+                viewModelScope.launch {
+                    val current = settings.value ?: SoltarSettingsEntity()
+                    repository.saveSettings(current.copy(subscriptionTier = "PREMIUM_ONE_TIME"))
+                }
             }
+            showNotification(message)
+        }
+    }
+
+    fun manageSubscriptionInGooglePlay(context: Context) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                data = android.net.Uri.parse("https://play.google.com/store/account/subscriptions?package=${context.packageName}&sku=${"premium_subscription"}")
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            showNotification("No se pudo abrir la gestión de suscripciones.")
         }
     }
 
@@ -1411,4 +1506,90 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
         showNotification("🎉 Notificación de celebración de hito ($days días) enviada")
     }
+
+    // --- B5: Trigger Events ---
+    fun registerTriggerEvent(context: String, trigger: String, emotion: String, note: String = "") {
+        viewModelScope.launch {
+            repository.saveTriggerEvent(
+                com.example.data.TriggerEventEntity(
+                    context = context,
+                    trigger = trigger,
+                    emotion = emotion,
+                    note = note
+                )
+            )
+        }
+    }
+    // --------------------------
+
+    // --- B2/B3: Red Flags & Peer Support ---
+    val redFlags: StateFlow<List<com.example.data.RedFlagEntity>> = repository.allRedFlags
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val peerSupportPosts: StateFlow<List<com.example.data.PeerSupportPostEntity>> = repository.allPeerSupportPosts
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun addRedFlag(reason: String) {
+        viewModelScope.launch {
+            repository.saveRedFlag(com.example.data.RedFlagEntity(reason = reason))
+        }
+    }
+
+    fun removeRedFlag(redFlag: com.example.data.RedFlagEntity) {
+        viewModelScope.launch {
+            repository.deleteRedFlag(redFlag)
+        }
+    }
+
+    fun addPeerSupportPost(content: String) {
+        viewModelScope.launch {
+            repository.savePeerSupportPost(com.example.data.PeerSupportPostEntity(content = content))
+        }
+    }
+
+    fun likePeerSupportPost(id: Long) {
+        viewModelScope.launch {
+            repository.likePeerSupportPost(id)
+        }
+    }
+
+    fun toggleConversationAnalyzer(visible: Boolean) = _uiState.update { it.copy(isConversationAnalyzerVisible = visible) }
+    fun openConversationAnalyzer() = _uiState.update { it.copy(isConversationAnalyzerVisible = true) }
+    fun closeConversationAnalyzer() = _uiState.update { it.copy(isConversationAnalyzerVisible = false) }
+    // --------------------------
+
+    // --- Thought Lab (C) ---
+    val thoughtLabEntries: StateFlow<List<com.example.data.ThoughtLabEntity>> = repository.allThoughtLabEntries
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun addThoughtLabEntry(original: String, distortion: String, reframed: String) {
+        viewModelScope.launch {
+            repository.saveThoughtLabEntry(com.example.data.ThoughtLabEntity(originalThought = original, distortionType = distortion, reframedThought = reframed))
+        }
+    }
+    // --------------------------
+
+    // --- Relationship Audit (D) ---
+    val relationshipAudits: StateFlow<List<com.example.data.RelationshipAuditEntity>> = repository.allRelationshipAudits
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun addRelationshipAudit(title: String, category: String, myResp: String, otherResp: String, sharedResp: String, pattern: String) {
+        viewModelScope.launch {
+            repository.saveRelationshipAudit(com.example.data.RelationshipAuditEntity(
+                title = title, 
+                category = category, 
+                myResponsibility = myResp,
+                otherResponsibility = otherResp,
+                sharedResponsibility = sharedResp,
+                patternIdentified = pattern
+            ))
+        }
+    }
+
+    fun removeRelationshipAudit(id: Long) {
+        viewModelScope.launch {
+            repository.deleteRelationshipAudit(id)
+        }
+    }
+    // --------------------------
 }

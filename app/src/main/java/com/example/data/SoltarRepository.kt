@@ -142,8 +142,55 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         return database.relapseDao().insertRelapse(relapse)
     }
 
+    // Trigger Events (B5)
+    val allTriggerEvents: Flow<List<TriggerEventEntity>> = database.triggerEventDao().getAllTriggerEvents()
+
+    suspend fun saveTriggerEvent(triggerEvent: TriggerEventEntity): Long {
+        return database.triggerEventDao().insertTriggerEvent(triggerEvent)
+    }
+
+    // Red Flags (B2)
+    val allRedFlags: Flow<List<RedFlagEntity>> = database.redFlagDao().getAllRedFlags()
+
+    suspend fun saveRedFlag(redFlag: RedFlagEntity): Long {
+        return database.redFlagDao().insertRedFlag(redFlag)
+    }
+
+    suspend fun deleteRedFlag(redFlag: RedFlagEntity) {
+        database.redFlagDao().deleteRedFlag(redFlag)
+    }
+
+    // Peer Support (B3)
+    val allPeerSupportPosts: Flow<List<PeerSupportPostEntity>> = database.peerSupportDao().getAllPosts()
+
+    suspend fun savePeerSupportPost(post: PeerSupportPostEntity): Long {
+        return database.peerSupportDao().insertPost(post)
+    }
+
+    suspend fun likePeerSupportPost(id: Long) {
+        database.peerSupportDao().likePost(id)
+    }
+
+    // Relationship Audit (D)
+    val allRelationshipAudits: Flow<List<RelationshipAuditEntity>> = database.relationshipAuditDao().getAllAudits()
+
+    suspend fun saveRelationshipAudit(audit: RelationshipAuditEntity): Long {
+        return database.relationshipAuditDao().insertAudit(audit)
+    }
+
+    suspend fun deleteRelationshipAudit(id: Long) {
+        database.relationshipAuditDao().deleteAudit(id)
+    }
+
     // Personal Journal & Philosophical Mentorship
     val allJournalEntries: Flow<List<JournalEntryEntity>> = database.journalDao().getAllJournalEntries()
+
+    // Thought Lab (C)
+    val allThoughtLabEntries: Flow<List<ThoughtLabEntity>> = database.thoughtLabDao().getAllEntries()
+
+    suspend fun saveThoughtLabEntry(entry: ThoughtLabEntity): Long {
+        return database.thoughtLabDao().insertEntry(entry)
+    }
 
     fun getJournalEntryById(id: Long): Flow<JournalEntryEntity?> {
         return database.journalDao().getJournalEntryById(id)
@@ -184,7 +231,22 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     // Settings
     val settings: Flow<SoltarSettingsEntity?> = database.soltarSettingsDao().getSettings()
 
+    suspend fun getSettingsOnce(): SoltarSettingsEntity? {
+        return database.soltarSettingsDao().getSettingsOnce()
+    }
+
     suspend fun saveSettings(settings: SoltarSettingsEntity) {
         database.soltarSettingsDao().saveSettings(settings)
+    }
+
+    // Time Capsule (C1)
+    val allTimeCapsules: Flow<List<TimeCapsuleEntity>> = database.timeCapsuleDao().getAllCapsules()
+
+    suspend fun saveTimeCapsule(capsule: TimeCapsuleEntity): Long {
+        return database.timeCapsuleDao().insertCapsule(capsule)
+    }
+
+    suspend fun unlockTimeCapsule(id: Long) {
+        database.timeCapsuleDao().unlockCapsule(id)
     }
 }

@@ -27,7 +27,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.audio.SoltarSoundManager
 import com.example.ui.SoltarTab
@@ -48,7 +47,6 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -95,6 +93,7 @@ class MainActivity : ComponentActivity() {
                         uiState.isLetterModalVisible ||
                         uiState.isIdentityGoalModalVisible ||
                         uiState.isRelapseModalVisible ||
+                        uiState.isConversationAnalyzerVisible ||
                         uiState.isAuthDialogVisible ||
                         authUiState.isAuthDialogVisible ||
                         uiState.isPaywallVisible ||
@@ -354,6 +353,20 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    if (uiState.isTimeCapsuleModalVisible) {
+                        com.example.ui.dialogs.TimeCapsuleDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleTimeCapsuleModal(false) }
+                        )
+                    }
+
+                    if (uiState.isEncounterSimulatorVisible) {
+                        com.example.ui.dialogs.EncounterSimulatorDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleEncounterSimulator(false) }
+                        )
+                    }
+
                     if (uiState.isThoughtModalVisible) {
                         ThoughtLabDialog(
                             viewModel = viewModel,
@@ -399,9 +412,12 @@ class MainActivity : ComponentActivity() {
                     if (uiState.isAuthDialogVisible || authUiState.isAuthDialogVisible) {
                         AuthDialog(
                             viewModel = authViewModel,
+                            isLockdown = uiState.isAuthDialogVisible,
                             onDismiss = {
-                                authViewModel.closeAuthDialog()
-                                viewModel.toggleAuthDialog(false)
+                                if (!uiState.isAuthDialogVisible) {
+                                    authViewModel.closeAuthDialog()
+                                    viewModel.toggleAuthDialog(false)
+                                }
                             }
                         )
                     }
@@ -417,6 +433,20 @@ class MainActivity : ComponentActivity() {
                         SupportContactDialog(
                             viewModel = viewModel,
                             onDismiss = { viewModel.closeSupportContactDialog() }
+                        )
+                    }
+
+                    if (uiState.isFounderExperienceVisible) {
+                        com.example.ui.dialogs.FounderExperienceDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleFounderExperience(false) }
+                        )
+                    }
+
+                    if (uiState.isConversationAnalyzerVisible) {
+                        ConversationAnalyzerDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeConversationAnalyzer() }
                         )
                     }
                 }

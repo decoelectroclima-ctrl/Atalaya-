@@ -29,6 +29,7 @@ import com.example.ui.theme.*
 @Composable
 fun AuthDialog(
     viewModel: AuthViewModel,
+    isLockdown: Boolean = false,
     onDismiss: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -36,8 +37,14 @@ fun AuthDialog(
     var showMessage by remember { mutableStateOf<String?>(null) }
 
     Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        onDismissRequest = {
+            if (!isLockdown) onDismiss()
+        },
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = !isLockdown,
+            dismissOnClickOutside = !isLockdown
+        )
     ) {
         Box(
             modifier = Modifier
@@ -54,8 +61,12 @@ fun AuthDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextSecondary)
+                    if (!isLockdown) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextSecondary)
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.height(48.dp))
                     }
                 }
 
@@ -159,26 +170,28 @@ fun AuthDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Toggle Mode Button
-                TextButton(
-                    onClick = {
-                        showMessage = null
-                        if (uiState.authDialogMode == "LOGIN") {
-                            viewModel.setAuthDialogMode("REGISTER")
-                        } else {
-                            viewModel.setAuthDialogMode("LOGIN")
+                // Toggle Mode Button (Only allowed if no PIN is configured yet and not in lockdown)
+                if (!uiState.hasConfiguredPin && !isLockdown) {
+                    TextButton(
+                        onClick = {
+                            showMessage = null
+                            if (uiState.authDialogMode == "LOGIN") {
+                                viewModel.setAuthDialogMode("REGISTER")
+                            } else {
+                                viewModel.setAuthDialogMode("LOGIN")
+                            }
                         }
+                    ) {
+                        Text(
+                            text = if (uiState.authDialogMode == "LOGIN")
+                                "¿No tienes PIN? Crear nuevo PIN / Registrarse"
+                            else
+                                "¿Ya tienes un PIN configurado? Iniciar Sesión",
+                            color = SoltarAmber,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center
+                        )
                     }
-                ) {
-                    Text(
-                        text = if (uiState.authDialogMode == "LOGIN")
-                            "¿No tienes PIN? Crear nuevo PIN / Registrarse"
-                        else
-                            "¿Ya tienes un PIN configurado? Iniciar Sesión",
-                        color = SoltarAmber,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center
-                    )
                 }
                 
                 showMessage?.let {

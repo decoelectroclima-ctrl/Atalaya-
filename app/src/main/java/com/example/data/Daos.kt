@@ -1,6 +1,7 @@
 package com.example.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -59,18 +60,6 @@ interface ThoughtDao {
 
     @Query("DELETE FROM thought_laboratory WHERE id = :id")
     suspend fun deleteThought(id: Long)
-}
-
-@Dao
-interface RelationshipAuditDao {
-    @Query("SELECT * FROM relationship_audits ORDER BY timestamp DESC")
-    fun getAllAudits(): Flow<List<RelationshipAuditEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAudit(audit: RelationshipAuditEntity): Long
-
-    @Query("DELETE FROM relationship_audits WHERE id = :id")
-    suspend fun deleteAudit(id: Long)
 }
 
 @Dao
@@ -152,6 +141,60 @@ interface RelapseDao {
 }
 
 @Dao
+interface TriggerEventDao {
+    @Query("SELECT * FROM trigger_events ORDER BY timestamp DESC")
+    fun getAllTriggerEvents(): Flow<List<TriggerEventEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTriggerEvent(triggerEvent: TriggerEventEntity): Long
+}
+
+@Dao
+interface RedFlagDao {
+    @Query("SELECT * FROM red_flags ORDER BY timestamp DESC")
+    fun getAllRedFlags(): Flow<List<RedFlagEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRedFlag(redFlag: RedFlagEntity): Long
+
+    @Delete
+    suspend fun deleteRedFlag(redFlag: RedFlagEntity)
+}
+
+@Dao
+interface PeerSupportDao {
+    @Query("SELECT * FROM peer_support_posts ORDER BY timestamp DESC")
+    fun getAllPosts(): Flow<List<PeerSupportPostEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPost(post: PeerSupportPostEntity): Long
+
+    @Query("UPDATE peer_support_posts SET likes = likes + 1 WHERE id = :id")
+    suspend fun likePost(id: Long)
+}
+
+@Dao
+interface ThoughtLabDao {
+    @Query("SELECT * FROM thought_lab_entries ORDER BY timestamp DESC")
+    fun getAllEntries(): Flow<List<ThoughtLabEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEntry(entry: ThoughtLabEntity): Long
+}
+
+@Dao
+interface RelationshipAuditDao {
+    @Query("SELECT * FROM relationship_audits ORDER BY timestamp DESC")
+    fun getAllAudits(): Flow<List<RelationshipAuditEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAudit(audit: RelationshipAuditEntity): Long
+
+    @Query("DELETE FROM relationship_audits WHERE id = :id")
+    suspend fun deleteAudit(id: Long)
+}
+
+@Dao
 interface JournalDao {
     @Query("SELECT * FROM personal_journal ORDER BY timestamp DESC")
     fun getAllJournalEntries(): Flow<List<JournalEntryEntity>>
@@ -186,6 +229,18 @@ interface AiMessageDao {
 
     @Query("DELETE FROM ai_messages")
     suspend fun clearAllMessages()
+}
+
+@Dao
+interface TimeCapsuleDao {
+    @Query("SELECT * FROM time_capsules ORDER BY createdAt DESC")
+    fun getAllCapsules(): Flow<List<TimeCapsuleEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCapsule(capsule: TimeCapsuleEntity): Long
+
+    @Query("UPDATE time_capsules SET isUnlocked = 1 WHERE id = :id")
+    suspend fun unlockCapsule(id: Long)
 }
 
 @Dao

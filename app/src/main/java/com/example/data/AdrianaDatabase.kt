@@ -19,11 +19,16 @@ import androidx.room.migration.Migration
         ExperimentEntity::class,
         IdentityGoalEntity::class,
         RelapseEntity::class,
+        TriggerEventEntity::class,
+        RedFlagEntity::class,
+        PeerSupportPostEntity::class,
+        ThoughtLabEntity::class,
         AiMessageEntity::class,
         JournalEntryEntity::class,
-        SoltarSettingsEntity::class
+        SoltarSettingsEntity::class,
+        TimeCapsuleEntity::class
     ],
-    version = 13,
+    version = 18,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -37,9 +42,14 @@ abstract class AdrianaDatabase : RoomDatabase() {
     abstract fun experimentDao(): ExperimentDao
     abstract fun identityGoalDao(): IdentityGoalDao
     abstract fun relapseDao(): RelapseDao
+    abstract fun triggerEventDao(): TriggerEventDao
+    abstract fun redFlagDao(): RedFlagDao
+    abstract fun peerSupportDao(): PeerSupportDao
+    abstract fun thoughtLabDao(): ThoughtLabDao
     abstract fun aiMessageDao(): AiMessageDao
     abstract fun journalDao(): JournalDao
     abstract fun soltarSettingsDao(): SoltarSettingsDao
+    abstract fun timeCapsuleDao(): TimeCapsuleDao
 
     companion object {
         @Volatile
@@ -59,7 +69,6 @@ abstract class AdrianaDatabase : RoomDatabase() {
                         db.execSQL("ALTER TABLE soltar_settings ADD COLUMN userPasswordHash TEXT NOT NULL DEFAULT ''")
                     }
                 })
-                .fallbackToDestructiveMigration(true)
                 .build()
                 INSTANCE = instance
                 instance

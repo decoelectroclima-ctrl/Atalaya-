@@ -2,7 +2,47 @@ package com.example.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
+@Entity(tableName = "trigger_events")
+data class TriggerEventEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestamp: Long = System.currentTimeMillis(),
+    val context: String, // "trabajo", "social", "solo", "redes", etc.
+    val trigger: String,
+    val emotion: String,
+    val note: String = ""
+)
+
+@Serializable
+@Entity(tableName = "red_flags")
+data class RedFlagEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val reason: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@Serializable
+@Entity(tableName = "peer_support_posts")
+data class PeerSupportPostEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val likes: Int = 0
+)
+
+@Serializable
+@Entity(tableName = "thought_lab_entries")
+data class ThoughtLabEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val originalThought: String,
+    val distortionType: String,
+    val reframedThought: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@Serializable
 @Entity(tableName = "daily_checkins")
 data class CheckinEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -25,6 +65,7 @@ data class CheckinEntity(
     val note: String = ""
 )
 
+@Serializable
 @Entity(tableName = "urge_episodes")
 data class UrgeEpisodeEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -44,6 +85,7 @@ data class UrgeEpisodeEntity(
     val learning: String = ""
 )
 
+@Serializable
 @Entity(tableName = "thought_laboratory")
 data class ThoughtEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -60,6 +102,7 @@ data class ThoughtEntity(
     val isClosed: Boolean = true
 )
 
+@Serializable
 @Entity(tableName = "relationship_audits")
 data class RelationshipAuditEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -72,6 +115,7 @@ data class RelationshipAuditEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(tableName = "idealization_antidotes")
 data class IdealizationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -80,6 +124,7 @@ data class IdealizationEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(tableName = "unsent_letters")
 data class UnsentLetterEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -91,6 +136,7 @@ data class UnsentLetterEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(tableName = "memory_bank")
 data class MemoryBankEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -101,6 +147,7 @@ data class MemoryBankEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(tableName = "behavioral_experiments")
 data class ExperimentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -113,6 +160,7 @@ data class ExperimentEntity(
     val completedAt: Long? = null
 )
 
+@Serializable
 @Entity(tableName = "identity_goals")
 data class IdentityGoalEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -127,6 +175,7 @@ data class IdentityGoalEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(tableName = "relapse_logs")
 data class RelapseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -140,6 +189,7 @@ data class RelapseEntity(
     val learning: String
 )
 
+@Serializable
 @Entity(tableName = "personal_journal")
 data class JournalEntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -154,6 +204,7 @@ data class JournalEntryEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
 @Entity(tableName = "ai_messages")
 data class AiMessageEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -164,6 +215,18 @@ data class AiMessageEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
+@Entity(tableName = "time_capsules")
+data class TimeCapsuleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val content: String,
+    val unlockAtTimestamp: Long, // Fecha prevista de desbloqueo
+    val createdAt: Long = System.currentTimeMillis(),
+    val isUnlocked: Boolean = false
+)
+
+@Serializable
 @Entity(tableName = "soltar_settings")
 data class SoltarSettingsEntity(
     @PrimaryKey val id: Int = 1,

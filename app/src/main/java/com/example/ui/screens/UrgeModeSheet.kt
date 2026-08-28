@@ -258,6 +258,38 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
             }
         }
 
+        // Red Flags Reminder during Urge / SOS
+        val redFlags by viewModel.redFlags.collectAsState()
+        if (redFlags.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = UrgeAlertBackground),
+                border = androidx.compose.foundation.BorderStroke(1.dp, UrgeAlertRed.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Flag, contentDescription = null, tint = UrgeAlertRed, modifier = Modifier.size(18.dp))
+                        Text("Tus Red Flags (Recuerda por qué saliste)", style = MaterialTheme.typography.titleSmall, color = UrgeAlertRed, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    redFlags.take(4).forEach { flag ->
+                        Text(
+                            text = "• ${flag.reason}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         // Support Network Quick Access
         val settings by viewModel.settings.collectAsState()
         val context = LocalContext.current

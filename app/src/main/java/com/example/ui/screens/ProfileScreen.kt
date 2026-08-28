@@ -1602,9 +1602,38 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Reiniciar historial del chat IA", color = SoltarAmber, fontSize = 13.sp)
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    Spacer(modifier = Modifier.height(10.dp))
+                    
+                    OutlinedButton(
+                        onClick = { /* TODO: Implement Export Logic */ },
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SoltarBorder)
+                    ) {
+                        Text("Exportar mis datos de forma segura")
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = { /* TODO: Implement Import Logic */ },
+                        modifier = Modifier.fillMaxWidth().height(44.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SoltarBorder)
+                    ) {
+                        Text("Importar mis datos")
+                    }
+                }
+            }
+        }
+        
+        // ... dialog placeholder or something ...
+        
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                     Button(
                         onClick = { showResetConfirmDialog = true },
                         modifier = Modifier.fillMaxWidth().height(44.dp),
@@ -1616,7 +1645,6 @@ fun ProfileScreen(
                         Text("Borrar todos los datos locales", color = UrgeAlertRed, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
-            }
         }
 
         // Footer Version
@@ -1630,10 +1658,11 @@ fun ProfileScreen(
                 Surface(
                     color = SoltarSurfaceHighlight,
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, SoltarBorder)
+                    border = BorderStroke(1.dp, SoltarBorder),
+                    modifier = Modifier.clickable { viewModel.toggleFounderExperience(true) }
                 ) {
                     Text(
-                        text = "ADRIANA v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
+                        text = "Atalaya v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})",
                         style = MaterialTheme.typography.labelSmall,
                         color = SoltarAmber,
                         fontWeight = FontWeight.Medium,

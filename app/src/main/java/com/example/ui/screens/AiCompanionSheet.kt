@@ -79,7 +79,7 @@ fun AiCompanionDialog(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "COACH ADRIANA",
+                            text = "COACH ATALAYA",
                             style = MaterialTheme.typography.titleSmall,
                             color = SoltarAmber,
                             fontWeight = FontWeight.Bold,

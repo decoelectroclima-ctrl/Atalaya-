@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 data class SoltarWidgetConfig(
     val quoteSource: String = SOURCE_PROFILE,
     val customMantra: String = "",
+    val themeMode: String = THEME_DARK, // "DARK", "LIGHT", "AUTO"
     val showDaysCounter: Boolean = true,
     val showFrameworkBadge: Boolean = true,
     val showPhaseBadge: Boolean = true,
@@ -23,6 +24,10 @@ data class SoltarWidgetConfig(
         const val SOURCE_PSYCHOLOGY = "PSYCHOLOGY"
         const val SOURCE_CATHOLIC = "CATHOLIC"
         const val SOURCE_CUSTOM = "CUSTOM"
+
+        const val THEME_DARK = "DARK"
+        const val THEME_LIGHT = "LIGHT"
+        const val THEME_AUTO = "AUTO"
     }
 }
 
@@ -43,6 +48,8 @@ object SoltarWidgetConfigManager {
             quoteSource = prefs.getString("${p}quote_source", SoltarWidgetConfig.SOURCE_PROFILE)
                 ?: SoltarWidgetConfig.SOURCE_PROFILE,
             customMantra = prefs.getString("${p}custom_mantra", "") ?: "",
+            themeMode = prefs.getString("${p}theme_mode", SoltarWidgetConfig.THEME_DARK)
+                ?: SoltarWidgetConfig.THEME_DARK,
             showDaysCounter = prefs.getBoolean("${p}show_days", true),
             showFrameworkBadge = prefs.getBoolean("${p}show_framework_badge", true),
             showPhaseBadge = prefs.getBoolean("${p}show_phase_badge", true),
@@ -63,6 +70,7 @@ object SoltarWidgetConfigManager {
         prefs.edit()
             .putString("${p}quote_source", config.quoteSource)
             .putString("${p}custom_mantra", config.customMantra)
+            .putString("${p}theme_mode", config.themeMode)
             .putBoolean("${p}show_days", config.showDaysCounter)
             .putBoolean("${p}show_framework_badge", config.showFrameworkBadge)
             .putBoolean("${p}show_phase_badge", config.showPhaseBadge)
@@ -83,6 +91,7 @@ object SoltarWidgetConfigManager {
         prefs.edit()
             .remove("${p}quote_source")
             .remove("${p}custom_mantra")
+            .remove("${p}theme_mode")
             .remove("${p}show_days")
             .remove("${p}show_framework_badge")
             .remove("${p}show_phase_badge")
