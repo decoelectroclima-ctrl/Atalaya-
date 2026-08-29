@@ -191,7 +191,8 @@ data class RelapseEntity(
     val thought: String,
     val behavior: String,
     val consequence: String,
-    val learning: String
+    val learning: String,
+    val isRestartingFromZero: Boolean = false
 )
 
 @Serializable

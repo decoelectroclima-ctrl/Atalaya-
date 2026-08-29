@@ -81,6 +81,9 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                 var days = 14
                 var userName = "Viajero"
                 var framework = SoltarFramework.PSICOLOGIA_MODERNA
+                var appThemeMode = "LIGHT"
+
+                val config = SoltarWidgetConfigManager.loadConfig(context, appWidgetId)
 
                 try {
                     val db = AdrianaDatabase.getDatabase(context)
@@ -96,8 +99,25 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                         } catch (_: Exception) {
                             SoltarFramework.PSICOLOGIA_MODERNA
                         }
+                        if (settings.themeMode.isNotBlank()) {
+                            appThemeMode = settings.themeMode
+                        }
                     }
                 } catch (_: Exception) {}
+
+                val isDark = when (config.themeMode) {
+                    SoltarWidgetConfig.THEME_DARK -> true
+                    SoltarWidgetConfig.THEME_LIGHT -> false
+                    else -> appThemeMode.equals("DARK", ignoreCase = true)
+                }
+
+                val bgRes = if (isDark) R.drawable.widget_background_dark else R.drawable.widget_background_light
+                val alphaVal = when (config.backgroundTransparency) {
+                    SoltarWidgetConfig.BG_SOLID -> 1.0f
+                    SoltarWidgetConfig.BG_SEMI -> 0.75f
+                    SoltarWidgetConfig.BG_TRANSPARENT -> 0.4f
+                    else -> 1.0f
+                }
 
                 val phaseBadge = when {
                     days < 7 -> "⚡ Desintoxicación"
@@ -122,6 +142,21 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                 val quote = quoteList[quoteIndex]
 
                 val views = RemoteViews(context.packageName, R.layout.widget_soltar_layout).apply {
+                    setInt(R.id.widget_root, "setBackgroundResource", bgRes)
+                    setFloat(R.id.widget_root, "setAlpha", alphaVal)
+
+                    val daysCountColor = if (isDark) android.graphics.Color.parseColor("#F8FAFC") else android.graphics.Color.parseColor("#0F172A")
+                    val primaryTextColor = if (isDark) android.graphics.Color.parseColor("#F8FAFC") else android.graphics.Color.parseColor("#0F172A")
+                    val secondaryTextColor = if (isDark) android.graphics.Color.parseColor("#94A3B8") else android.graphics.Color.parseColor("#475569")
+                    val amberColor = if (isDark) android.graphics.Color.parseColor("#E5A93C") else android.graphics.Color.parseColor("#B45309")
+
+                    setTextColor(R.id.widget_title, amberColor)
+                    setTextColor(R.id.widget_framework_badge, amberColor)
+                    setTextColor(R.id.widget_days_count, daysCountColor)
+                    setTextColor(R.id.widget_days_label, primaryTextColor)
+                    setTextColor(R.id.widget_days_subtext, secondaryTextColor)
+                    setTextColor(R.id.widget_quote_text, secondaryTextColor)
+
                     setTextViewText(R.id.widget_days_count, days.toString())
                     setTextViewText(R.id.widget_phase_badge, phaseBadge)
                     setTextViewText(R.id.widget_framework_badge, frameworkBadgeText)

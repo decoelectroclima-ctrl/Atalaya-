@@ -328,6 +328,87 @@ fun WidgetConfigureScreen(
                 }
             }
 
+            // Theme and Transparency Configuration Card
+            Card(
+                colors = CardDefaults.cardColors(containerColor = soltarColors.surface),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, soltarColors.borderSubtle)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Tune, contentDescription = null, tint = soltarColors.amber)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Tema y Transparencia del Widget",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = soltarColors.textPrimary
+                        )
+                    }
+
+                    Text(
+                        "Adapta el fondo y el color según el modo oscuro o luz de la app:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = soltarColors.textSecondary
+                    )
+
+                    Text("Tema visual:", style = MaterialTheme.typography.labelSmall, color = soltarColors.amber, fontWeight = FontWeight.Bold)
+                    val themes = listOf(
+                        SoltarWidgetConfig.THEME_AUTO to "🌓 Automático (según app / dispositivo)",
+                        SoltarWidgetConfig.THEME_DARK to "🌙 Modo Oscuro",
+                        SoltarWidgetConfig.THEME_LIGHT to "☀️ Modo Luz / Normal"
+                    )
+                    themes.forEach { (key, label) ->
+                        val isSelected = config.themeMode == key
+                        Surface(
+                            onClick = { config = config.copy(themeMode = key) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) soltarColors.amber.copy(alpha = 0.15f) else soltarColors.surfaceElevated,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) soltarColors.amber else soltarColors.borderSubtle),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = isSelected, onClick = { config = config.copy(themeMode = key) }, colors = RadioButtonDefaults.colors(selectedColor = soltarColors.amber))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(label, style = MaterialTheme.typography.bodySmall, color = if (isSelected) soltarColors.amber else soltarColors.textPrimary, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Fondo y Transparencia:", style = MaterialTheme.typography.labelSmall, color = soltarColors.amber, fontWeight = FontWeight.Bold)
+                    val transps = listOf(
+                        SoltarWidgetConfig.BG_SOLID to "⬛ Opaco Sólido (fondo completo)",
+                        SoltarWidgetConfig.BG_SEMI to "🌫️ Semitransparente (translúcido)",
+                        SoltarWidgetConfig.BG_TRANSPARENT to "🫥 Transparente (minimalista)"
+                    )
+                    transps.forEach { (key, label) ->
+                        val isSelected = config.backgroundTransparency == key
+                        Surface(
+                            onClick = { config = config.copy(backgroundTransparency = key) },
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) soltarColors.amber.copy(alpha = 0.15f) else soltarColors.surfaceElevated,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) soltarColors.amber else soltarColors.borderSubtle),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(selected = isSelected, onClick = { config = config.copy(backgroundTransparency = key) }, colors = RadioButtonDefaults.colors(selectedColor = soltarColors.amber))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(label, style = MaterialTheme.typography.bodySmall, color = if (isSelected) soltarColors.amber else soltarColors.textPrimary, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                            }
+                        }
+                    }
+                }
+            }
+
             // 3. Metrics & Visibility Toggles
             Card(
                 colors = CardDefaults.cardColors(containerColor = soltarColors.surface),
@@ -502,6 +583,23 @@ fun WidgetLivePreviewCard(
 ) {
     val soltarColors = LocalSoltarColors.current
 
+    val isDark = when (config.themeMode) {
+        SoltarWidgetConfig.THEME_DARK -> true
+        SoltarWidgetConfig.THEME_LIGHT -> false
+        else -> true
+    }
+
+    val bgColor = if (isDark) Color(0xFF16181F) else Color(0xFFFFFFFF)
+    val alphaVal = when (config.backgroundTransparency) {
+        SoltarWidgetConfig.BG_SOLID -> 1.0f
+        SoltarWidgetConfig.BG_SEMI -> 0.85f
+        SoltarWidgetConfig.BG_TRANSPARENT -> 0.5f
+        else -> 1.0f
+    }
+    val primaryTextColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+    val secondaryTextColor = if (isDark) Color(0xFF94A3B8) else Color(0xFF475569)
+    val amberColor = if (isDark) Color(0xFFE5A93C) else Color(0xFFB45309)
+
     val phaseBadge = when {
         days < 7 -> "⚡ Desintox"
         days < 30 -> "🛡️ Soberanía"
@@ -531,8 +629,8 @@ fun WidgetLivePreviewCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF161412))
-            .border(1.5.dp, soltarColors.amber.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+            .background(bgColor.copy(alpha = alphaVal))
+            .border(1.5.dp, amberColor.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
             .padding(14.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -543,7 +641,7 @@ fun WidgetLivePreviewCard(
             ) {
                 Text(
                     "ADRIANA",
-                    color = soltarColors.amber,
+                    color = amberColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
@@ -551,13 +649,13 @@ fun WidgetLivePreviewCard(
 
                 if (config.showFrameworkBadge) {
                     Surface(
-                        color = Color(0xFF2A241E),
+                        color = if (isDark) Color(0xFF2A241E) else Color(0xFFF1F5F9),
                         shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Text(
                             frameworkText,
-                            color = soltarColors.amber,
+                            color = amberColor,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -567,13 +665,13 @@ fun WidgetLivePreviewCard(
 
                 if (config.showPhaseBadge) {
                     Surface(
-                        color = Color(0xFF222620),
+                        color = if (isDark) Color(0xFF222620) else Color(0xFFDCFCE7),
                         shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Text(
                             phaseBadge,
-                            color = soltarColors.sage,
+                            color = if (isDark) soltarColors.sage else Color(0xFF15803D),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -583,7 +681,7 @@ fun WidgetLivePreviewCard(
 
                 if (config.showConfigureButton) {
                     Surface(
-                        color = Color(0xFF2A241E),
+                        color = if (isDark) Color(0xFF2A241E) else Color(0xFFF1F5F9),
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
@@ -604,7 +702,7 @@ fun WidgetLivePreviewCard(
                 ) {
                     Text(
                         "$days",
-                        color = Color.White,
+                        color = primaryTextColor,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -612,14 +710,14 @@ fun WidgetLivePreviewCard(
                     Column {
                         Text(
                             if (days == 1) "DÍA DE SOBERANÍA" else "DÍAS DE SOBERANÍA",
-                            color = Color.White,
+                            color = primaryTextColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                         if (config.showSubtext) {
                             Text(
                                 "$userName • Autonomía y Paz",
-                                color = Color(0xFFAAAAAA),
+                                color = secondaryTextColor,
                                 fontSize = 10.sp
                             )
                         }
@@ -631,7 +729,7 @@ fun WidgetLivePreviewCard(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 sampleQuote,
-                color = Color(0xFFCCCCCC),
+                color = secondaryTextColor,
                 fontSize = 10.sp,
                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                 maxLines = 2
@@ -660,34 +758,34 @@ fun WidgetLivePreviewCard(
                     if (config.showCoachButton) {
                         Button(
                             onClick = {},
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A241E)),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF2A241E) else Color(0xFFF1F5F9)),
                             contentPadding = PaddingValues(0.dp),
                             shape = RoundedCornerShape(6.dp),
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         ) {
-                            Text("💬 Coach", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = soltarColors.amber)
+                            Text("💬 Coach", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = amberColor)
                         }
                     }
                     if (config.showJournalButton) {
                         Button(
                             onClick = {},
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A241E)),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF2A241E) else Color(0xFFF1F5F9)),
                             contentPadding = PaddingValues(0.dp),
                             shape = RoundedCornerShape(6.dp),
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         ) {
-                            Text("📖 Diario", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("📖 Diario", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = primaryTextColor)
                         }
                     }
                     if (config.showCheckinButton) {
                         Button(
                             onClick = {},
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A241E)),
+                            colors = ButtonDefaults.buttonColors(containerColor = if (isDark) Color(0xFF2A241E) else Color(0xFFF1F5F9)),
                             contentPadding = PaddingValues(0.dp),
                             shape = RoundedCornerShape(6.dp),
                             modifier = Modifier.weight(1f).fillMaxHeight()
                         ) {
-                            Text("✨ Check-in", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = soltarColors.sage)
+                            Text("✨ Check-in", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = if (isDark) soltarColors.sage else Color(0xFF15803D))
                         }
                     }
                 }

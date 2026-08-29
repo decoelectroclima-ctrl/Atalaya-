@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.audio.SoltarSoundManager
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RelapseDialog(
@@ -103,6 +107,92 @@ fun RelapseDialog(
                                 color = TextSecondary,
                                 lineHeight = 18.sp
                             )
+                        }
+                    }
+                }
+
+                // Date and Perspective Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, SoltarBorder)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            text = "Fecha y Perspectiva del Suceso",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        val dateFormat = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("es", "ES")) }
+                        val currentDateStr = dateFormat.format(Date(uiState.relapseTimestamp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(text = "Cuándo ocurrió:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text(text = currentDateStr, style = MaterialTheme.typography.bodyMedium, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                OutlinedButton(
+                                    onClick = { viewModel.setRelapseTimestamp(System.currentTimeMillis()) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Ahora", fontSize = 11.sp)
+                                }
+                                OutlinedButton(
+                                    onClick = { viewModel.setRelapseTimestamp(System.currentTimeMillis() - 24L * 3600 * 1000) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Ayer", fontSize = 11.sp)
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(color = SoltarBorderSubtle)
+
+                        Text(
+                            text = "¿Cómo sentiste esta recaída en tu proceso?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = !uiState.relapseIsRestarting,
+                                onClick = { viewModel.setRelapseIsRestarting(false) }
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column(modifier = Modifier.clickable { viewModel.setRelapseIsRestarting(false) }) {
+                                Text(text = "Tropiezo consciente (Reafirma evolución)", style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                                Text(text = "No reinicia el contador. Es un punto a tener en cuenta para aprender.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = uiState.relapseIsRestarting,
+                                onClick = { viewModel.setRelapseIsRestarting(true) }
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column(modifier = Modifier.clickable { viewModel.setRelapseIsRestarting(true) }) {
+                                Text(text = "Siento que volví a cero (Reiniciar contador)", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                                Text(text = "Reiniciar la fecha de inicio del contacto cero.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            }
                         }
                     }
                 }

@@ -84,6 +84,9 @@ data class SoltarUiState(
     val isMemoryModalVisible: Boolean = false,
     val isTimeCapsuleModalVisible: Boolean = false,
     val isEncounterSimulatorVisible: Boolean = false,
+    val isWisdomLibraryVisible: Boolean = false,
+    val isClosingRitualVisible: Boolean = false,
+    val isVoluntaryExitVisible: Boolean = false,
     val isNeedHelpSheetVisible: Boolean = false,
     val isFounderExperienceVisible: Boolean = false,
     val isConversationAnalyzerVisible: Boolean = false,
@@ -140,6 +143,8 @@ data class SoltarUiState(
     val relapseBehaviorInput: String = "",
     val relapseConsequenceInput: String = "",
     val relapseLearningInput: String = "",
+    val relapseTimestamp: Long = System.currentTimeMillis(),
+    val relapseIsRestarting: Boolean = false,
     
     // AI Chat Inputs
     val aiInputMessage: String = "",
@@ -928,6 +933,8 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun setRelapseBehavior(t: String) = _uiState.update { it.copy(relapseBehaviorInput = t) }
     fun setRelapseConsequence(t: String) = _uiState.update { it.copy(relapseConsequenceInput = t) }
     fun setRelapseLearning(t: String) = _uiState.update { it.copy(relapseLearningInput = t) }
+    fun setRelapseTimestamp(ts: Long) = _uiState.update { it.copy(relapseTimestamp = ts) }
+    fun setRelapseIsRestarting(isRestarting: Boolean) = _uiState.update { it.copy(relapseIsRestarting = isRestarting) }
 
     fun saveRelapseLog() {
         val s = _uiState.value
@@ -935,18 +942,23 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.saveRelapse(
                 RelapseEntity(
+                    timestamp = s.relapseTimestamp,
                     whatHappened = s.relapseWhatHappenedInput,
                     trigger = s.relapseTriggerInput,
                     emotion = s.relapseEmotionInput,
                     thought = s.relapseThoughtInput,
                     behavior = s.relapseBehaviorInput,
                     consequence = s.relapseConsequenceInput,
-                    learning = s.relapseLearningInput.ifBlank { "Una recaída no borra mi progreso, me da información sobre mis detonantes." }
+                    learning = s.relapseLearningInput.ifBlank { "Una recaída no borra mi progreso, me da información sobre mis detonantes." },
+                    isRestartingFromZero = s.relapseIsRestarting
                 )
             )
-            // Reset no-contact timestamp with compassion
-            val current = settings.value ?: SoltarSettingsEntity()
-            repository.saveSettings(current.copy(breakupDateTimestamp = System.currentTimeMillis()))
+            
+            // Only update breakup date/counter if user explicitly chose to restart counter
+            if (s.relapseIsRestarting) {
+                val current = settings.value ?: SoltarSettingsEntity()
+                repository.saveSettings(current.copy(breakupDateTimestamp = s.relapseTimestamp))
+            }
 
             _uiState.update {
                 it.copy(
@@ -957,11 +969,13 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     relapseBehaviorInput = "",
                     relapseConsequenceInput = "",
                     relapseLearningInput = "",
+                    relapseTimestamp = System.currentTimeMillis(),
+                    relapseIsRestarting = false,
                     isRelapseModalVisible = false
                 )
             }
             playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
-            showNotification("🤝 Registro completado sin juicios. Tu dignidad sigue intacta y volvemos a empezar.")
+            showNotification("🤝 Registro completado sin juicios. Tu proceso y tu dignidad siguen intactos.")
             com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())
         }
     }
@@ -1003,13 +1017,18 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     // AI Engine exposed for Encounter Simulator
     suspend fun sendEncounterMessage(message: String, history: List<Pair<String, String>>, scenario: String): SoltarAiResponse {
-        val systemInstruction = "Actúa como el personaje en el siguiente escenario: $scenario. Mantén un tono realista, no diagnóstico, y practica la comunicación saludable."
-        return SoltarAiEngine.generateResponse(message, history, SoltarFramework.PSICOLOGIA_MODERNA, SoltarUserContext(), systemInstruction = systemInstruction)
+        val userCtx = buildUserPersonalizationContext()
+        val journals = journalEntries.value.take(3).joinToString("\n") { "- ${it.title}: ${it.content.take(200)}" }
+        val systemInstruction = "Actúa como la expareja del usuario en el escenario: '$scenario'. Utiliza estrictamente el contexto de la relación, los patrones emocionales y las notas del diario del usuario:\n$journals\nMantén un tono realista, no diagnóstico, constructivo y basado en los límites sanos."
+        return SoltarAiEngine.generateResponse(message, history, userCtx.framework, userCtx, systemInstruction = systemInstruction)
     }
     
     fun toggleMemoryModal(visible: Boolean) = _uiState.update { it.copy(isMemoryModalVisible = visible) }
     fun toggleTimeCapsuleModal(visible: Boolean) = _uiState.update { it.copy(isTimeCapsuleModalVisible = visible) }
     fun toggleEncounterSimulator(visible: Boolean) = _uiState.update { it.copy(isEncounterSimulatorVisible = visible) }
+    fun toggleWisdomLibraryDialog(visible: Boolean) = _uiState.update { it.copy(isWisdomLibraryVisible = visible) }
+    fun toggleClosingRitualDialog(visible: Boolean) = _uiState.update { it.copy(isClosingRitualVisible = visible) }
+    fun toggleVoluntaryExitDialog(visible: Boolean) = _uiState.update { it.copy(isVoluntaryExitVisible = visible) }
     
     fun saveTimeCapsule(title: String, content: String, unlockAt: Long) {
         viewModelScope.launch {

@@ -863,6 +863,63 @@ fun ProfileScreen(
                 }
             }
         }
+
+        // --- Ceremonias y Sabiduría (C4/C5/D3) ---
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("ceremonies_wisdom_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Sabiduría, Rituales y Cierre",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.toggleWisdomLibraryDialog(true) },
+                        modifier = Modifier.fillMaxWidth().testTag("open_wisdom_library_button"),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.MenuBook, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Biblioteca de Sabiduría Viva (C4)", color = TextPrimary)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.toggleClosingRitualDialog(true) },
+                        modifier = Modifier.fillMaxWidth().testTag("open_closing_ritual_button"),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.SelfImprovement, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Ritual de Cierre Guiado (C5)", color = TextPrimary)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = { viewModel.toggleVoluntaryExitDialog(true) },
+                        modifier = Modifier.fillMaxWidth().testTag("voluntary_exit_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = UrgeAlertRed.copy(alpha = 0.2f))
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = UrgeAlertRed, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cerrar mi proceso y concluir (D3)", color = UrgeAlertRed, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
         
         // --- Info Aplicación ---
         item {

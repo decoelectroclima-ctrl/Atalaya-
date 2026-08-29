@@ -456,6 +456,27 @@ class MainActivity : ComponentActivity() {
                             onDismiss = { viewModel.closeConversationAnalyzer() }
                         )
                     }
+
+                    if (uiState.isWisdomLibraryVisible) {
+                        com.example.ui.dialogs.WisdomLibraryDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleWisdomLibraryDialog(false) }
+                        )
+                    }
+
+                    if (uiState.isClosingRitualVisible) {
+                        com.example.ui.dialogs.ClosingRitualDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleClosingRitualDialog(false) }
+                        )
+                    }
+
+                    if (uiState.isVoluntaryExitVisible) {
+                        com.example.ui.dialogs.VoluntaryExitDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleVoluntaryExitDialog(false) }
+                        )
+                    }
                 }
             }
         }

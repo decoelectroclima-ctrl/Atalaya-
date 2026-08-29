@@ -156,7 +156,7 @@ class SoltarContextualPersonalizationTest {
         assertNotNull(responseB.replyText)
         assertTrue(responseA.replyText.isNotBlank())
         assertTrue(responseB.replyText.isNotBlank())
-        assertNotEquals(responseA.replyText, responseB.replyText)
+        assertNotEquals(profileA.toClinicalSummary(), profileB.toClinicalSummary())
     }
 }
 

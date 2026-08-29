@@ -18,8 +18,11 @@ android {
     applicationId = "com.aistudio.atalaya.kxmpzq"
     minSdk = 24
     targetSdk = 36
-    versionCode = 50
-    versionName = "50.0"
+    versionCode = 55
+    versionName = "55.0"
+
+    val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: ""
+    buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

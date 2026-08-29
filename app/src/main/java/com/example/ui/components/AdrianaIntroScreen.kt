@@ -3,6 +3,7 @@ package com.example.ui.components
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -42,8 +44,11 @@ import kotlin.math.sin
 @Composable
 fun AdrianaIntroScreen(
     onAnimationFinished: () -> Unit = {},
+    onInteract: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var hasInteracted by remember { mutableStateOf(false) }
+
     // Entrance animation for brand text
     val brandAlpha = remember { Animatable(0f) }
     val brandOffsetY = remember { Animatable(20f) }
@@ -90,11 +95,13 @@ fun AdrianaIntroScreen(
         label = "halo_alpha"
     )
 
-    LaunchedEffect(Unit) {
-        // Play heartbeat thuds in sync with the visual loading animation cycles
-        while (true) {
-            SoltarSoundManager.playSound(SoltarSoundManager.SoundType.HEARTBEAT)
-            delay(1450)
+    LaunchedEffect(hasInteracted) {
+        if (!hasInteracted) {
+            // Play heartbeat thuds in sync with the visual loading animation cycles
+            while (true) {
+                SoltarSoundManager.playSound(SoltarSoundManager.SoundType.HEARTBEAT)
+                delay(1450)
+            }
         }
     }
 
@@ -125,6 +132,14 @@ fun AdrianaIntroScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        hasInteracted = true
+                        onInteract()
+                    }
+                )
+            }
             .background(
                 Brush.radialGradient(
                     colors = listOf(bgCenter, bgMid, bgEdge),

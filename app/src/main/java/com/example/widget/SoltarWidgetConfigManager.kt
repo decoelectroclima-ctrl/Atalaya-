@@ -6,7 +6,8 @@ import android.content.SharedPreferences
 data class SoltarWidgetConfig(
     val quoteSource: String = SOURCE_PROFILE,
     val customMantra: String = "",
-    val themeMode: String = THEME_DARK, // "DARK", "LIGHT", "AUTO"
+    val themeMode: String = THEME_AUTO, // "AUTO", "DARK", "LIGHT"
+    val backgroundTransparency: String = BG_SOLID, // "SOLID", "SEMI", "TRANSPARENT"
     val showDaysCounter: Boolean = true,
     val showFrameworkBadge: Boolean = true,
     val showPhaseBadge: Boolean = true,
@@ -25,9 +26,13 @@ data class SoltarWidgetConfig(
         const val SOURCE_CATHOLIC = "CATHOLIC"
         const val SOURCE_CUSTOM = "CUSTOM"
 
+        const val THEME_AUTO = "AUTO"
         const val THEME_DARK = "DARK"
         const val THEME_LIGHT = "LIGHT"
-        const val THEME_AUTO = "AUTO"
+
+        const val BG_SOLID = "SOLID"
+        const val BG_SEMI = "SEMI"
+        const val BG_TRANSPARENT = "TRANSPARENT"
     }
 }
 
@@ -42,14 +47,26 @@ object SoltarWidgetConfigManager {
 
     fun loadConfig(context: Context, appWidgetId: Int): SoltarWidgetConfig {
         val prefs = getPrefs(context)
-        val p = "$PREFIX_KEY${appWidgetId}_"
+        val specificPrefix = "$PREFIX_KEY${appWidgetId}_"
+        val defaultPrefix = "${PREFIX_KEY}default_"
+
+        // Check if specific config exists, otherwise fall back to default
+        val p = if (appWidgetId != android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID && appWidgetId > 0 && prefs.contains("${specificPrefix}theme_mode")) {
+            specificPrefix
+        } else if (prefs.contains("${defaultPrefix}theme_mode")) {
+            defaultPrefix
+        } else {
+            specificPrefix // fallback
+        }
 
         return SoltarWidgetConfig(
             quoteSource = prefs.getString("${p}quote_source", SoltarWidgetConfig.SOURCE_PROFILE)
                 ?: SoltarWidgetConfig.SOURCE_PROFILE,
             customMantra = prefs.getString("${p}custom_mantra", "") ?: "",
-            themeMode = prefs.getString("${p}theme_mode", SoltarWidgetConfig.THEME_DARK)
-                ?: SoltarWidgetConfig.THEME_DARK,
+            themeMode = prefs.getString("${p}theme_mode", SoltarWidgetConfig.THEME_AUTO)
+                ?: SoltarWidgetConfig.THEME_AUTO,
+            backgroundTransparency = prefs.getString("${p}bg_transparency", SoltarWidgetConfig.BG_SOLID)
+                ?: SoltarWidgetConfig.BG_SOLID,
             showDaysCounter = prefs.getBoolean("${p}show_days", true),
             showFrameworkBadge = prefs.getBoolean("${p}show_framework_badge", true),
             showPhaseBadge = prefs.getBoolean("${p}show_phase_badge", true),
@@ -65,12 +82,26 @@ object SoltarWidgetConfigManager {
 
     fun saveConfig(context: Context, appWidgetId: Int, config: SoltarWidgetConfig) {
         val prefs = getPrefs(context)
-        val p = "$PREFIX_KEY${appWidgetId}_"
+        val specificPrefix = "$PREFIX_KEY${appWidgetId}_"
+        val defaultPrefix = "${PREFIX_KEY}default_"
 
-        prefs.edit()
-            .putString("${p}quote_source", config.quoteSource)
+        val editor = prefs.edit()
+
+        // Save to specific appWidgetId if valid
+        if (appWidgetId != android.appwidget.AppWidgetManager.INVALID_APPWIDGET_ID && appWidgetId > 0) {
+            savePrefix(editor, specificPrefix, config)
+        }
+        // Always save to default as well so app-wide customizations apply globally
+        savePrefix(editor, defaultPrefix, config)
+
+        editor.apply()
+    }
+
+    private fun savePrefix(editor: SharedPreferences.Editor, p: String, config: SoltarWidgetConfig) {
+        editor.putString("${p}quote_source", config.quoteSource)
             .putString("${p}custom_mantra", config.customMantra)
             .putString("${p}theme_mode", config.themeMode)
+            .putString("${p}bg_transparency", config.backgroundTransparency)
             .putBoolean("${p}show_days", config.showDaysCounter)
             .putBoolean("${p}show_framework_badge", config.showFrameworkBadge)
             .putBoolean("${p}show_phase_badge", config.showPhaseBadge)
@@ -81,7 +112,6 @@ object SoltarWidgetConfigManager {
             .putBoolean("${p}show_journal", config.showJournalButton)
             .putBoolean("${p}show_checkin", config.showCheckinButton)
             .putBoolean("${p}show_configure", config.showConfigureButton)
-            .apply()
     }
 
     fun deleteConfig(context: Context, appWidgetId: Int) {
@@ -92,6 +122,7 @@ object SoltarWidgetConfigManager {
             .remove("${p}quote_source")
             .remove("${p}custom_mantra")
             .remove("${p}theme_mode")
+            .remove("${p}bg_transparency")
             .remove("${p}show_days")
             .remove("${p}show_framework_badge")
             .remove("${p}show_phase_badge")
