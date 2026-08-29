@@ -28,7 +28,7 @@ import androidx.room.migration.Migration
         SoltarSettingsEntity::class,
         TimeCapsuleEntity::class
     ],
-    version = 18,
+    version = 23,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -62,13 +62,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                     AdrianaDatabase::class.java,
                     "adriana_database"
                 )
-                .addMigrations(object : Migration(9, 10) {
-                    override fun migrate(db: SupportSQLiteDatabase) {
-                        db.execSQL("ALTER TABLE soltar_settings ADD COLUMN isLoggedIn INTEGER NOT NULL DEFAULT 0")
-                        db.execSQL("ALTER TABLE soltar_settings ADD COLUMN userEmail TEXT NOT NULL DEFAULT ''")
-                        db.execSQL("ALTER TABLE soltar_settings ADD COLUMN userPasswordHash TEXT NOT NULL DEFAULT ''")
-                    }
-                })
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance

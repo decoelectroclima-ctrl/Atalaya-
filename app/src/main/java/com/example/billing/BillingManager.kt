@@ -59,12 +59,24 @@ class BillingManager(
             .setProductList(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId("premium_subscription")
+                        .setProductId("premium_weekly")
                         .setProductType(BillingClient.ProductType.SUBS)
                         .build(),
                     QueryProductDetailsParams.Product.newBuilder()
                         .setProductId("atalaya_pro_monthly")
                         .setProductType(BillingClient.ProductType.SUBS)
+                        .build(),
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId("premium_annual")
+                        .setProductType(BillingClient.ProductType.SUBS)
+                        .build(),
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId("program_6_months")
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build(),
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId("lifetime_access")
+                        .setProductType(BillingClient.ProductType.INAPP)
                         .build()
                 )
             )
@@ -73,7 +85,7 @@ class BillingManager(
         billingClient.queryProductDetailsAsync(queryProductDetailsParams) { billingResult, productDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList.isNotEmpty()) {
                 _premiumProductDetails.update { productDetailsList[0] }
-                Log.d(TAG, "Loaded product details: ${productDetailsList[0].name}")
+                Log.d(TAG, "Loaded product details count: ${productDetailsList.size}")
             } else {
                 Log.d(TAG, "Product details query response: ${billingResult.responseCode}")
             }
@@ -81,23 +93,42 @@ class BillingManager(
     }
 
     fun queryExistingPurchases() {
-        val params = QueryPurchasesParams.newBuilder()
+        // Query subscriptions
+        val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        billingClient.queryPurchasesAsync(params) { billingResult, purchasesList ->
+        billingClient.queryPurchasesAsync(subsParams) { billingResult, purchasesList ->
+            var hasActive = false
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                var hasActiveSubscription = false
                 for (purchase in purchasesList) {
                     if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-                        hasActiveSubscription = true
+                        hasActive = true
                         if (!purchase.isAcknowledged) {
                             acknowledgePurchase(purchase)
                         }
                     }
                 }
-                _isPremium.update { hasActiveSubscription }
-                Log.d(TAG, "Active subscriptions query: hasActive=$hasActiveSubscription (${purchasesList.size} found)")
+            }
+
+            // Also query INAPP for lifetime / 6 months
+            val inappParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+
+            billingClient.queryPurchasesAsync(inappParams) { inappResult, inappPurchasesList ->
+                if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    for (purchase in inappPurchasesList) {
+                        if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                            hasActive = true
+                            if (!purchase.isAcknowledged) {
+                                acknowledgePurchase(purchase)
+                            }
+                        }
+                    }
+                }
+                _isPremium.update { hasActive }
+                Log.d(TAG, "Active purchases query: hasActive=$hasActive")
             }
         }
     }

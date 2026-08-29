@@ -56,6 +56,11 @@ data class CheckinEntity(
     val rumination: Float = 0f,
     val urgeToContact: Float = 0f,
     val autonomy: Float = 5f,
+    val emotionalState: String = "Neutral",
+    val predominantEmotion: String = "Nostalgia",
+    val firstThoughts: String = "",
+    val trigger: String = "",
+    val comparisonWithYesterday: String = "Igual",
     val focusBodyAction: String = "",
     val focusBodyDone: Boolean = false,
     val focusSelfAction: String = "",
@@ -269,5 +274,42 @@ data class SoltarSettingsEntity(
     val reminderMinute: Int = 0,
     val lastMilestoneCelebrated: Int = 0,
     val inactivityAlertsEnabled: Boolean = true,
-    val lastInactivityNoticeSentTimestamp: Long = 0L
-)
+    val lastInactivityNoticeSentTimestamp: Long = 0L,
+    // Contextual Profile (Mi situación)
+    val relDuration: String = "6_12_MESES", 
+    val hasChildren: Boolean = false,
+    val contactType: String = "CONTACTO_CERO_REAL", 
+    val breakupSituation: String = "RUPTURA_RECIENTE", 
+    val practicals: String = "", 
+    val timeSinceBreakup: String = "1_3_meses",
+    val previousBreakupsCount: Int = 0,
+    val cohabitation: Boolean = false,
+    val marriedOrEngaged: Boolean = false,
+    val anticipatedGrief: String = "NO",
+    val inevitableContact: Boolean = false,
+    val childrenContactFrequency: String = "OCASIONAL",
+    val childrenCohabitation: String = "NO_CONVIVENCIA",
+    val parentalOnlyCommunication: Boolean = true,
+    val emotionalSituation: String = "ansiedad, echo de menos",
+    val decisionMaker: String = "OTRA_PERSONA",
+    val breakupReason: String = "desgaste",
+    val freeHistoryNotes: String = ""
+) {
+    fun toClinicalContextSummary(): String {
+        return """
+            • Duración de la relación: ${relDuration.replace("_", " ")}
+            • Tiempo desde la ruptura: ${timeSinceBreakup.replace("_", " ")}
+            • Rupturas previas / Reconciliaciones: $previousBreakupsCount
+            • Convivencia previa: ${if (cohabitation) "Sí" else "No"} | Casados/Comprometidos: ${if (marriedOrEngaged) "Sí" else "No"}
+            • Situación actual: ${breakupSituation.replace("_", " ")}
+            • Duelo anticipado (duelo previo a la ruptura): ${anticipatedGrief.replace("_", " ")}
+            • Hijos en común: ${if (hasChildren) "Sí (Contacto inevitable: ${if (inevitableContact) "Sí" else "No"}, Frecuencia: $childrenContactFrequency, Comunicación: ${if (parentalOnlyCommunication) "Exclusivamente parental" else "Emocionalmente activa"})" else "No"}
+            • Tipo de contacto actual: ${contactType.replace("_", " ")} (Nota: Contacto cero adaptativo cuando hay vínculos inevitables: eliminar contacto emocional innecesario, mantener comunicación funcional imprescindible).
+            • Situación emocional: $emotionalSituation
+            • Quién decidió la ruptura: ${decisionMaker.replace("_", " ")}
+            • Motivo / Contexto: ${breakupReason.replace("_", " ")}
+            • Factores prácticos: ${practicals.ifBlank { "Ninguno" }}
+            • Notas libres del usuario: ${freeHistoryNotes.ifBlank { "Ninguna" }}
+        """.trimIndent()
+    }
+}

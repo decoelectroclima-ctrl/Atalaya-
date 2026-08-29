@@ -325,6 +325,29 @@ object SoltarNotificationHelper {
 
             val selectedQuote = quotesList.random()
 
+            var adaptiveQuote = selectedQuote
+            var adaptiveTitle = title
+            try {
+                val db = AdrianaDatabase.getDatabase(context)
+                val latestCheckin = db.checkinDao().getLatestCheckin()
+                if (latestCheckin != null) {
+                    when {
+                        latestCheckin.comparisonWithYesterday.contains("Mejor", true) || latestCheckin.urgeToContact <= 3f -> {
+                            adaptiveTitle = "🌿 ADRIANA • Seguimiento Emocional (Progreso)"
+                            adaptiveQuote = "¿Cómo estás hoy? Queremos ver si esa calma que estabas recuperando sigue ahí."
+                        }
+                        latestCheckin.urgeToContact > 5f || latestCheckin.comparisonWithYesterday.contains("Peor", true) -> {
+                            adaptiveTitle = "🛡️ ADRIANA • Seguimiento Emocional (Contención)"
+                            adaptiveQuote = "¿Cómo estás hoy? ¿Ha vuelto ese impulso de contactar? Detente un instante antes de actuar."
+                        }
+                        else -> {
+                            adaptiveTitle = "🧠 ADRIANA • Check-in Emocional Diario"
+                            adaptiveQuote = "¿Cómo te encuentras hoy emocionalmente? Registra tu evolución en 1 minuto."
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+
             // Main Tap Intent -> Open Check-in (Inicio)
             val mainIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -375,17 +398,17 @@ object SoltarNotificationHelper {
 
             val notification = NotificationCompat.Builder(context, CHANNEL_DAILY)
                 .setSmallIcon(R.drawable.ic_stat_soltar)
-                .setContentTitle(title)
-                .setContentText(selectedQuote)
+                .setContentTitle(adaptiveTitle)
+                .setContentText(adaptiveQuote)
                 .setStyle(
                     NotificationCompat.BigTextStyle()
-                        .bigText("$selectedQuote\n\n$userName, honra hoy tu camino de autonomía y paz.")
+                        .bigText("$adaptiveQuote\n\n$userName, pulsa para completar tu check-in emocional rápido.")
                 )
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .setContentIntent(mainPendingIntent)
+                .addAction(0, "✨ Check-in Rápido", mainPendingIntent)
                 .addAction(0, "💬 Coach", coachPendingIntent)
-                .addAction(0, "📖 Diario", journalPendingIntent)
                 .addAction(0, "🚨 SOS", sosPendingIntent)
                 .build()
 

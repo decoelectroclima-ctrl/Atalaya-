@@ -87,6 +87,14 @@ data class SoltarUiState(
     val isNeedHelpSheetVisible: Boolean = false,
     val isFounderExperienceVisible: Boolean = false,
     val isConversationAnalyzerVisible: Boolean = false,
+    val isEmotionalCheckinVisible: Boolean = false,
+    val checkinStateInput: String = "Neutral",
+    val checkinFirstThoughtsInput: String = "",
+    val checkinUrgeInput: Float = 2f,
+    val checkinPredominantEmotionInput: String = "Nostalgia",
+    val checkinTriggerInput: String = "",
+    val checkinComparisonInput: String = "Igual",
+    val checkinFreeNoteInput: String = "",
     
     // Thought Laboratory Inputs
     val thoughtOriginalInput: String = "",
@@ -151,7 +159,7 @@ data class SoltarUiState(
 
     // Paywall & Monetization
     val isPaywallVisible: Boolean = false,
-    val selectedSubscriptionPlan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ONE_TIME,
+    val selectedSubscriptionPlan: SubscriptionPlan = SubscriptionPlan.MONTHLY,
     val isProcessingPayment: Boolean = false,
 
     // Support Network Contact Editor Dialog
@@ -358,11 +366,117 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         setThemeMode(if (isDarkMode) "DARK" else "LIGHT")
     }
 
+    fun updateRelationshipContext(
+        relDuration: String,
+        timeSinceBreakup: String,
+        previousBreakupsCount: Int,
+        cohabitation: Boolean,
+        marriedOrEngaged: Boolean,
+        breakupSituation: String,
+        anticipatedGrief: String,
+        hasChildren: Boolean,
+        inevitableContact: Boolean,
+        childrenContactFrequency: String,
+        childrenCohabitation: String,
+        parentalOnlyCommunication: Boolean,
+        contactType: String,
+        emotionalSituation: String,
+        decisionMaker: String,
+        breakupReason: String,
+        practicals: String
+    ) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(
+                current.copy(
+                    relDuration = relDuration,
+                    timeSinceBreakup = timeSinceBreakup,
+                    previousBreakupsCount = previousBreakupsCount,
+                    cohabitation = cohabitation,
+                    marriedOrEngaged = marriedOrEngaged,
+                    breakupSituation = breakupSituation,
+                    anticipatedGrief = anticipatedGrief,
+                    hasChildren = hasChildren,
+                    inevitableContact = inevitableContact,
+                    childrenContactFrequency = childrenContactFrequency,
+                    childrenCohabitation = childrenCohabitation,
+                    parentalOnlyCommunication = parentalOnlyCommunication,
+                    contactType = contactType,
+                    emotionalSituation = emotionalSituation,
+                    decisionMaker = decisionMaker,
+                    breakupReason = breakupReason,
+                    practicals = practicals
+                )
+            )
+            showNotification("✅ Perfil contextual actualizado correctamente.")
+            playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
+        }
+    }
+
     fun setOnboardingCompleted(completed: Boolean) {
         viewModelScope.launch {
             val current = settings.value ?: SoltarSettingsEntity()
             repository.saveSettings(current.copy(onboardingCompleted = completed))
             _uiState.update { it.copy(isOnboardingVisible = !completed) }
+        }
+    }
+
+    fun completeOnboardingFlow(
+        userName: String,
+        userEmail: String,
+        relDuration: String,
+        timeSinceBreakup: String,
+        hasChildren: Boolean,
+        contactType: String,
+        framework: SoltarFramework,
+        breakupSituation: String,
+        anticipatedGrief: String,
+        emotionalSituation: String,
+        decisionMaker: String,
+        breakupReason: String,
+        freeHistoryNotes: String,
+        cohabitation: Boolean,
+        marriedOrEngaged: Boolean,
+        previousBreakupsCount: Int
+    ) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val recentList = current.recentCardIds.split(",").filter { it.isNotBlank() }
+            val newCard = WisdomBank.getRandomCard(framework, recentList)
+            val updatedRecent = (recentList + newCard.id).takeLast(5).joinToString(",")
+
+            repository.saveSettings(
+                current.copy(
+                    userName = if (userName.isNotBlank()) userName else "Viajero",
+                    userEmail = userEmail,
+                    isLoggedIn = userEmail.isNotBlank(),
+                    relDuration = relDuration,
+                    timeSinceBreakup = timeSinceBreakup,
+                    hasChildren = hasChildren,
+                    contactType = contactType,
+                    preferredFramework = framework.key,
+                    recentCardIds = updatedRecent,
+                    onboardingCompleted = true,
+                    breakupSituation = breakupSituation,
+                    anticipatedGrief = anticipatedGrief,
+                    emotionalSituation = emotionalSituation,
+                    decisionMaker = decisionMaker,
+                    breakupReason = breakupReason,
+                    freeHistoryNotes = freeHistoryNotes,
+                    cohabitation = cohabitation,
+                    marriedOrEngaged = marriedOrEngaged,
+                    previousBreakupsCount = previousBreakupsCount
+                )
+            )
+            _uiState.update {
+                it.copy(
+                    isOnboardingVisible = false,
+                    preferredFramework = framework,
+                    currentWisdomCard = newCard
+                )
+            }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            showNotification("✨ ¡Bienvenido a ADRIANA! Tu perfil y contexto han sido configurados.")
         }
     }
 
@@ -944,7 +1058,22 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             recentRelapseTriggers = recentTriggers,
             recentPatternsAudited = patternsAudited,
             activeIdentityGoals = activeGoals,
-            framework = _uiState.value.preferredFramework
+            framework = _uiState.value.preferredFramework,
+            relDuration = currentSettings?.relDuration ?: "",
+            hasChildren = currentSettings?.hasChildren ?: false,
+            contactType = currentSettings?.contactType ?: "",
+            breakupSituation = currentSettings?.breakupSituation ?: "",
+            practicals = currentSettings?.practicals ?: "",
+            timeSinceBreakup = currentSettings?.timeSinceBreakup ?: "",
+            previousBreakupsCount = currentSettings?.previousBreakupsCount ?: 0,
+            cohabitation = currentSettings?.cohabitation ?: false,
+            marriedOrEngaged = currentSettings?.marriedOrEngaged ?: false,
+            anticipatedGrief = currentSettings?.anticipatedGrief ?: "",
+            parentalOnlyCommunication = currentSettings?.parentalOnlyCommunication ?: true,
+            emotionalSituation = currentSettings?.emotionalSituation ?: "",
+            decisionMaker = currentSettings?.decisionMaker ?: "",
+            breakupReason = currentSettings?.breakupReason ?: "",
+            freeHistoryNotes = currentSettings?.freeHistoryNotes ?: ""
         )
     }
 
@@ -1295,7 +1424,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     // ==========================================
     // MONETIZATION, SUBSCRIPTION & PAYWALL
     // ==========================================
-    fun openPaywall(plan: SubscriptionPlan = SubscriptionPlan.PREMIUM_ONE_TIME) {
+    fun openPaywall(plan: SubscriptionPlan = SubscriptionPlan.MONTHLY) {
         _uiState.update {
             it.copy(
                 isPaywallVisible = true,
@@ -1342,7 +1471,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             val expiry = System.currentTimeMillis() + (7L * 24 * 3600 * 1000)
             repository.saveSettings(
                 current.copy(
-                    subscriptionTier = "PREMIUM_ONE_TIME",
+                    subscriptionTier = "atalaya_pro_monthly",
                     isTrialActive = true,
                     subscriptionExpiryTimestamp = expiry
                 )
@@ -1376,7 +1505,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 // Update local settings if needed based on billing result
                 viewModelScope.launch {
                     val current = settings.value ?: SoltarSettingsEntity()
-                    repository.saveSettings(current.copy(subscriptionTier = "PREMIUM_ONE_TIME"))
+                    repository.saveSettings(current.copy(subscriptionTier = "atalaya_pro_monthly"))
                 }
             }
             showNotification(message)
@@ -1400,6 +1529,27 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleReminderTimeDialog(show: Boolean) {
         _uiState.update { it.copy(isTimePickerDialogVisible = show) }
         playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+    }
+
+    fun updateRelationshipContext(
+        relDuration: String,
+        hasChildren: Boolean,
+        contactType: String,
+        breakupSituation: String,
+        practicals: String
+    ) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            repository.saveSettings(
+                current.copy(
+                    relDuration = relDuration,
+                    hasChildren = hasChildren,
+                    contactType = contactType,
+                    breakupSituation = breakupSituation,
+                    practicals = practicals
+                )
+            )
+        }
     }
 
     fun setReminderHourInput(hour: Int) {
@@ -1589,6 +1739,43 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun removeRelationshipAudit(id: Long) {
         viewModelScope.launch {
             repository.deleteRelationshipAudit(id)
+        }
+    }
+    // --------------------------
+
+    // --- Emotional Check-in ---
+    fun openEmotionalCheckin() = _uiState.update { it.copy(isEmotionalCheckinVisible = true) }
+    fun closeEmotionalCheckin() = _uiState.update { it.copy(isEmotionalCheckinVisible = false) }
+    fun updateCheckinState(state: String) = _uiState.update { it.copy(checkinStateInput = state) }
+    fun updateCheckinFirstThoughts(text: String) = _uiState.update { it.copy(checkinFirstThoughtsInput = text) }
+    fun updateCheckinUrge(urge: Float) = _uiState.update { it.copy(checkinUrgeInput = urge) }
+    fun updateCheckinPredominantEmotion(emotion: String) = _uiState.update { it.copy(checkinPredominantEmotionInput = emotion) }
+    fun updateCheckinTrigger(trigger: String) = _uiState.update { it.copy(checkinTriggerInput = trigger) }
+    fun updateCheckinComparison(comparison: String) = _uiState.update { it.copy(checkinComparisonInput = comparison) }
+    fun updateCheckinFreeNote(note: String) = _uiState.update { it.copy(checkinFreeNoteInput = note) }
+
+    fun saveEmotionalCheckin() {
+        val state = _uiState.value
+        val dateKey = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        viewModelScope.launch {
+            repository.saveCheckin(
+                CheckinEntity(
+                    dateKey = dateKey,
+                    emotionalState = state.checkinStateInput,
+                    firstThoughts = state.checkinFirstThoughtsInput,
+                    urgeToContact = state.checkinUrgeInput,
+                    predominantEmotion = state.checkinPredominantEmotionInput,
+                    trigger = state.checkinTriggerInput,
+                    comparisonWithYesterday = state.checkinComparisonInput,
+                    note = state.checkinFreeNoteInput
+                )
+            )
+            _uiState.update {
+                it.copy(
+                    isEmotionalCheckinVisible = false,
+                    notificationMessage = "✨ Check-in emocional guardado con éxito. Evolución registrada."
+                )
+            }
         }
     }
     // --------------------------

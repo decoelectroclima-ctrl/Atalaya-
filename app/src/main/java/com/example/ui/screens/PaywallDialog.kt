@@ -126,14 +126,15 @@ fun PaywallDialog(
                 // Plan Selector Cards
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Plan Premium
-                    PlanCard(
-                        plan = SubscriptionPlan.PREMIUM_ONE_TIME,
-                        isSelected = uiState.selectedSubscriptionPlan == SubscriptionPlan.PREMIUM_ONE_TIME,
-                        onSelect = { viewModel.selectSubscriptionPlan(SubscriptionPlan.PREMIUM_ONE_TIME) }
-                    )
+                    SubscriptionPlan.entries.filter { it != SubscriptionPlan.FREE }.forEach { plan ->
+                        PlanCard(
+                            plan = plan,
+                            isSelected = uiState.selectedSubscriptionPlan == plan,
+                            onSelect = { viewModel.selectSubscriptionPlan(plan) }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

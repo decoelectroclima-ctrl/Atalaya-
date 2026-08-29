@@ -16,12 +16,42 @@ enum class SubscriptionPlan(
         periodLabel = "Para siempre",
         billingDetail = "Acceso esencial a herramientas de contención y contador diario"
     ),
-    PREMIUM_ONE_TIME(
-        tierKey = "PREMIUM_ONE_TIME",
-        title = "ADRIANA Premium",
-        priceDisplay = "19,99 €",
+    WEEKLY(
+        tierKey = "premium_weekly",
+        title = "Plan Semanal",
+        priceDisplay = "6,99 €",
+        periodLabel = "por semana",
+        billingDetail = "Acceso completo ilimitado, renovable semanalmente. Cancela cuando quieras."
+    ),
+    MONTHLY(
+        tierKey = "atalaya_pro_monthly",
+        title = "Plan Mensual",
+        priceDisplay = "10,99 €",
+        periodLabel = "por mes",
+        billingDetail = "Acceso completo ilimitado, renovable mensualmente. Cancela en Google Play.",
+        trialDays = 7
+    ),
+    ANNUAL(
+        tierKey = "premium_annual",
+        title = "Plan Anual",
+        priceDisplay = "39,99 €",
+        periodLabel = "por año",
+        billingDetail = "Equivalente a 3,33 €/mes. El compromiso más sólido con tu recuperación.",
+        savingsBadge = "AHORRO 70%"
+    ),
+    PROGRAM_6_MONTHS(
+        tierKey = "program_6_months",
+        title = "Programa 6 Meses",
+        priceDisplay = "34,99 €",
         periodLabel = "pago único",
-        billingDetail = "Acceso completo de por vida a todas las herramientas, sonidos y chat avanzado."
+        billingDetail = "Acceso guiado especial de 6 meses sin renovaciones automáticas."
+    ),
+    LIFETIME(
+        tierKey = "lifetime_access",
+        title = "Acceso de Por Vida",
+        priceDisplay = "59,99 €",
+        periodLabel = "pago único",
+        billingDetail = "Acceso definitivo e ilimitado para toda la vida a todas las actualizaciones futuras."
     )
 }
 
@@ -40,11 +70,15 @@ data class UserEntitlements(
         fun fromSettings(settings: SoltarSettingsEntity?): UserEntitlements {
             val tierKey = settings?.subscriptionTier ?: "FREE"
             val isTrial = settings?.isTrialActive == true
-            val isPrem = tierKey == "PREMIUM_ONE_TIME" || isTrial
+            val isPrem = tierKey != "FREE" || isTrial
 
             val plan = when (tierKey) {
-                "PREMIUM_ONE_TIME" -> SubscriptionPlan.PREMIUM_ONE_TIME
-                else -> SubscriptionPlan.FREE
+                "premium_weekly" -> SubscriptionPlan.WEEKLY
+                "atalaya_pro_monthly" -> SubscriptionPlan.MONTHLY
+                "premium_annual" -> SubscriptionPlan.ANNUAL
+                "program_6_months" -> SubscriptionPlan.PROGRAM_6_MONTHS
+                "lifetime_access" -> SubscriptionPlan.LIFETIME
+                else -> if (isPrem) SubscriptionPlan.MONTHLY else SubscriptionPlan.FREE
             }
 
             return UserEntitlements(
@@ -61,3 +95,4 @@ data class UserEntitlements(
         }
     }
 }
+

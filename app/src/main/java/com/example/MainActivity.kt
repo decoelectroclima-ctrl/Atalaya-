@@ -325,6 +325,13 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    if (uiState.isEmotionalCheckinVisible) {
+                        com.example.ui.dialogs.EmotionalCheckinDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.closeEmotionalCheckin() }
+                        )
+                    }
+
                     if (uiState.isJournalModalVisible) {
                         com.example.ui.dialogs.PersonalJournalDialog(
                             viewModel = viewModel,
@@ -470,7 +477,7 @@ class MainActivity : ComponentActivity() {
                 viewModel.openJournalModal()
             }
             com.example.widget.SoltarAppWidgetProvider.ACTION_CHECKIN -> {
-                viewModel.setSelectedTab(SoltarTab.INICIO)
+                viewModel.openEmotionalCheckin()
             }
             com.example.widget.SoltarAppWidgetProvider.ACTION_COACH -> {
                 viewModel.toggleAiCompanionSheet(true)

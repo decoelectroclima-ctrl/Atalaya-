@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.audio.SoltarSoundManager
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
@@ -88,6 +89,14 @@ fun AdrianaIntroScreen(
         ),
         label = "halo_alpha"
     )
+
+    LaunchedEffect(Unit) {
+        // Play heartbeat thuds in sync with the visual loading animation cycles
+        while (true) {
+            SoltarSoundManager.playSound(SoltarSoundManager.SoundType.HEARTBEAT)
+            delay(1450)
+        }
+    }
 
     LaunchedEffect(Unit) {
         // Delay 600ms before showing brand name

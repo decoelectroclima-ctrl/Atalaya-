@@ -37,6 +37,7 @@ import com.example.data.UserEntitlements
 import com.example.ui.SoltarViewModel
 import com.example.ui.auth.AuthViewModel
 import com.example.ui.theme.*
+import com.example.ui.components.RelationshipContextSection
 
 @Composable
 fun ProfileScreen(
@@ -532,7 +533,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Button(
-                        onClick = { viewModel.openPaywall(SubscriptionPlan.PREMIUM_ONE_TIME) },
+                        onClick = { viewModel.openPaywall(SubscriptionPlan.MONTHLY) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp)
@@ -787,6 +788,92 @@ fun ProfileScreen(
         }
 
         // Sound & Preferences Settings Card
+        item {
+            RelationshipContextSection(viewModel, settings)
+        }
+
+        // --- Ayuda y contacto ---
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("help_contact_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Ayuda y contacto",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    
+                    // Reportar problema
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = Uri.parse("mailto:support@adrianaapp.com")
+                                putExtra(Intent.EXTRA_SUBJECT, "Reportar problema - ADRIANA v${BuildConfig.VERSION_NAME}")
+                            }
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Reportar un problema")
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Sugerir mejora
+                    OutlinedButton(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = Uri.parse("mailto:support@adrianaapp.com")
+                                putExtra(Intent.EXTRA_SUBJECT, "Sugerir una mejora - ADRIANA")
+                            }
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Sugerir una mejora")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Contactar soporte
+                    Button(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = Uri.parse("mailto:support@adrianaapp.com")
+                                putExtra(Intent.EXTRA_SUBJECT, "Contacto soporte - ADRIANA")
+                            }
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                    ) {
+                        Text("Contactar con soporte", color = Color.Black)
+                    }
+                }
+            }
+        }
+        
+        // --- Info Aplicación ---
+        item {
+            Text(
+                text = "Versión: ${BuildConfig.VERSION_NAME}",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+
         item {
             Card(
                 modifier = Modifier

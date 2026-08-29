@@ -9,8 +9,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
@@ -19,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -33,16 +36,15 @@ import com.example.ui.theme.*
 
 sealed class OnboardingPage {
     data object IntroHero : OnboardingPage()
+    data object AccountRegistration : OnboardingPage()
+    data object ContextCurrentSituation : OnboardingPage()
+    data object ContextDuration : OnboardingPage()
+    data object ContextTimePassed : OnboardingPage()
+    data object ContextBreakupOrigin : OnboardingPage()
+    data object ContextChildren : OnboardingPage()
+    data object ContextAnticipatedGrief : OnboardingPage()
+    data object ContextEmotionalState : OnboardingPage()
     data object FrameworkSelector : OnboardingPage()
-
-    data class Info(
-        val badge: String,
-        val title: String,
-        val subtitle: String,
-        val quote: String,
-        val icon: ImageVector,
-        val accentColor: androidx.compose.ui.graphics.Color
-    ) : OnboardingPage()
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -53,31 +55,34 @@ fun OnboardingScreen(
 ) {
     var currentStepIndex by remember { mutableStateOf(0) }
     val uiState by viewModel.uiState.collectAsState()
+
+    // Form states for 10 progressive steps
+    var userNameInput by remember { mutableStateOf("Viajero") }
+    var userEmailInput by remember { mutableStateOf("") }
+    var selectedBreakupSituation by remember { mutableStateOf("RUPTURA_RECIENTE") }
+    var selectedRelDuration by remember { mutableStateOf("6_12_MESES") }
+    var selectedTimeSinceBreakup by remember { mutableStateOf("1_3_meses") }
+    var selectedBreakupReason by remember { mutableStateOf("desgaste") }
+    var selectedDecisionMaker by remember { mutableStateOf("OTRA_PERSONA") }
+    var selectedHasChildren by remember { mutableStateOf(false) }
+    var selectedCohabitation by remember { mutableStateOf(false) }
+    var selectedAnticipatedGrief by remember { mutableStateOf("NO") }
+    var selectedEmotionalSituation by remember { mutableStateOf("ansiedad, tristeza, confusión") }
+    var selectedContactType by remember { mutableStateOf("CONTACTO_CERO_REAL") }
     var selectedFramework by remember(uiState.preferredFramework) { mutableStateOf(uiState.preferredFramework) }
 
-    val sageColor = SoltarSage
-    val terracottaColor = SoltarTerracotta
-
-    val pages: List<OnboardingPage> = remember(sageColor, terracottaColor) {
+    val pages = remember {
         listOf(
             OnboardingPage.IntroHero,
-            OnboardingPage.FrameworkSelector,
-            OnboardingPage.Info(
-                badge = "EL ANCLAJE",
-                title = "Contacto Cero: Respeto implacable a tu paz",
-                subtitle = "El contacto cero no es manipulación ni orgullo: es el tiempo biológico que tu sistema nervioso necesita para desintoxicarse de la dopamina intermitente y recuperar tu eje.",
-                quote = "«Cada hora sin ceder al impulso es una victoria que le devuelve el mando a tu futuro.»",
-                icon = Icons.Default.Shield,
-                accentColor = sageColor
-            ),
-            OnboardingPage.Info(
-                badge = "SISTEMA DE PRECISIÓN",
-                title = "Herramientas reales cuando la mente entra en pánico",
-                subtitle = "Dispones de un protocolo somático de 20 minutos para impulsos agudos, laboratorio TCC para desarmar bucles, y auditorías objetivas de la relación.",
-                quote = "«Las decisiones de tu vida las toma tu dignidad, no la desesperación del momento.»",
-                icon = Icons.Default.Psychology,
-                accentColor = terracottaColor
-            )
+            OnboardingPage.AccountRegistration,
+            OnboardingPage.ContextCurrentSituation,
+            OnboardingPage.ContextDuration,
+            OnboardingPage.ContextTimePassed,
+            OnboardingPage.ContextBreakupOrigin,
+            OnboardingPage.ContextChildren,
+            OnboardingPage.ContextAnticipatedGrief,
+            OnboardingPage.ContextEmotionalState,
+            OnboardingPage.FrameworkSelector
         )
     }
 
@@ -97,7 +102,7 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Bar with Step Counter & Skip
+            // Top Bar with Step Counter & Emergency Button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,34 +112,34 @@ fun OnboardingScreen(
             ) {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = if (isIntroPage) androidx.compose.ui.graphics.Color(0xFFEBE4DC) else SoltarSurfaceElevated,
-                    border = BorderStroke(1.dp, if (isIntroPage) androidx.compose.ui.graphics.Color(0xFFD5CDC3) else SoltarBorder)
+                    color = if (isIntroPage) Color(0xFFEBE4DC) else SoltarSurfaceElevated,
+                    border = BorderStroke(1.dp, if (isIntroPage) Color(0xFFD5CDC3) else SoltarBorder)
                 ) {
                     Text(
-                        text = "ADRIANA • ${currentStepIndex + 1}/$totalSteps",
+                        text = "ADRIANA • Paso ${currentStepIndex + 1} de $totalSteps",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isIntroPage) androidx.compose.ui.graphics.Color(0xFF8F1825) else SoltarAmber,
+                        color = if (isIntroPage) Color(0xFF8F1825) else SoltarAmber,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
                 }
 
-                if (currentStepIndex < totalSteps - 1) {
-                    TextButton(
-                        onClick = {
-                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            viewModel.setFramework(selectedFramework)
-                            viewModel.setOnboardingCompleted(true)
-                            onComplete()
-                        }
-                    ) {
-                        Text(
-                            text = "Saltar",
-                            color = if (isIntroPage) androidx.compose.ui.graphics.Color(0xFF756B6D) else TextSecondary,
-                            fontSize = 13.sp
-                        )
-                    }
+                // Emergency / Need Help button accessible during onboarding
+                TextButton(
+                    onClick = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
+                        viewModel.openNeedHelpSheet()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = UrgeAlertRed)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bolt,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Ayuda", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -150,172 +155,614 @@ fun OnboardingScreen(
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     label = "onboarding_page"
                 ) { page ->
-                    when (page) {
-                        is OnboardingPage.IntroHero -> {
-                            AdrianaIntroScreen(
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        when (page) {
+                            is OnboardingPage.IntroHero -> {
+                                AdrianaIntroScreen(
+                                    modifier = Modifier.fillMaxWidth().height(400.dp)
+                                )
+                            }
 
-                        is OnboardingPage.Info -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp)
-                            ) {
-                                Surface(
-                                    modifier = Modifier.size(90.dp),
-                                    shape = CircleShape,
-                                    color = page.accentColor.copy(alpha = 0.12f),
-                                    border = BorderStroke(1.5.dp, page.accentColor.copy(alpha = 0.5f))
+                            is OnboardingPage.AccountRegistration -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Icon(
-                                            imageVector = page.icon,
-                                            contentDescription = null,
-                                            tint = page.accentColor,
-                                            modifier = Modifier.size(42.dp)
-                                        )
+                                    Surface(
+                                        modifier = Modifier.size(72.dp),
+                                        shape = CircleShape,
+                                        color = SoltarAmber.copy(alpha = 0.12f),
+                                        border = BorderStroke(1.5.dp, SoltarAmber.copy(alpha = 0.5f))
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.Person,
+                                                contentDescription = null,
+                                                tint = SoltarAmber,
+                                                modifier = Modifier.size(36.dp)
+                                            )
+                                        }
                                     }
-                                }
 
-                                Spacer(modifier = Modifier.height(24.dp))
+                                    Spacer(modifier = Modifier.height(20.dp))
 
-                                Text(
-                                    text = page.badge,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = page.accentColor,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.4.sp
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = page.title,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 28.sp
-                                )
-
-                                Spacer(modifier = Modifier.height(14.dp))
-
-                                Text(
-                                    text = page.subtitle,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextSecondary,
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 22.sp
-                                )
-
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                Card(
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                                    border = BorderStroke(1.dp, SoltarBorder)
-                                ) {
                                     Text(
-                                        text = page.quote,
-                                        style = MaterialTheme.typography.bodySmall,
+                                        text = "REGISTRO Y PERFIL BÁSICO",
+                                        style = MaterialTheme.typography.labelMedium,
                                         color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Crea tu cuenta para comenzar con ADRIANA",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "ADRIANA requiere un registro (incluida la versión FREE) para proteger tus datos de duelo y mantener tu progreso de contacto cero de forma segura.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary,
                                         textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(16.dp),
                                         lineHeight = 20.sp
+                                    )
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    OutlinedTextField(
+                                        value = userNameInput,
+                                        onValueChange = { userNameInput = it },
+                                        label = { Text("Tu Nombre o Pseudónimo") },
+                                        modifier = Modifier.fillMaxWidth().testTag("onboarding_name_input"),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = SoltarAmber,
+                                            unfocusedBorderColor = SoltarBorder,
+                                            focusedLabelColor = SoltarAmber
+                                        ),
+                                        singleLine = true
+                                    )
+
+                                    Spacer(modifier = Modifier.height(14.dp))
+
+                                    OutlinedTextField(
+                                        value = userEmailInput,
+                                        onValueChange = { userEmailInput = it },
+                                        label = { Text("Correo electrónico (para tu cuenta)") },
+                                        modifier = Modifier.fillMaxWidth().testTag("onboarding_email_input"),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = SoltarAmber,
+                                            unfocusedBorderColor = SoltarBorder,
+                                            focusedLabelColor = SoltarAmber
+                                        ),
+                                        singleLine = true
                                     )
                                 }
                             }
-                        }
 
-                        is OnboardingPage.FrameworkSelector -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = "MARCO DE SABIDURÍA",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = SoltarAmber,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.4.sp
-                                )
+                            is OnboardingPage.ContextCurrentSituation -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "SITUACIÓN ACTUAL",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Cuál es tu situación respecto a la relación?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
 
-                                Spacer(modifier = Modifier.height(6.dp))
+                                    val situations = listOf(
+                                        "RUPTURA_RECIENTE" to "Ruptura reciente / shock emocional",
+                                        "SEPARACION_AMBIGUA" to "Separación ambigua / contacto intermitente",
+                                        "TODAVIA_JUNTOS_DESCONECTADOS" to "Todavía conviviendo / en proceso de terminar",
+                                        "PLANTEANDOSE_TERMINAR" to "Planteándose terminar la relación"
+                                    )
 
-                                Text(
-                                    text = "¿Desde qué enfoque prefieres acompañar tu proceso?",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 26.sp
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Text(
-                                    text = "Elige la perspectiva que guiará tus reflexiones diarias y las respuestas de tu coach. Podrás cambiarla cuando quieras desde tu Perfil sin afectar tu progreso.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 18.sp
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                SoltarFramework.values().forEach { framework ->
-                                    val isSelected = selectedFramework == framework
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 5.dp)
-                                            .clickable {
-                                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                                selectedFramework = framework
-                                            }
-                                            .testTag("framework_option_${framework.name.lowercase()}"),
-                                        shape = RoundedCornerShape(12.dp),
-                                        color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
-                                        border = BorderStroke(
-                                            width = if (isSelected) 1.5.dp else 1.dp,
-                                            color = if (isSelected) SoltarAmber else SoltarBorder
-                                        )
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(14.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    situations.forEach { (key, label) ->
+                                        val isSelected = selectedBreakupSituation == key
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp)
+                                                .clickable {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    selectedBreakupSituation = key
+                                                },
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) SoltarAmber else SoltarBorder)
                                         ) {
-                                            RadioButton(
-                                                selected = isSelected,
-                                                onClick = {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedBreakupSituation = key
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(selectedColor = SoltarAmber)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is OnboardingPage.ContextDuration -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "CONTEXTO DE LA RELACIÓN",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Cuánto tiempo duró la relación?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    val durations = listOf(
+                                        "MENOS_3_MESES" to "Menos de 3 meses",
+                                        "3_6_MESES" to "3 a 6 meses",
+                                        "6_12_MESES" to "6 a 12 meses",
+                                        "1_3_ANIOS" to "1 a 3 años",
+                                        "3_5_ANIOS" to "3 a 5 años",
+                                        "5_10_ANIOS" to "5 a 10 años",
+                                        "MAS_10_ANIOS" to "Más de 10 años"
+                                    )
+
+                                    durations.forEach { (key, label) ->
+                                        val isSelected = selectedRelDuration == key
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp)
+                                                .clickable {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    selectedRelDuration = key
+                                                },
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedRelDuration = key
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(selectedColor = SoltarAmber)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is OnboardingPage.ContextTimePassed -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "MOMENTO ACTUAL",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Cuánto tiempo ha pasado desde la ruptura?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    val times = listOf(
+                                        "MENOS_1_MES" to "Menos de 1 mes (Fase aguda / shock)",
+                                        "1_3_meses" to "1 a 3 meses",
+                                        "3_6_meses" to "3 a 6 meses",
+                                        "6_12_meses" to "6 a 12 meses",
+                                        "MAS_1_ANO" to "Más de 1 año",
+                                        "TODAVIA_JUNTOS" to "Todavía juntos / Proceso de separación"
+                                    )
+
+                                    times.forEach { (key, label) ->
+                                        val isSelected = selectedTimeSinceBreakup == key
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp)
+                                                .clickable {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    selectedTimeSinceBreakup = key
+                                                },
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedTimeSinceBreakup = key
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(selectedColor = SoltarAmber)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is OnboardingPage.ContextChildren -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "VÍNCULOS E HIJOS",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Tienen hijos en común u otros vínculos inevitables?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "ADRIANA adapta su protocolo si existen hijos para gestionar contacto cero funcional (estrictamente parental).",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    val options = listOf(
+                                        false to "No tenemos hijos ni vínculos inevitables",
+                                        true to "Sí, tenemos hijos u otros vínculos inevitables"
+                                    )
+
+                                    options.forEach { (value, label) ->
+                                        val isSelected = selectedHasChildren == value
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp)
+                                                .clickable {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    selectedHasChildren = value
+                                                },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(16.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedHasChildren = value
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(selectedColor = SoltarAmber)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is OnboardingPage.ContextBreakupOrigin -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "ORIGEN Y DECISIÓN",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Quién tomó la decisión de terminar y cuál fue el detonante?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Text(text = "Quién decidió:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    val decs = listOf(
+                                        "OTRA_PERSONA" to "La otra persona decidió terminar",
+                                        "YO" to "Yo tomé la decisión",
+                                        "MUTUA" to "Fue de mutuo acuerdo"
+                                    )
+                                    decs.forEach { (key, label) ->
+                                        val isSelected = selectedDecisionMaker == key
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 2.dp)
+                                                .clickable { selectedDecisionMaker = key },
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(1.dp, if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                RadioButton(selected = isSelected, onClick = { selectedDecisionMaker = key })
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(label, style = MaterialTheme.typography.bodySmall, color = if (isSelected) SoltarAmber else TextPrimary)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(text = "Motivo principal:", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    val reasons = listOf(
+                                        "desgaste" to "Desgaste y pérdida de conexión",
+                                        "infidelidad" to "Infidelidad o traición de confianza",
+                                        "distanciamiento" to "Distanciamiento gradual o proyectos distintos"
+                                    )
+                                    reasons.forEach { (key, label) ->
+                                        val isSelected = selectedBreakupReason == key
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 2.dp)
+                                                .clickable { selectedBreakupReason = key },
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(1.dp, if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                RadioButton(selected = isSelected, onClick = { selectedBreakupReason = key })
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(label, style = MaterialTheme.typography.bodySmall, color = if (isSelected) SoltarAmber else TextPrimary)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is OnboardingPage.ContextAnticipatedGrief -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "DUELO ANTICIPADO",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Empezaste a hacer el duelo antes de la ruptura formal?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    val griefs = listOf(
+                                        "NO" to "No, fue completamente inesperado",
+                                        "SI_LLEVABA_TIEMPO_DECEPCIONANDOME" to "Sí, llevaba tiempo decepcionándome o sufriendo en silencio",
+                                        "SI_ESTABA_AGOTADO" to "Sí, estaba agotado emocionalmente antes de terminar"
+                                    )
+
+                                    griefs.forEach { (key, label) ->
+                                        val isSelected = selectedAnticipatedGrief == key
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp)
+                                                .clickable { selectedAnticipatedGrief = key },
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(1.dp, if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                RadioButton(selected = isSelected, onClick = { selectedAnticipatedGrief = key })
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is OnboardingPage.ContextEmotionalState -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "ESTADO EMOCIONAL",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "¿Cómo describes tu estado emocional o lo que más necesitas ahora?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    OutlinedTextField(
+                                        value = selectedEmotionalSituation,
+                                        onValueChange = { selectedEmotionalSituation = it },
+                                        label = { Text("Ej. Ansiedad nocturna, nostalgia, ganas de escribirle, confusión...") },
+                                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = SoltarAmber,
+                                            unfocusedBorderColor = SoltarBorder,
+                                            focusedLabelColor = SoltarAmber
+                                        )
+                                    )
+                                }
+                            }
+
+                            is OnboardingPage.FrameworkSelector -> {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "MARCO DE SABIDURÍA",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.4.sp
+                                    )
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = "¿Desde qué enfoque prefieres acompañar tu proceso?",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Text(
+                                        text = "Elige la perspectiva que guiará tus reflexiones diarias y las respuestas de tu coach.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    SoltarFramework.values().forEach { framework ->
+                                        val isSelected = selectedFramework == framework
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 5.dp)
+                                                .clickable {
                                                     viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                                                     selectedFramework = framework
-                                                },
-                                                colors = RadioButtonDefaults.colors(
-                                                    selectedColor = SoltarAmber,
-                                                    unselectedColor = SoltarBorder
-                                                )
+                                                }
+                                                .testTag("framework_option_${framework.name.lowercase()}"),
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(
+                                                width = if (isSelected) 1.5.dp else 1.dp,
+                                                color = if (isSelected) SoltarAmber else SoltarBorder
                                             )
-                                            Column {
-                                                Text(
-                                                    text = framework.title,
-                                                    style = MaterialTheme.typography.titleSmall,
-                                                    color = if (isSelected) SoltarAmber else TextPrimary,
-                                                    fontWeight = FontWeight.Bold
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(14.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedFramework = framework
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(
+                                                        selectedColor = SoltarAmber,
+                                                        unselectedColor = SoltarBorder
+                                                    )
                                                 )
-                                                Text(
-                                                    text = framework.description,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = TextSecondary,
-                                                    lineHeight = 17.sp,
-                                                    fontSize = 12.sp
-                                                )
+                                                Column {
+                                                    Text(
+                                                        text = framework.title,
+                                                        style = MaterialTheme.typography.titleSmall,
+                                                        color = if (isSelected) SoltarAmber else TextPrimary,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        text = framework.description,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = TextSecondary,
+                                                        lineHeight = 17.sp,
+                                                        fontSize = 12.sp
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -348,9 +795,9 @@ fun OnboardingScreen(
                                 .clip(RoundedCornerShape(3.dp))
                                 .background(
                                     if (isCurrent) {
-                                        if (isIntroPage) androidx.compose.ui.graphics.Color(0xFF8F1825) else SoltarAmber
+                                        if (isIntroPage) Color(0xFF8F1825) else SoltarAmber
                                     } else {
-                                        if (isIntroPage) androidx.compose.ui.graphics.Color(0xFFD5CDC3) else SoltarBorder
+                                        if (isIntroPage) Color(0xFFD5CDC3) else SoltarBorder
                                     }
                                 )
                         )
@@ -362,14 +809,27 @@ fun OnboardingScreen(
                     onClick = {
                         if (currentStepIndex < totalSteps - 1) {
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            if (currentPage is OnboardingPage.FrameworkSelector) {
-                                viewModel.setFramework(selectedFramework)
-                            }
                             currentStepIndex++
                         } else {
                             viewModel.playSound(SoltarSoundManager.SoundType.WARM_CHIME)
-                            viewModel.setFramework(selectedFramework)
-                            viewModel.setOnboardingCompleted(true)
+                            viewModel.completeOnboardingFlow(
+                                userName = userNameInput,
+                                userEmail = userEmailInput,
+                                relDuration = selectedRelDuration,
+                                timeSinceBreakup = selectedTimeSinceBreakup,
+                                hasChildren = selectedHasChildren,
+                                contactType = selectedContactType,
+                                framework = selectedFramework,
+                                breakupSituation = selectedBreakupSituation,
+                                anticipatedGrief = selectedAnticipatedGrief,
+                                emotionalSituation = selectedEmotionalSituation,
+                                decisionMaker = selectedDecisionMaker,
+                                breakupReason = selectedBreakupReason,
+                                freeHistoryNotes = "",
+                                cohabitation = selectedCohabitation,
+                                marriedOrEngaged = false,
+                                previousBreakupsCount = 0
+                            )
                             onComplete()
                         }
                     },
@@ -379,7 +839,7 @@ fun OnboardingScreen(
                         .testTag("onboarding_primary_button"),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isIntroPage) androidx.compose.ui.graphics.Color(0xFF8F1825) else SoltarAmber
+                        containerColor = if (isIntroPage) Color(0xFF8F1825) else SoltarAmber
                     )
                 ) {
                     Row(
@@ -392,14 +852,14 @@ fun OnboardingScreen(
                                 currentStepIndex < totalSteps - 1 -> "Siguiente"
                                 else -> "Comenzar mi reconstrucción"
                             },
-                            color = if (isIntroPage) androidx.compose.ui.graphics.Color.White else SoltarBackground,
+                            color = if (isIntroPage) Color.White else SoltarBackground,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
-                            tint = if (isIntroPage) androidx.compose.ui.graphics.Color.White else SoltarBackground,
+                            tint = if (isIntroPage) Color.White else SoltarBackground,
                             modifier = Modifier.size(18.dp)
                         )
                     }

@@ -31,8 +31,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.SoltarSoundManager
+import com.example.data.SubscriptionPlan
+import com.example.data.UserEntitlements
 import com.example.data.WisdomBank
 import com.example.ui.SoltarViewModel
+import com.example.ui.dialogs.SemanticBellAndSoundscapesDialog
 import com.example.ui.managers.ProgressManager
 import com.example.ui.components.KintsugiHeart
 import com.example.ui.components.ProgressiveLandscape
@@ -64,6 +67,8 @@ fun TodayScreen(
 
     val noContactStart = settings?.breakupDateTimestamp ?: (currentTime - (14L * 24 * 3600 * 1000))
     val elapsedMillis = (currentTime - noContactStart).coerceAtLeast(0L)
+
+    var showSemanticBellDialog by remember { mutableStateOf(false) }
 
     val totalSeconds = elapsedMillis / 1000
     val days = totalSeconds / (24 * 3600)
@@ -101,6 +106,118 @@ fun TodayScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 KintsugiHeart(progressStage = progressStage)
                 ProgressiveLandscape(progressStage = progressStage)
+            }
+        }
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.openEmotionalCheckin()
+                    }
+                    .testTag("today_emotional_checkin_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                border = BorderStroke(1.dp, SoltarAmber)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(SoltarAmber.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Favorite, contentDescription = null, tint = SoltarAmber)
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Check-in Emocional Rápido (30-60s)",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Evalúa tu evolución, estado y detonantes de hoy.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = SoltarAmber)
+                }
+            }
+        }
+        item {
+            val settings by viewModel.settings.collectAsState()
+            val recommendation = remember(settings) {
+                com.example.ai.ContextualExperienceEngine.analyzeContext(settings)
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("contextual_recommendation_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                        Text(
+                            text = "GUÍA CONTEXTUAL • ${recommendation.profileTypeDescription.uppercase()}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SoltarAmber,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = recommendation.bannerMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = 22.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = SoltarBorderSubtle)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Column {
+                        Text(
+                            text = "Estrategia recomendada:",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = recommendation.priorityToolTitle,
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = recommendation.strategySummary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 12.sp,
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
             }
         }
         item {
@@ -399,6 +516,81 @@ fun TodayScreen(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = null,
                         tint = TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        // Semantic Bell & Calm Soundscapes (Pro Feature)
+        item {
+            val entitlements = UserEntitlements.fromSettings(settings)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        if (entitlements.isPremium) {
+                            showSemanticBellDialog = true
+                        } else {
+                            viewModel.openPaywall(SubscriptionPlan.MONTHLY)
+                        }
+                    }
+                    .testTag("semantic_bell_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, if (entitlements.isPremium) SoltarAmber else SoltarBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(SoltarAmber.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SelfImprovement,
+                            contentDescription = null,
+                            tint = SoltarAmber,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "CAMPANA & PAISAJES DE CALMA",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            if (!entitlements.isPremium) {
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = SoltarAmber.copy(alpha = 0.2f)
+                                ) {
+                                    Text("PRO", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = SoltarAmber, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                }
+                            }
+                        }
+                        Text(
+                            text = "Regulación auditiva 528Hz y entornos sonoros inmersivos",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        imageVector = if (entitlements.isPremium) Icons.Default.ChevronRight else Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = if (entitlements.isPremium) TextSecondary else SoltarAmber,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -806,6 +998,13 @@ fun TodayScreen(
                 }
             }
         }
+    }
+
+    if (showSemanticBellDialog) {
+        SemanticBellAndSoundscapesDialog(
+            viewModel = viewModel,
+            onDismiss = { showSemanticBellDialog = false }
+        )
     }
 }
 
