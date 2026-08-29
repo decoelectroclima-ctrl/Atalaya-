@@ -249,4 +249,11 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     suspend fun unlockTimeCapsule(id: Long) {
         database.timeCapsuleDao().unlockCapsule(id)
     }
+
+    // Wisdom Contributions (C4)
+    val allWisdomContributions: Flow<List<WisdomContributionEntity>> = database.wisdomContributionDao().getAllContributions()
+
+    suspend fun saveWisdomContribution(contribution: WisdomContributionEntity): Long {
+        return database.wisdomContributionDao().insertContribution(contribution)
+    }
 }

@@ -314,3 +314,15 @@ data class SoltarSettingsEntity(
         """.trimIndent()
     }
 }
+
+@Serializable
+@Entity(tableName = "wisdom_contributions")
+data class WisdomContributionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val framework: String,
+    val quote: String,
+    val author: String = "Viajero en Reconstrucción",
+    val reflection: String = "Frase compartida desde la experiencia de superación de un hito de proceso.",
+    val timestamp: Long = System.currentTimeMillis()
+)
+

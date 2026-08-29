@@ -231,6 +231,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val aiMessages: StateFlow<List<AiMessageEntity>> = repository.allAiMessages
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val wisdomContributions: StateFlow<List<WisdomContributionEntity>> = repository.allWisdomContributions
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val settings: StateFlow<SoltarSettingsEntity?> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -1040,6 +1043,18 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             )
             showNotification("⏳ Cápsula del tiempo sellada. Nos vemos en el futuro.")
+        }
+    }
+
+    fun saveWisdomContribution(framework: String, quote: String) {
+        viewModelScope.launch {
+            repository.saveWisdomContribution(
+                WisdomContributionEntity(
+                    framework = framework,
+                    quote = quote
+                )
+            )
+            showNotification("✨ ¡Frase guardada en tu banco personal!")
         }
     }
 

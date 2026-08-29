@@ -254,3 +254,13 @@ interface SoltarSettingsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveSettings(settings: SoltarSettingsEntity)
 }
+
+@Dao
+interface WisdomContributionDao {
+    @Query("SELECT * FROM wisdom_contributions ORDER BY timestamp DESC")
+    fun getAllContributions(): Flow<List<WisdomContributionEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertContribution(contribution: WisdomContributionEntity): Long
+}
+

@@ -32,6 +32,10 @@ import com.example.audio.SoltarSoundManager
 import com.example.data.CheckinEntity
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun ProcessScreen(
@@ -89,6 +93,41 @@ fun ProcessScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary
                 )
+                
+                val context = LocalContext.current
+                val settings by viewModel.settings.collectAsState()
+                val startTs = settings?.breakupDateTimestamp ?: (System.currentTimeMillis() - (14L * 24 * 3600 * 1000))
+                val days = ((System.currentTimeMillis() - startTs) / (24 * 3600 * 1000L)).coerceAtLeast(0L)
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = {
+                        val uri = generateShareableCardBitmap(
+                            context = context,
+                            title = "Proceso ADRIANA",
+                            subtitle = "Día $days de Reconstrucción",
+                            quote = "“La soberanía interior se construye un día a la vez.”",
+                            streakText = "Racha activa • $days días"
+                        )
+                        if (uri != null) {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "image/png"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Compartir Tarjeta de Hito ADRIANA"))
+                        } else {
+                            Toast.makeText(context, "No se pudo generar la tarjeta", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, tint = SoltarBackground)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Compartir Tarjeta de Hito (D1)", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                }
             }
         }
 
@@ -119,6 +158,48 @@ fun ProcessScreen(
                     icon = Icons.Default.Balance,
                     accentColor = SoltarSage
                 )
+            }
+        }
+
+        // C3: Linguistic Analysis Card
+        item {
+            val linguisticAnalysis by viewModel.linguisticProgress.collectAsState()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(SoltarAmber.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber)
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "ANÁLISIS LINGÜÍSTICO (C3)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SoltarAmber,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = linguisticAnalysis,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary
+                        )
+                    }
+                }
             }
         }
 
@@ -812,3 +893,81 @@ private fun EvolutionLineChart(
         drawMetricPath(dataPoints.map { it.autonomy }, autonomyColor, strokeWidth = 3f)
     }
 }
+
+fun generateShareableCardBitmap(
+    context: android.content.Context,
+    title: String,
+    subtitle: String,
+    quote: String,
+    streakText: String
+): Uri? {
+    try {
+        val width = 1080
+        val height = 1080
+        val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+
+        val paint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#1E293B")
+            style = android.graphics.Paint.Style.FILL
+        }
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+
+        paint.color = android.graphics.Color.parseColor("#F59E0B")
+        paint.strokeWidth = 12f
+        canvas.drawRect(60f, 60f, (width - 60).toFloat(), (height - 60).toFloat(), paint)
+
+        paint.color = android.graphics.Color.parseColor("#0F172A")
+        canvas.drawRect(72f, 72f, (width - 72).toFloat(), (height - 72).toFloat(), paint)
+
+        val textPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#F59E0B")
+            textSize = 52f
+            isAntiAlias = true
+            isFakeBoldText = true
+        }
+        canvas.drawText(title.uppercase(), 120f, 180f, textPaint)
+
+        textPaint.color = android.graphics.Color.parseColor("#94A3B8")
+        textPaint.textSize = 38f
+        textPaint.isFakeBoldText = false
+        canvas.drawText(streakText, 120f, 250f, textPaint)
+
+        textPaint.color = android.graphics.Color.parseColor("#FFFFFF")
+        textPaint.textSize = 56f
+        textPaint.isFakeBoldText = true
+
+        val x = 120f
+        var y = 440f
+        val maxWidth = width - 240f
+        val words = quote.split(" ")
+        var line = ""
+        for (word in words) {
+            val testLine = if (line.isEmpty()) word else "$line $word"
+            if (textPaint.measureText(testLine) > maxWidth) {
+                canvas.drawText(line, x, y, textPaint)
+                line = word
+                y += 80f
+            } else {
+                line = testLine
+            }
+        }
+        if (line.isNotEmpty()) {
+            canvas.drawText(line, x, y, textPaint)
+        }
+
+        textPaint.color = android.graphics.Color.parseColor("#F59E0B")
+        textPaint.textSize = 34f
+        canvas.drawText("• ADRIANA • Reconstrucción & Soberanía", 120f, (height - 150).toFloat(), textPaint)
+
+        val cachePath = java.io.File(context.cacheDir, "shared_card.png")
+        val stream = java.io.FileOutputStream(cachePath)
+        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+        stream.close()
+
+        return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", cachePath)
+    } catch (e: Exception) {
+        return null
+    }
+}
+

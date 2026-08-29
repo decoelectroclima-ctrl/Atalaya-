@@ -44,8 +44,11 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
     var contributedCards by remember { mutableStateOf(listOf<WisdomCard>()) }
     var successMsg by remember { mutableStateOf<String?>(null) }
 
+    val savedContributions by viewModel.wisdomContributions.collectAsState()
+
     val framework = uiState.preferredFramework
     val cards = WisdomBank.cards.filter { it.framework == framework }
+    val filteredContributions = savedContributions.filter { it.framework == framework.key }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(
@@ -81,7 +84,7 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Milestone contribution section (Viva)
+                // Milestone contribution section (Banco Personal / Vivo)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -90,14 +93,14 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = if (isMilestoneReached) "✨ Hito Alcanzado: Banco Vivo Comunitario" else "🔒 Banco Vivo Comunitario (Se desbloquea al alcanzar 30 días o 5 check-ins)",
+                            text = if (isMilestoneReached) "✨ Hito Alcanzado: Banco Personal de Sabiduría" else "🔒 Banco Personal (Se desbloquea al alcanzar 30 días o 5 check-ins)",
                             style = MaterialTheme.typography.titleSmall,
                             color = if (isMilestoneReached) SoltarAmber else TextSecondary,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Comparte una frase corta de resiliencia y claridad validada por la comunidad para otros viajeros en tu mismo estado emocional.",
+                            text = "Guarda tus propias frases de resiliencia y claridad en tu banco personal para fortalecer tu proceso de reconstrucción.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             lineHeight = 18.sp
@@ -116,23 +119,15 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                             Button(
                                 onClick = {
                                     if (contributionInput.isNotBlank()) {
-                                        val newCard = WisdomCard(
-                                            id = "community_${System.currentTimeMillis()}",
-                                            framework = framework,
-                                            title = "Aportación de Comunidad",
-                                            quote = contributionInput.trim(),
-                                            author = "Viajero en Reconstrucción",
-                                            reflection = "Frase compartida desde la experiencia de superación de un hito de proceso."
-                                        )
-                                        contributedCards = listOf(newCard) + contributedCards
+                                        viewModel.saveWisdomContribution(framework.key, contributionInput.trim())
                                         contributionInput = ""
-                                        successMsg = "✨ ¡Frase aportada y filtrada con éxito al Banco Vivo!"
+                                        successMsg = "✨ ¡Frase guardada en tu banco personal!"
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
                             ) {
-                                Text("Aportar al Banco Vivo", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                                Text("Guardar en mi Banco Personal", color = SoltarBackground, fontWeight = FontWeight.Bold)
                             }
                             successMsg?.let {
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -144,11 +139,19 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Display Community Contributed Cards
-                if (contributedCards.isNotEmpty()) {
-                    Text("Aportaciones Vivas Recientes:", style = MaterialTheme.typography.titleSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                // Display Saved Contributions from Room
+                if (filteredContributions.isNotEmpty()) {
+                    Text("Tus Aportaciones Personales Guardadas:", style = MaterialTheme.typography.titleSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
-                    contributedCards.forEach { card ->
+                    filteredContributions.forEach { item ->
+                        val card = WisdomCard(
+                            id = "saved_${item.id}",
+                            framework = framework,
+                            title = "Mi Banco Personal",
+                            quote = item.quote,
+                            author = item.author,
+                            reflection = item.reflection
+                        )
                         WisdomCardItem(card = card, context = context)
                         Spacer(modifier = Modifier.height(8.dp))
                     }
