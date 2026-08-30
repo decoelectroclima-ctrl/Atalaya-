@@ -28,6 +28,9 @@ import com.example.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
+import android.app.DatePickerDialog
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun RelapseDialog(
@@ -128,6 +131,7 @@ fun RelapseDialog(
 
                         val dateFormat = remember { SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("es", "ES")) }
                         val currentDateStr = dateFormat.format(Date(uiState.relapseTimestamp))
+                        val context = LocalContext.current
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -138,20 +142,45 @@ fun RelapseDialog(
                                 Text(text = "Cuándo ocurrió:", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 Text(text = currentDateStr, style = MaterialTheme.typography.bodyMedium, color = SoltarAmber, fontWeight = FontWeight.Bold)
                             }
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 OutlinedButton(
                                     onClick = { viewModel.setRelapseTimestamp(System.currentTimeMillis()) },
                                     shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)
                                 ) {
-                                    Text("Ahora", fontSize = 11.sp)
+                                    Text("Ahora", fontSize = 10.sp)
                                 }
                                 OutlinedButton(
                                     onClick = { viewModel.setRelapseTimestamp(System.currentTimeMillis() - 24L * 3600 * 1000) },
                                     shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)
                                 ) {
-                                    Text("Ayer", fontSize = 11.sp)
+                                    Text("Ayer", fontSize = 10.sp)
+                                }
+                                OutlinedButton(
+                                    onClick = {
+                                        val cal = Calendar.getInstance().apply { timeInMillis = uiState.relapseTimestamp }
+                                        DatePickerDialog(
+                                            context,
+                                            { _, y, m, d ->
+                                                val selectedCal = Calendar.getInstance().apply {
+                                                    set(y, m, d, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+                                                }
+                                                if (selectedCal.timeInMillis <= System.currentTimeMillis()) {
+                                                    viewModel.setRelapseTimestamp(selectedCal.timeInMillis)
+                                                }
+                                            },
+                                            cal.get(Calendar.YEAR),
+                                            cal.get(Calendar.MONTH),
+                                            cal.get(Calendar.DAY_OF_MONTH)
+                                        ).apply {
+                                            datePicker.maxDate = System.currentTimeMillis()
+                                        }.show()
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)
+                                ) {
+                                    Text("Otra fecha...", fontSize = 10.sp)
                                 }
                             }
                         }
@@ -159,39 +188,63 @@ fun RelapseDialog(
                         HorizontalDivider(color = SoltarBorderSubtle)
 
                         Text(
-                            text = "¿Cómo sentiste esta recaída en tu proceso?",
+                            text = "¿Cómo sientes que te ha dejado esto en tu proceso?",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextPrimary,
                             fontWeight = FontWeight.Medium
                         )
 
+                        // Option 1: Retroceso / Reiniciar racha
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.setRelapseInterpretation("retroceso") },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
-                                selected = !uiState.relapseIsRestarting,
-                                onClick = { viewModel.setRelapseIsRestarting(false) }
+                                selected = uiState.relapseInterpretation == "retroceso",
+                                onClick = { viewModel.setRelapseInterpretation("retroceso") }
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Column(modifier = Modifier.clickable { viewModel.setRelapseIsRestarting(false) }) {
-                                Text(text = "Tropiezo consciente (Reafirma evolución)", style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontWeight = FontWeight.Bold)
-                                Text(text = "No reinicia el contador. Es un punto a tener en cuenta para aprender.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            Column {
+                                Text(text = "Me ha hecho retroceder (Reiniciar racha)", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                                Text(text = "Siento que necesito reiniciar el contador de contacto cero desde este día.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             }
                         }
 
+                        // Option 2: Reafirmación / Tropiezo consciente
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.setRelapseInterpretation("reafirmacion") },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
-                                selected = uiState.relapseIsRestarting,
-                                onClick = { viewModel.setRelapseIsRestarting(true) }
+                                selected = uiState.relapseInterpretation == "reafirmacion",
+                                onClick = { viewModel.setRelapseInterpretation("reafirmacion") }
                             )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Column(modifier = Modifier.clickable { viewModel.setRelapseIsRestarting(true) }) {
-                                Text(text = "Siento que volví a cero (Reiniciar contador)", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
-                                Text(text = "Reiniciar la fecha de inicio del contacto cero.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            Column {
+                                Text(text = "Me ha reafirmado que hago bien en soltar", style = MaterialTheme.typography.bodySmall, color = SoltarSage, fontWeight = FontWeight.Bold)
+                                Text(text = "No reinicia la racha. Confirma que el contacto ya no aporta.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            }
+                        }
+
+                        // Option 3: Neutro / Solo registrar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.setRelapseInterpretation("neutro") },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = uiState.relapseInterpretation == "neutro",
+                                onClick = { viewModel.setRelapseInterpretation("neutro") }
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
+                                Text(text = "Neutro / Solo quiero registrarlo", style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                                Text(text = "No altera la racha de contacto cero.", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             }
                         }
                     }

@@ -66,7 +66,9 @@ fun TodayScreen(
     }
 
     val noContactStart = settings?.breakupDateTimestamp ?: (currentTime - (14L * 24 * 3600 * 1000))
+    val initialStart = settings?.initialStartDateTimestamp ?: noContactStart
     val elapsedMillis = (currentTime - noContactStart).coerceAtLeast(0L)
+    val totalAccumulatedMillis = (currentTime - initialStart).coerceAtLeast(0L)
 
     var showSemanticBellDialog by remember { mutableStateOf(false) }
 
@@ -75,6 +77,8 @@ fun TodayScreen(
     val hours = (totalSeconds % (24 * 3600)) / 3600
     val minutes = (totalSeconds % 3600) / 60
     val seconds = totalSeconds % 60
+
+    val totalAccumulatedDays = totalAccumulatedMillis / (24 * 3600 * 1000)
 
     // Milestones
     val (milestoneTitle, nextMilestoneDays, milestoneProgress) = remember(days) {
@@ -448,6 +452,15 @@ fun TodayScreen(
                         color = TextSecondary,
                         letterSpacing = 1.2.sp,
                         fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "$days días de racha actual • $totalAccumulatedDays días totales en tu proceso",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SoltarAmber,
+                        fontWeight = FontWeight.Bold
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))

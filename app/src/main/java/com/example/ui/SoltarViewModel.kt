@@ -144,7 +144,8 @@ data class SoltarUiState(
     val relapseConsequenceInput: String = "",
     val relapseLearningInput: String = "",
     val relapseTimestamp: Long = System.currentTimeMillis(),
-    val relapseIsRestarting: Boolean = false,
+    val relapseIsRestarting: Boolean = true,
+    val relapseInterpretation: String = "retroceso", // "retroceso", "reafirmacion", "neutro"
     
     // AI Chat Inputs
     val aiInputMessage: String = "",
@@ -950,6 +951,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun setRelapseLearning(t: String) = _uiState.update { it.copy(relapseLearningInput = t) }
     fun setRelapseTimestamp(ts: Long) = _uiState.update { it.copy(relapseTimestamp = ts) }
     fun setRelapseIsRestarting(isRestarting: Boolean) = _uiState.update { it.copy(relapseIsRestarting = isRestarting) }
+    fun setRelapseInterpretation(interpretation: String) {
+        val isRestarting = interpretation == "retroceso"
+        _uiState.update { it.copy(relapseInterpretation = interpretation, relapseIsRestarting = isRestarting) }
+    }
 
     fun saveRelapseLog() {
         val s = _uiState.value
@@ -965,7 +970,8 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     behavior = s.relapseBehaviorInput,
                     consequence = s.relapseConsequenceInput,
                     learning = s.relapseLearningInput.ifBlank { "Una recaída no borra mi progreso, me da información sobre mis detonantes." },
-                    isRestartingFromZero = s.relapseIsRestarting
+                    isRestartingFromZero = s.relapseIsRestarting,
+                    interpretation = s.relapseInterpretation
                 )
             )
             
@@ -985,7 +991,8 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     relapseConsequenceInput = "",
                     relapseLearningInput = "",
                     relapseTimestamp = System.currentTimeMillis(),
-                    relapseIsRestarting = false,
+                    relapseIsRestarting = true,
+                    relapseInterpretation = "retroceso",
                     isRelapseModalVisible = false
                 )
             }

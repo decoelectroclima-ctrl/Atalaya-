@@ -92,6 +92,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                     pinHash = "",
                     isLoggedIn = false,
                     breakupDateTimestamp = System.currentTimeMillis(),
+                    initialStartDateTimestamp = System.currentTimeMillis(),
                     biometricLockEnabled = false,
                     soundEnabled = true,
                     onboardingCompleted = false,

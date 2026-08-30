@@ -79,6 +79,7 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             CoroutineScope(Dispatchers.IO).launch {
                 var days = 14
+                var totalAccumulatedDays = 14
                 var userName = "Viajero"
                 var framework = SoltarFramework.PSICOLOGIA_MODERNA
                 var appThemeMode = "LIGHT"
@@ -89,8 +90,14 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                     val db = AdrianaDatabase.getDatabase(context)
                     val settings = db.soltarSettingsDao().getSettingsOnce()
                     if (settings != null) {
-                        val diffMillis = System.currentTimeMillis() - settings.breakupDateTimestamp
-                        days = (TimeUnit.MILLISECONDS.toDays(diffMillis)).coerceAtLeast(0).toInt()
+                        val currentTime = System.currentTimeMillis()
+                        val diffMillis = (currentTime - settings.breakupDateTimestamp).coerceAtLeast(0L)
+                        days = (TimeUnit.MILLISECONDS.toDays(diffMillis)).toInt()
+
+                        val initialStart = if (settings.initialStartDateTimestamp > 0) settings.initialStartDateTimestamp else settings.breakupDateTimestamp
+                        val totalDiffMillis = (currentTime - initialStart).coerceAtLeast(0L)
+                        totalAccumulatedDays = (TimeUnit.MILLISECONDS.toDays(totalDiffMillis)).toInt()
+
                         if (settings.userName.isNotBlank()) {
                             userName = settings.userName
                         }
@@ -160,8 +167,8 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                     setTextViewText(R.id.widget_days_count, days.toString())
                     setTextViewText(R.id.widget_phase_badge, phaseBadge)
                     setTextViewText(R.id.widget_framework_badge, frameworkBadgeText)
-                    setTextViewText(R.id.widget_days_label, if (days == 1) "DÍA DE SOBERANÍA" else "DÍAS DE SOBERANÍA")
-                    setTextViewText(R.id.widget_days_subtext, "$userName • Autonomía y Paz")
+                    setTextViewText(R.id.widget_days_label, "DÍAS DE RACHA ACTUAL")
+                    setTextViewText(R.id.widget_days_subtext, "$totalAccumulatedDays días totales en tu proceso • $userName")
                     setTextViewText(R.id.widget_quote_text, quote)
 
                     // 1. Root Intent -> Open MainActivity normally
