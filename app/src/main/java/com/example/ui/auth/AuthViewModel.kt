@@ -226,25 +226,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun loginAsAdmin(onResult: (Boolean, String) -> Unit) {
-        viewModelScope.launch {
-            val current = repository.getSettingsOnce() ?: SoltarSettingsEntity()
-            val salt = getOrCreateSalt()
-            val adminPinHash = hashPinWithSalt("0000", salt)
-            repository.saveSettings(
-                current.copy(
-                    userEmail = "jj.terapias@gmail.com",
-                    subscriptionTier = "lifetime_access",
-                    isLoggedIn = true,
-                    pinHash = if (current.pinHash.isBlank()) adminPinHash else current.pinHash,
-                    userName = "Administrador (JJ)"
-                )
-            )
-            _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, hasConfiguredPin = true) }
-            closeAuthDialog()
-            onResult(true, "Acceso de Administrador concedido (jj.terapias@gmail.com / PIN: 0000).")
-        }
-    }
+
 
     fun deleteAccount() {
         viewModelScope.launch {
