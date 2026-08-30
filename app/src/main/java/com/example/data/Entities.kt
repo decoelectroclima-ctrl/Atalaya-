@@ -326,3 +326,18 @@ data class WisdomContributionEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
+@Entity(tableName = "risk_dates")
+data class RiskDateEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String, // e.g. "Cumpleaños del ex", "Aniversario de relación", "San Valentín", etc.
+    val month: Int, // 1 - 12
+    val day: Int, // 1 - 31
+    val year: Int? = null,
+    val category: String = "personal", // "ex_birthday", "anniversary", "holiday", "special", "custom"
+    val customStrategy: String = "", // Pre-prepared strategy / coping plan
+    val reminderDaysBefore: Int = 7, // 5-7 days before
+    val lastNotifiedYear: Int = 0,
+    val timestamp: Long = System.currentTimeMillis()
+)
+

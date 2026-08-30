@@ -264,3 +264,18 @@ interface WisdomContributionDao {
     suspend fun insertContribution(contribution: WisdomContributionEntity): Long
 }
 
+@Dao
+interface RiskDateDao {
+    @Query("SELECT * FROM risk_dates ORDER BY month ASC, day ASC")
+    fun getAllRiskDates(): Flow<List<RiskDateEntity>>
+
+    @Query("SELECT * FROM risk_dates")
+    suspend fun getAllRiskDatesOnce(): List<RiskDateEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRiskDate(entity: RiskDateEntity): Long
+
+    @Query("DELETE FROM risk_dates WHERE id = :id")
+    suspend fun deleteRiskDate(id: Long)
+}
+

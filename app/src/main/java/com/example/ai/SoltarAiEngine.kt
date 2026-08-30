@@ -3,6 +3,7 @@ package com.example.ai
 import android.util.Log
 import com.example.BuildConfig
 import com.example.data.ClinicalKnowledgeBase
+import com.example.data.JournalEntryEntity
 import com.example.data.KnowledgeCapsule
 import com.example.data.SoltarFramework
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,8 @@ data class SoltarUserContext(
     val emotionalSituation: String = "",
     val decisionMaker: String = "",
     val breakupReason: String = "",
-    val freeHistoryNotes: String = ""
+    val freeHistoryNotes: String = "",
+    val upcomingRiskDatesSummary: String = ""
 ) {
     fun toClinicalSummary(): String {
         val parts = mutableListOf<String>()
@@ -54,6 +56,9 @@ data class SoltarUserContext(
         }
         if (activeIdentityGoals.isNotEmpty()) {
             parts.add("• Valores y objetivos de identidad trabajados: ${activeIdentityGoals.take(3).joinToString(", ")}")
+        }
+        if (upcomingRiskDatesSummary.isNotBlank()) {
+            parts.add("• FECHAS DE RIESGO ANTICIPADO PRÓXIMAS:\n$upcomingRiskDatesSummary")
         }
         // Contexto contextualizado y profundo
         parts.add("• CONTEXTO HUMANO Y DE VÍNCULO:")
@@ -86,6 +91,13 @@ data class JournalMentorshipResult(
     val corePrinciple: String,
     val socraticQuestion: String,
     val concreteAction: String
+)
+
+data class LinguisticAnalysisResult(
+    val nivelAutonomia: Int = 5,
+    val lenguajeRumiativo: Int = 5,
+    val distorsionesCognitivas: List<String> = emptyList(),
+    val cambioDesdeUltimaEntrada: String = "Registra más entradas en tu diario para activar el análisis lingüístico profundo de ADRIANA."
 )
 
 object SoltarAiEngine {
@@ -630,5 +642,160 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
             socraticQuestion = capsule.socraticPrompt,
             concreteAction = capsule.concreteAction
         )
+    }
+
+    fun analyzeJournalLocally(entries: List<JournalEntryEntity>): LinguisticAnalysisResult {
+        if (entries.isEmpty()) {
+            return LinguisticAnalysisResult(
+                nivelAutonomia = 5,
+                lenguajeRumiativo = 5,
+                distorsionesCognitivas = emptyList(),
+                cambioDesdeUltimaEntrada = "Aún no hay entradas en tu diario. Comienza a escribir para calibrar tu proceso."
+            )
+        }
+        val latest = entries.first().content.lowercase()
+        val previous = if (entries.size > 1) entries[1].content.lowercase() else ""
+
+        val posWords = listOf("yo", "puedo", "decido", "libertad", "paz", "tranquilidad", "presente", "aprender", "crecer")
+        val negWords = listOf("él", "ella", "sin", "esperando", "culpa", "nunca", "por qué", "extraño", "dependo")
+
+        val posCount = posWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
+        val negCount = negWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
+
+        val autonomia = (5 + (posCount - negCount)).coerceIn(0, 10)
+        val rumiativo = (5 + (negCount - posCount)).coerceIn(0, 10)
+
+        val distortions = mutableListOf<String>()
+        val catastrofismoKeywords = listOf("terrible", "horrible", "catástrofe", "fin del mundo", "no lo soporto", "insoportable", "ruina", "destruido")
+        val bwKeywords = listOf("todo", "nada", "nunca", "siempre", "perfecto", "pésimo", "absolutamente")
+        val personalizacionKeywords = listOf("por mi culpa", "lo hizo para", "me lo hizo", "es mi responsabilidad", "me odia")
+
+        if (catastrofismoKeywords.any { latest.contains(it) }) distortions.add("Catastrofismo")
+        if (bwKeywords.any { latest.contains(it) }) distortions.add("Pensamiento blanco/negro")
+        if (personalizacionKeywords.any { latest.contains(it) }) distortions.add("Personalización")
+
+        val cambio = if (previous.isNotBlank()) {
+            val prevPos = posWords.sumOf { word -> previous.windowed(word.length).count { it == word } }
+            if (posCount > prevPos) {
+                "Mayor sentido de agencia y autonomía respecto a tu entrada anterior."
+            } else if (posCount < prevPos) {
+                "Ligero incremento en la carga emocional o rumiación en comparación con tu registro previo."
+            } else {
+                "Estabilidad emocional y reflexiva sostenida desde tu último registro."
+            }
+        } else {
+            "Primera entrada registrada. Has dado un paso fundamental hacia la autoconsciencia."
+        }
+
+        return LinguisticAnalysisResult(
+            nivelAutonomia = autonomia,
+            lenguajeRumiativo = rumiativo,
+            distorsionesCognitivas = distortions,
+            cambioDesdeUltimaEntrada = cambio
+        )
+    }
+
+    suspend fun analyzeJournalLinguistic(
+        entries: List<JournalEntryEntity>,
+        userContext: SoltarUserContext = SoltarUserContext()
+    ): LinguisticAnalysisResult = withContext(Dispatchers.IO) {
+        if (entries.isEmpty()) {
+            return@withContext analyzeJournalLocally(entries)
+        }
+
+        val latest = entries.first().content
+        val previous = if (entries.size > 1) entries[1].content else ""
+
+        val apiKey = try {
+            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+
+        val isRobolectric = try {
+            android.os.Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
+        } catch (_: Exception) {
+            false
+        }
+
+        if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
+            try {
+                val prompt = """
+Eres el sistema de análisis lingüístico y clínico de ADRIANA. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
+Detecta con rigor clínico y devuelve un objeto JSON estricto con exactamente estas claves:
+- "nivelAutonomia" (entero de 0 a 10)
+- "lenguajeRumiativo" (entero de 0 a 10)
+- "distorsionesCognitivas" (lista de strings detectadas entre: "Catastrofismo", "Pensamiento blanco/negro", "Personalización", u otras si aparecen)
+- "cambioDesdeUltimaEntrada" (texto breve describiendo la evolución o contraste con la entrada previa).
+
+ÚLTIMA ENTRADA:
+$latest
+
+ENTRADA ANTERIOR (si existe):
+$previous
+
+Contexto del usuario:
+${userContext.toClinicalSummary()}
+
+Responde ÚNICAMENTE con el objeto JSON válido.
+                """.trimIndent()
+
+                val jsonBody = JSONObject().apply {
+                    val contents = JSONArray().apply {
+                        val partObj = JSONObject().apply {
+                            val parts = JSONArray().apply {
+                                put(JSONObject().apply { put("text", prompt) })
+                            }
+                            put("parts", parts)
+                        }
+                        put(partObj)
+                    }
+                    put("contents", contents)
+                }
+
+                val request = Request.Builder()
+                    .url(API_URL + "?key=$apiKey")
+                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
+                    .build()
+
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val bodyString = response.body?.string() ?: ""
+                    val root = JSONObject(bodyString)
+                    val candidates = root.optJSONArray("candidates")
+                    if (candidates != null && candidates.length() > 0) {
+                        val text = candidates.getJSONObject(0)
+                            .getJSONObject("content")
+                            .getJSONArray("parts")
+                            .getJSONObject(0)
+                            .getString("text")
+
+                        val cleanJson = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                        val parsed = JSONObject(cleanJson)
+                        val autonomia = parsed.optInt("nivelAutonomia", 5)
+                        val rumiativo = parsed.optInt("lenguajeRumiativo", 5)
+                        val distortionsArray = parsed.optJSONArray("distorsionesCognitivas")
+                        val distortions = mutableListOf<String>()
+                        if (distortionsArray != null) {
+                            for (i in 0 until distortionsArray.length()) {
+                                distortions.add(distortionsArray.getString(i))
+                            }
+                        }
+                        val cambio = parsed.optString("cambioDesdeUltimaEntrada", "Evolución favorable.")
+
+                        return@withContext LinguisticAnalysisResult(
+                            nivelAutonomia = autonomia,
+                            lenguajeRumiativo = rumiativo,
+                            distorsionesCognitivas = distortions,
+                            cambioDesdeUltimaEntrada = cambio
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Gemini linguistic analysis failed, falling back to local analyzer", e)
+            }
+        }
+
+        return@withContext analyzeJournalLocally(entries)
     }
 }

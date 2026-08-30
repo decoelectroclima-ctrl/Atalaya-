@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.BuildConfig
@@ -457,6 +458,11 @@ fun ProfileScreen(
                     }
                 }
             }
+        }
+
+        // Anticipated Risk Dates Calendar
+        item {
+            AnticipatedRiskDatesSection(viewModel = viewModel)
         }
 
         // Subscription & Monetization Card
@@ -1931,5 +1937,244 @@ private fun triggerSms(context: Context, phone: String) {
         context.startActivity(intent)
     } catch (e: Exception) {
         Toast.makeText(context, "No se pudo abrir la app de SMS", Toast.LENGTH_SHORT).show()
+    }
+}
+
+@Composable
+private fun AnticipatedRiskDatesSection(viewModel: SoltarViewModel) {
+    val riskDates by viewModel.riskDates.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+        border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.EventNote, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                    Text(
+                        text = "FECHAS DE RIESGO ANTICIPADO",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                IconButton(onClick = { viewModel.toggleRiskDateModal(true) }) {
+                    Icon(Icons.Default.AddCircle, contentDescription = "Añadir Fecha", tint = SoltarAmber)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Nadie avisa antes de que llegue el momento difícil. Introduce fechas clave (cumpleaños del ex, aniversario, Navidad, San Valentín). Adriana te avisará 5-7 días antes con una estrategia preparada, y el coach conocerá el contexto sin que tengas que explicarlo.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                fontSize = 12.sp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (riskDates.isEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = SoltarSurface,
+                    border = BorderStroke(1.dp, SoltarBorderSubtle)
+                ) {
+                    Text(
+                        text = "No has configurado fechas de riesgo. Toca '+' para añadir la primera (ej. Cumpleaños del ex, Aniversario).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMuted,
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for (rd in riskDates) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = SoltarSurface,
+                            border = BorderStroke(1.dp, SoltarSage.copy(alpha = 0.3f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = rd.title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Fecha: ${rd.day} de ${getMonthName(rd.month)} • Aviso previo: ${rd.reminderDaysBefore} días",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = SoltarAmber,
+                                        fontSize = 11.sp
+                                    )
+                                    if (rd.customStrategy.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "Estrategia: ${rd.customStrategy}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextSecondary,
+                                            fontSize = 11.sp,
+                                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                        )
+                                    }
+                                }
+                                IconButton(onClick = { viewModel.deleteRiskDate(rd.id) }) {
+                                    Icon(Icons.Default.DeleteOutline, contentDescription = "Eliminar", tint = UrgeAlertRed, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Dialog para Crear/Añadir Fecha de Riesgo
+    if (uiState.isRiskDateModalVisible) {
+        AlertDialog(
+            onDismissRequest = { viewModel.toggleRiskDateModal(false) },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.DateRange, contentDescription = null, tint = SoltarAmber)
+                    Text("Nueva Fecha de Riesgo Anticipado", color = TextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        "Selecciona un hito o introduce uno personalizado. Adriana se anticipará para proteger tu paz.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    // Presets
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            for (preset in listOf("Cumpleaños del ex", "Aniversario", "San Valentín")) {
+                                OutlinedButton(
+                                    onClick = { viewModel.setRiskDateTitle(preset) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SoltarAmber),
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f)),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(preset, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            for (preset in listOf("Fecha de inicio", "Navidad")) {
+                                OutlinedButton(
+                                    onClick = { viewModel.setRiskDateTitle(preset) },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = SoltarAmber),
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f)),
+                                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(preset, fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = uiState.riskDateTitleInput,
+                        onValueChange = { viewModel.setRiskDateTitle(it) },
+                        label = { Text("Título de la fecha (ej. Cumpleaños)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SoltarAmber,
+                            unfocusedBorderColor = SoltarBorder,
+                            focusedLabelColor = SoltarAmber
+                        )
+                    )
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = uiState.riskDateDayInput.toString(),
+                            onValueChange = { viewModel.setRiskDateDay(it.toIntOrNull() ?: 1) },
+                            label = { Text("Día (1-31)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = uiState.riskDateMonthInput.toString(),
+                            onValueChange = { viewModel.setRiskDateMonth(it.toIntOrNull() ?: 1) },
+                            label = { Text("Mes (1-12)") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = uiState.riskDateStrategyInput,
+                        onValueChange = { viewModel.setRiskDateStrategy(it) },
+                        label = { Text("Estrategia / Plan de contención preparado") },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Ej. Contacto cero estricto, cena con amigos, apagar móvil.") },
+                        maxLines = 3,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SoltarAmber,
+                            unfocusedBorderColor = SoltarBorder,
+                            focusedLabelColor = SoltarAmber
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.saveRiskDate() },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                ) {
+                    Text("Guardar Fecha Clave", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { viewModel.toggleRiskDateModal(false) }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+}
+
+private fun getMonthName(month: Int): String {
+    return when (month) {
+        1 -> "Enero"
+        2 -> "Febrero"
+        3 -> "Marzo"
+        4 -> "Abril"
+        5 -> "Mayo"
+        6 -> "Junio"
+        7 -> "Julio"
+        8 -> "Agosto"
+        9 -> "Septiembre"
+        10 -> "Octubre"
+        11 -> "Noviembre"
+        12 -> "Diciembre"
+        else -> "Mes $month"
     }
 }

@@ -256,4 +256,19 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     suspend fun saveWisdomContribution(contribution: WisdomContributionEntity): Long {
         return database.wisdomContributionDao().insertContribution(contribution)
     }
+
+    // Anticipated Risk Dates Calendar
+    val allRiskDates: Flow<List<RiskDateEntity>> = database.riskDateDao().getAllRiskDates()
+
+    suspend fun saveRiskDate(entity: RiskDateEntity): Long {
+        return database.riskDateDao().insertRiskDate(entity)
+    }
+
+    suspend fun deleteRiskDate(id: Long) {
+        database.riskDateDao().deleteRiskDate(id)
+    }
+
+    suspend fun getAllRiskDatesOnce(): List<RiskDateEntity> {
+        return database.riskDateDao().getAllRiskDatesOnce()
+    }
 }

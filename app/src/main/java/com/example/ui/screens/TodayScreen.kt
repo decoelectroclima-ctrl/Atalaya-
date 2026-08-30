@@ -101,6 +101,75 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
     ) {
+        // Anticipated Risk Date Proactive Banner
+        item {
+            val riskDates by viewModel.riskDates.collectAsState()
+            val nowCal = remember { Calendar.getInstance() }
+            val currentYr = nowCal.get(Calendar.YEAR)
+            
+            val upcomingRisk = remember(riskDates) {
+                riskDates.mapNotNull { rd ->
+                    val target = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, currentYr)
+                        set(Calendar.MONTH, rd.month - 1)
+                        set(Calendar.DAY_OF_MONTH, rd.day)
+                    }
+                    if (target.timeInMillis < nowCal.timeInMillis) {
+                        target.add(Calendar.YEAR, 1)
+                    }
+                    val days = ((target.timeInMillis - nowCal.timeInMillis) / (1000L * 3600 * 24)).toInt()
+                    if (days in 0..rd.reminderDaysBefore) {
+                        Triple(rd, days, target.timeInMillis)
+                    } else null
+                }.minByOrNull { it.second }
+            }
+
+            if (upcomingRisk != null) {
+                val (rd, days, _) = upcomingRisk
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                    border = BorderStroke(1.5.dp, SoltarAmber)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.WarningAmber, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(22.dp))
+                            Text(
+                                text = if (days == 0) "🚨 ALERTA • HOY ES ${rd.title.uppercase()}" else "🛡️ PREVENCIÓN DE RIESGO • ${rd.title.uppercase()} EN $days DÍAS",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = if (days == 0) "Hoy se cumple ${rd.title}. El riesgo de impulso es alto. Ya tienes preparada tu estrategia: ${rd.customStrategy.ifBlank { "Mantén contacto cero y respira." }}" else "Se acerca ${rd.title} en $days días. Nos anticipamos al momento difícil para sostener tu soberanía.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        if (rd.customStrategy.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Estrategia: ${rd.customStrategy}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = SoltarSage,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
         item {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {

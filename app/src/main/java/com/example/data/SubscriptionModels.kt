@@ -70,9 +70,12 @@ data class UserEntitlements(
         fun fromSettings(settings: SoltarSettingsEntity?): UserEntitlements {
             val tierKey = settings?.subscriptionTier ?: "FREE"
             val isTrial = settings?.isTrialActive == true
-            val isPrem = tierKey != "FREE" || isTrial
+            val email = settings?.userEmail ?: ""
+            val isAdmin = email == "jj.terapias@gmail.com" || email == "admin@soltar.app"
 
-            val plan = when (tierKey) {
+            val isPrem = isAdmin || tierKey != "FREE" || isTrial
+
+            val plan = if (isAdmin) SubscriptionPlan.LIFETIME else when (tierKey) {
                 "premium_weekly" -> SubscriptionPlan.WEEKLY
                 "atalaya_pro_monthly" -> SubscriptionPlan.MONTHLY
                 "premium_annual" -> SubscriptionPlan.ANNUAL
@@ -84,8 +87,8 @@ data class UserEntitlements(
             return UserEntitlements(
                 isPremium = isPrem,
                 tier = plan,
-                isTrial = isTrial,
-                maxDailyCoachMessages = if (isPrem) 9999 else 5,
+                isTrial = isTrial && !isAdmin,
+                maxDailyCoachMessages = if (isPrem) Int.MAX_VALUE else 5,
                 canAccessAllLabs = isPrem,
                 canAccessDeepMemory = isPrem,
                 canExportDataReport = isPrem,

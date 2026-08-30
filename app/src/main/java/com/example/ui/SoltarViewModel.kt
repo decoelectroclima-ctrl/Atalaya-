@@ -179,7 +179,15 @@ data class SoltarUiState(
     val reminderHourInput: Int = 21,
     val reminderMinuteInput: Int = 0,
     val notificationsEnabled: Boolean = true,
-    val inactivityAlertsEnabled: Boolean = true
+    val inactivityAlertsEnabled: Boolean = true,
+
+    // Anticipated Risk Dates Calendar
+    val isRiskDateModalVisible: Boolean = false,
+    val riskDateTitleInput: String = "",
+    val riskDateMonthInput: Int = 1,
+    val riskDateDayInput: Int = 1,
+    val riskDateStrategyInput: String = "",
+    val riskDateReminderDaysInput: Int = 7
 )
 
 class SoltarViewModel(application: Application) : AndroidViewModel(application) {
@@ -234,6 +242,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val wisdomContributions: StateFlow<List<WisdomContributionEntity>> = repository.allWisdomContributions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val riskDates: StateFlow<List<RiskDateEntity>> = repository.allRiskDates
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val settings: StateFlow<SoltarSettingsEntity?> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -245,6 +256,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
         loadTodayCheckin()
         observeSettings()
+        observeJournalEntriesForLinguisticAnalysis()
     }
 
     fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
@@ -991,30 +1003,19 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     // ==========================================
     // AI CHAT & MEMORY CONTROLS
-    // C3: Progreso Lingüístico
-    val linguisticProgress: StateFlow<String> = repository.allJournalEntries
-        .map { entries ->
-            if (entries.size < 3) "Necesitas registrar más entradas para ver tu evolución."
-            else {
-                val first = entries.last().content
-                val last = entries.first().content
-                // Análisis básico de palabras clave (autonomía vs dependencia)
-                val posWords = listOf("yo", "puedo", "decido", "libertad", "paz")
-                val negWords = listOf("él", "ella", "sin", "esperando", "culpa")
-                
-                fun score(text: String): Double {
-                    val words = text.lowercase().split(Regex("\\s+"))
-                    return words.count { it in posWords }.toDouble() / (words.count { it in negWords } + 1)
-                }
-                
-                val evolution = score(last) - score(first)
-                when {
-                    evolution > 0.5 -> "Has ganado mucha autonomía y perspectiva."
-                    evolution < -0.5 -> "Parece que estás en un momento de mayor dependencia o rumiación."
-                    else -> "Tu lenguaje muestra estabilidad y reflexión."
-                }
+    // C3: Progreso Lingüístico estructurado (Gemini con fallback local)
+    private val _linguisticProgress = MutableStateFlow(com.example.ai.LinguisticAnalysisResult())
+    val linguisticProgress: StateFlow<com.example.ai.LinguisticAnalysisResult> = _linguisticProgress.asStateFlow()
+
+    private fun observeJournalEntriesForLinguisticAnalysis() {
+        viewModelScope.launch {
+            repository.allJournalEntries.collect { entries ->
+                val userCtx = buildUserPersonalizationContext()
+                val result = SoltarAiEngine.analyzeJournalLinguistic(entries, userCtx)
+                _linguisticProgress.value = result
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Analizando...")
+        }
+    }
 
     fun setAiInputMessage(t: String) = _uiState.update { it.copy(aiInputMessage = t) }
 
@@ -1084,6 +1085,23 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             .map { "${it.area}: ${it.goalTitle}" }
             .take(3)
 
+        val nowCal = java.util.Calendar.getInstance()
+        val currentYr = nowCal.get(java.util.Calendar.YEAR)
+        val upcomingRiskSummary = riskDates.value.mapNotNull { rd ->
+            val target = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.YEAR, currentYr)
+                set(java.util.Calendar.MONTH, rd.month - 1)
+                set(java.util.Calendar.DAY_OF_MONTH, rd.day)
+            }
+            if (target.timeInMillis < nowCal.timeInMillis) {
+                target.add(java.util.Calendar.YEAR, 1)
+            }
+            val days = ((target.timeInMillis - nowCal.timeInMillis) / (1000L * 3600 * 24)).toInt()
+            if (days in 0..14) {
+                "• ${rd.title} en $days días (Estrategia preparada: ${rd.customStrategy.ifBlank { "Ninguna especificada" }})"
+            } else null
+        }.joinToString("\n")
+
         return SoltarUserContext(
             streakDays = diffDays,
             totalCheckins = allCheckinsList.size,
@@ -1107,7 +1125,8 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             emotionalSituation = currentSettings?.emotionalSituation ?: "",
             decisionMaker = currentSettings?.decisionMaker ?: "",
             breakupReason = currentSettings?.breakupReason ?: "",
-            freeHistoryNotes = currentSettings?.freeHistoryNotes ?: ""
+            freeHistoryNotes = currentSettings?.freeHistoryNotes ?: "",
+            upcomingRiskDatesSummary = upcomingRiskSummary
         )
     }
 
@@ -1813,4 +1832,49 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
     // --------------------------
+
+    // --- Anticipated Risk Dates Calendar ---
+    fun toggleRiskDateModal(visible: Boolean) {
+        _uiState.update { it.copy(isRiskDateModalVisible = visible) }
+    }
+
+    fun setRiskDateTitle(t: String) = _uiState.update { it.copy(riskDateTitleInput = t) }
+    fun setRiskDateMonth(m: Int) = _uiState.update { it.copy(riskDateMonthInput = m) }
+    fun setRiskDateDay(d: Int) = _uiState.update { it.copy(riskDateDayInput = d) }
+    fun setRiskDateStrategy(s: String) = _uiState.update { it.copy(riskDateStrategyInput = s) }
+    fun setRiskDateReminderDays(d: Int) = _uiState.update { it.copy(riskDateReminderDaysInput = d) }
+
+    fun saveRiskDate() {
+        val s = _uiState.value
+        if (s.riskDateTitleInput.isBlank()) {
+            showNotification("⚠️ Por favor, introduce un título para la fecha de riesgo.")
+            return
+        }
+        viewModelScope.launch {
+            repository.saveRiskDate(
+                RiskDateEntity(
+                    title = s.riskDateTitleInput.trim(),
+                    month = s.riskDateMonthInput.coerceIn(1, 12),
+                    day = s.riskDateDayInput.coerceIn(1, 31),
+                    customStrategy = s.riskDateStrategyInput.trim(),
+                    reminderDaysBefore = s.riskDateReminderDaysInput.coerceIn(1, 30)
+                )
+            )
+            _uiState.update {
+                it.copy(
+                    isRiskDateModalVisible = false,
+                    riskDateTitleInput = "",
+                    riskDateStrategyInput = ""
+                )
+            }
+            showNotification("📅 Fecha clave de riesgo anticipado guardada con éxito.")
+        }
+    }
+
+    fun deleteRiskDate(id: Long) {
+        viewModelScope.launch {
+            repository.deleteRiskDate(id)
+            showNotification("🗑️ Fecha de riesgo eliminada.")
+        }
+    }
 }

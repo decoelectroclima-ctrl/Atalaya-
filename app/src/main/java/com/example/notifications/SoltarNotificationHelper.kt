@@ -248,6 +248,41 @@ object SoltarNotificationHelper {
                     return@launch
                 }
 
+                // 1.5. Check for Anticipated Risk Dates (5-7 days before or today)
+                val riskDatesList = db.riskDateDao().getAllRiskDatesOnce()
+                val todayCal = Calendar.getInstance()
+                val currentYear = todayCal.get(Calendar.YEAR)
+                var riskDateTriggered = false
+
+                for (rd in riskDatesList) {
+                    val targetCal = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, currentYear)
+                        set(Calendar.MONTH, rd.month - 1)
+                        set(Calendar.DAY_OF_MONTH, rd.day)
+                        set(Calendar.HOUR_OF_DAY, 9)
+                        set(Calendar.MINUTE, 0)
+                    }
+                    if (targetCal.timeInMillis < todayCal.timeInMillis) {
+                        targetCal.add(Calendar.YEAR, 1)
+                    }
+                    val diffMillis = targetCal.timeInMillis - todayCal.timeInMillis
+                    val daysUntil = (diffMillis / (1000L * 3600 * 24)).toInt()
+
+                    if (daysUntil in 0..rd.reminderDaysBefore) {
+                        if (rd.lastNotifiedYear != currentYear) {
+                            sendRiskDateAnticipatedNotification(context, rd, daysUntil, framework, userName)
+                            db.riskDateDao().insertRiskDate(rd.copy(lastNotifiedYear = currentYear))
+                            riskDateTriggered = true
+                            break
+                        }
+                    }
+                }
+
+                if (riskDateTriggered) {
+                    scheduleDailyReminder(context, settings?.reminderHour ?: 21, settings?.reminderMinute ?: 0)
+                    return@launch
+                }
+
                 // 2. Check for 3+ Days Inactivity
                 val latestCheckin = db.checkinDao().getLatestCheckin()
                 val lastInactivityNotice = settings?.lastInactivityNoticeSentTimestamp ?: 0L
@@ -563,6 +598,62 @@ object SoltarNotificationHelper {
 
         try {
             NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_MILESTONE, notification)
+        } catch (_: SecurityException) {}
+    }
+
+    fun sendRiskDateAnticipatedNotification(
+        context: Context,
+        riskDate: com.example.data.RiskDateEntity,
+        daysUntil: Int,
+        framework: SoltarFramework,
+        userName: String
+    ) {
+        if (!hasNotificationPermission(context)) return
+
+        createNotificationChannels(context)
+
+        val title = if (daysUntil == 0) {
+            "🚨 ALERTA • Hoy es ${riskDate.title}"
+        } else {
+            "🛡️ ADRIANA • Fecha de Riesgo en $daysUntil días (${riskDate.title})"
+        }
+
+        val strategyText = if (riskDate.customStrategy.isNotBlank()) {
+            "Estrategia preparada: ${riskDate.customStrategy}"
+        } else {
+            "Mantén tu soberanía emocional, evita la exposición y activa tu red de apoyo si sientes impulso."
+        }
+
+        val bodyMessage = if (daysUntil == 0) {
+            "Hola $userName. Hoy se cumple ${riskDate.title}. El riesgo de impulso es alto, pero ya estás preparado/a. $strategyText"
+        } else {
+            "Hola $userName. Se acerca ${riskDate.title} en $daysUntil días. Nos anticipamos al golpe para proteger tu paz. $strategyText"
+        }
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(SoltarAppWidgetProvider.EXTRA_OPEN_ACTION, SoltarAppWidgetProvider.ACTION_URGE_MODE)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            6001,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_SUPPORT)
+            .setSmallIcon(R.drawable.ic_stat_soltar)
+            .setContentTitle(title)
+            .setContentText(bodyMessage)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(bodyMessage))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .addAction(0, "🛡️ Modo Impulso", pendingIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(1005, notification)
         } catch (_: SecurityException) {}
     }
 }

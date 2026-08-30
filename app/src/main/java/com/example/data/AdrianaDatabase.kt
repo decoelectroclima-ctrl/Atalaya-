@@ -27,9 +27,10 @@ import androidx.room.migration.Migration
         JournalEntryEntity::class,
         SoltarSettingsEntity::class,
         TimeCapsuleEntity::class,
-        WisdomContributionEntity::class
+        WisdomContributionEntity::class,
+        RiskDateEntity::class
     ],
-    version = 24,
+    version = 25,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -52,6 +53,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
     abstract fun soltarSettingsDao(): SoltarSettingsDao
     abstract fun timeCapsuleDao(): TimeCapsuleDao
     abstract fun wisdomContributionDao(): WisdomContributionDao
+    abstract fun riskDateDao(): RiskDateDao
 
     companion object {
         @Volatile

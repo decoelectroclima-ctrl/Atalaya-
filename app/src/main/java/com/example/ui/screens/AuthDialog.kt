@@ -170,7 +170,7 @@ fun AuthDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Toggle Mode Button (Only allowed if no PIN is configured yet and not in lockdown)
+
                 if (!uiState.hasConfiguredPin && !isLockdown) {
                     TextButton(
                         onClick = {

@@ -165,38 +165,136 @@ fun ProcessScreen(
         item {
             val linguisticAnalysis by viewModel.linguisticProgress.collectAsState()
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("linguistic_analysis_card"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
             ) {
-                Row(
+                Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(SoltarAmber.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(SoltarAmber.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber)
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "ANÁLISIS LINGÜÍSTICO Y CLÍNICO (C3)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Evaluación semántica de tus entradas de diario",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
                     }
-                    Column(modifier = Modifier.weight(1f)) {
+
+                    // Metrics Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = SoltarBackground),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("Autonomía", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "${linguisticAnalysis.nivelAutonomia}/10",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SoltarSage
+                                )
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = SoltarBackground),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("Rumiación", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "${linguisticAnalysis.lenguajeRumiativo}/10",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (linguisticAnalysis.lenguajeRumiativo > 6) UrgeAlertRed else SoltarAmber
+                                )
+                            }
+                        }
+                    }
+
+                    // Cognitive Distortions
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "ANÁLISIS LINGÜÍSTICO (C3)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SoltarAmber,
+                            text = "Distorsiones cognitivas detectadas:",
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = linguisticAnalysis,
-                            style = MaterialTheme.typography.bodySmall,
                             color = TextPrimary
+                        )
+                        if (linguisticAnalysis.distorsionesCognitivas.isEmpty()) {
+                            Text(
+                                text = "• Ninguna distorsión crítica detectada en tus registros recientes.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = SoltarSage
+                            )
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                linguisticAnalysis.distorsionesCognitivas.forEach { distortion ->
+                                    Surface(
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = UrgeAlertRed.copy(alpha = 0.15f),
+                                        border = BorderStroke(1.dp, UrgeAlertRed.copy(alpha = 0.4f))
+                                    ) {
+                                        Text(
+                                            text = distortion,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = UrgeAlertRed,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Change / Evolution
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "Evolución desde última entrada:",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = linguisticAnalysis.cambioDesdeUltimaEntrada,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
                         )
                     }
                 }
