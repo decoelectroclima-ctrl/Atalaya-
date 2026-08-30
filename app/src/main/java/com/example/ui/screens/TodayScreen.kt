@@ -66,7 +66,8 @@ fun TodayScreen(
     }
 
     val noContactStart = settings?.breakupDateTimestamp ?: (currentTime - (14L * 24 * 3600 * 1000))
-    val initialStart = settings?.initialStartDateTimestamp ?: noContactStart
+    val initialStartRaw = settings?.initialStartDateTimestamp ?: 0L
+    val initialStart = if (initialStartRaw > 0L) initialStartRaw else noContactStart
     val elapsedMillis = (currentTime - noContactStart).coerceAtLeast(0L)
     val totalAccumulatedMillis = (currentTime - initialStart).coerceAtLeast(0L)
 
@@ -447,7 +448,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "TIEMPO EN CONTACTO CERO",
+                        text = "DÍAS DESDE LA RECAÍDA",
                         style = MaterialTheme.typography.labelMedium,
                         color = TextSecondary,
                         letterSpacing = 1.2.sp,

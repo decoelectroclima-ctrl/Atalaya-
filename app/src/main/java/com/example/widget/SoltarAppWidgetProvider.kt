@@ -167,7 +167,7 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                     setTextViewText(R.id.widget_days_count, days.toString())
                     setTextViewText(R.id.widget_phase_badge, phaseBadge)
                     setTextViewText(R.id.widget_framework_badge, frameworkBadgeText)
-                    setTextViewText(R.id.widget_days_label, "DÍAS DE RACHA ACTUAL")
+                    setTextViewText(R.id.widget_days_label, "DÍAS DESDE LA RECAÍDA")
                     setTextViewText(R.id.widget_days_subtext, "$totalAccumulatedDays días totales en tu proceso • $userName")
                     setTextViewText(R.id.widget_quote_text, quote)
 
