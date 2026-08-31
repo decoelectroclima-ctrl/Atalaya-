@@ -718,7 +718,7 @@ fun WidgetLivePreviewCard(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            "DÍAS DESDE LA RECAÍDA",
+                            "DÍAS DE CONTACTO CERO",
                             color = primaryTextColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold

@@ -56,6 +56,19 @@ fun TodayScreen(
     val checkins by viewModel.checkins.collectAsState()
     val context = LocalContext.current
 
+    val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
+    val vulnerabilityMode = when {
+        vulnerabilityScore >= 70 -> "REFUGIO"
+        vulnerabilityScore >= 35 -> "PRESENTE"
+        else -> "EXPLORACION"
+    }
+    val relapses by viewModel.relapses.collectAsState()
+    val now = System.currentTimeMillis()
+    val hasRelapse48h = remember(relapses) {
+        relapses.any { r -> (now - r.timestamp) < (48L * 3600 * 1000) }
+    }
+    var showMoreToolsInPresent by remember { mutableStateOf(false) }
+
     // Live clock ticker for No-Contact Counter
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -245,10 +258,24 @@ fun TodayScreen(
 
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
         item {
-            val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
-                ProgressiveLandscape(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
+                ProgressiveLandscape(
+                    progressStage = progressStage,
+                    vulnerabilityScore = vulnerabilityScore,
+                    onTapSun = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.rotateWisdomCard(uiState.preferredFramework)
+                    },
+                    onTapTree = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.openJournalModal()
+                    },
+                    onTapMountain = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.toggleThoughtModal(true)
+                    }
+                )
             }
         }
         item {
@@ -517,7 +544,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "DÍAS DESDE LA RECAÍDA",
+                        text = "DÍAS DE CONTACTO CERO",
                         style = MaterialTheme.typography.labelMedium,
                         color = TextSecondary,
                         letterSpacing = 1.2.sp,
@@ -526,8 +553,20 @@ fun TodayScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    val lastRelapseTimestamp = remember(relapses) {
+                        relapses.maxByOrNull { it.timestamp }?.timestamp ?: 0L
+                    }
+                    val daysSinceLastRelapse = if (lastRelapseTimestamp > 0L) {
+                        ((currentTime - lastRelapseTimestamp).coerceAtLeast(0L)) / (24 * 3600 * 1000)
+                    } else {
+                        -1L
+                    }
+
                     Text(
-                        text = "$days días de racha actual • $totalAccumulatedDays días totales en tu proceso",
+                        text = if (daysSinceLastRelapse >= 0L)
+                            "$days días de contacto cero • $daysSinceLastRelapse días desde la última recaída"
+                        else
+                            "$days días de contacto cero (Sin recaídas registradas)",
                         style = MaterialTheme.typography.labelSmall,
                         color = SoltarAmber,
                         fontWeight = FontWeight.Bold
