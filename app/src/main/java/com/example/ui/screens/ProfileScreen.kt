@@ -460,6 +460,60 @@ fun ProfileScreen(
             }
         }
 
+        // Process Counter & Streak Summary Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("profile_streak_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Timer, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                        Text(
+                            text = "Estadísticas de tu Proceso",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val currentTime = System.currentTimeMillis()
+                    val noContactStart = settings?.breakupDateTimestamp ?: (currentTime - (14L * 24 * 3600 * 1000))
+                    val initialStartRaw = settings?.initialStartDateTimestamp ?: 0L
+                    val initialStart = if (initialStartRaw > 0L) initialStartRaw else noContactStart
+                    val elapsedMillis = (currentTime - noContactStart).coerceAtLeast(0L)
+                    val totalAccumulatedMillis = (currentTime - initialStart).coerceAtLeast(0L)
+                    val currentDays = elapsedMillis / (1000 * 3600 * 24)
+                    val totalDays = totalAccumulatedMillis / (1000 * 3600 * 24)
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Racha Actual", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("$currentDays días", style = MaterialTheme.typography.titleMedium, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Días Totales", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("$totalDays días", style = MaterialTheme.typography.titleMedium, color = SoltarSage, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // Anticipated Risk Dates Calendar
         item {
             AnticipatedRiskDatesSection(viewModel = viewModel)

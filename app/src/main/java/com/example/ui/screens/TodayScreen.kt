@@ -106,6 +106,74 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
     ) {
+        // Adaptive Vulnerability Mode Banner
+        item {
+            val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
+            val vulnerabilityMode = when {
+                vulnerabilityScore >= 70 -> "REFUGIO"
+                vulnerabilityScore >= 35 -> "PRESENTE"
+                else -> "EXPLORACION"
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = when(vulnerabilityMode) {
+                        "REFUGIO" -> Color(0xFFFEF2F2)
+                        "PRESENTE" -> SoltarSurfaceElevated
+                        else -> SoltarSurface
+                    }
+                ),
+                border = BorderStroke(1.dp, when(vulnerabilityMode) {
+                    "REFUGIO" -> Color(0xFFEF4444)
+                    "PRESENTE" -> SoltarAmber
+                    else -> SoltarBorder
+                })
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = when(vulnerabilityMode) {
+                                "REFUGIO" -> Icons.Default.Shield
+                                "PRESENTE" -> Icons.Default.SelfImprovement
+                                else -> Icons.Default.Explore
+                            },
+                            contentDescription = null,
+                            tint = when(vulnerabilityMode) {
+                                "REFUGIO" -> Color(0xFFEF4444)
+                                else -> SoltarAmber
+                            }
+                        )
+                        Column {
+                            Text(
+                                text = when(vulnerabilityMode) {
+                                    "REFUGIO" -> "🛡️ MODO REFUGIO (Vulnerabilidad Alta)"
+                                    "PRESENTE" -> "🌿 MODO PRESENTE (Vulnerabilidad Moderada)"
+                                    else -> "✨ MODO EXPLORACIÓN (Vulnerabilidad Baja)"
+                                },
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (vulnerabilityMode == "REFUGIO") Color(0xFF991B1B) else TextPrimary
+                            )
+                            Text(
+                                text = "Puntuación: $vulnerabilityScore/100 • Interfaz adaptada a tu momento emocional.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Anticipated Risk Date Proactive Banner
         item {
             val riskDates by viewModel.riskDates.collectAsState()
@@ -177,9 +245,10 @@ fun TodayScreen(
 
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
         item {
+            val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                KintsugiHeart(progressStage = progressStage)
-                ProgressiveLandscape(progressStage = progressStage)
+                KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
+                ProgressiveLandscape(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
             }
         }
         item {

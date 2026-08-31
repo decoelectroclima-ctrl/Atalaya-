@@ -246,6 +246,45 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val riskDates: StateFlow<List<RiskDateEntity>> = repository.allRiskDates
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val vulnerabilityScore: StateFlow<Int> = combine(
+        checkins,
+        riskDates,
+        relapses
+    ) { checkinList, riskList, relapseList ->
+        val latest = checkinList.firstOrNull()
+        var score = 40
+        if (latest != null) {
+            val painF = (latest.pain / 10f) * 20f
+            val anxF = (latest.anxiety / 10f) * 20f
+            val rumF = (latest.rumination / 10f) * 15f
+            val urgeF = (latest.urgeToContact / 10f) * 15f
+            val autF = ((10f - latest.autonomy) / 10f) * 15f
+            score = (painF + anxF + rumF + urgeF + autF).toInt()
+        }
+
+        val now = System.currentTimeMillis()
+        val nowCal = java.util.Calendar.getInstance()
+        val currentYr = nowCal.get(java.util.Calendar.YEAR)
+        val hasRisk = riskList.any { rd ->
+            val target = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.YEAR, currentYr)
+                set(java.util.Calendar.MONTH, rd.month - 1)
+                set(java.util.Calendar.DAY_OF_MONTH, rd.day)
+            }
+            if (target.timeInMillis < nowCal.timeInMillis) {
+                target.add(java.util.Calendar.YEAR, 1)
+            }
+            val diffDays = ((target.timeInMillis - now) / (1000L * 3600 * 24)).toInt()
+            diffDays in 0..7
+        }
+        if (hasRisk) score += 20
+
+        val hasRelapse48h = relapseList.any { r -> (now - r.timestamp) < (48L * 3600 * 1000) }
+        if (hasRelapse48h) score += 25
+
+        score.coerceIn(0, 100)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 40)
+
     val settings: StateFlow<SoltarSettingsEntity?> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -504,7 +543,15 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun updateNoContactStartDate(timestamp: Long) {
         viewModelScope.launch {
             val current = settings.value ?: SoltarSettingsEntity()
-            repository.saveSettings(current.copy(breakupDateTimestamp = timestamp))
+            val isFirstTime = !current.initialStartDateSet
+            val newInitial = if (isFirstTime) timestamp else current.initialStartDateTimestamp
+            repository.saveSettings(
+                current.copy(
+                    breakupDateTimestamp = timestamp,
+                    initialStartDateTimestamp = newInitial,
+                    initialStartDateSet = true
+                )
+            )
             showNotification("⏱️ Fecha de Contacto Cero actualizada correctamente.")
             playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
             com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())

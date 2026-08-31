@@ -109,6 +109,7 @@ fun WidgetConfigureScreen(
     var loaded by remember { mutableStateOf(false) }
     var profileFramework by remember { mutableStateOf(SoltarFramework.PSICOLOGIA_MODERNA) }
     var userDays by remember { mutableIntStateOf(14) }
+    var totalAccumulatedDays by remember { mutableIntStateOf(14) }
     var userName by remember { mutableStateOf("Viajero") }
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -120,8 +121,14 @@ fun WidgetConfigureScreen(
                 val db = AdrianaDatabase.getDatabase(context)
                 val settings = db.soltarSettingsDao().getSettingsOnce()
                 if (settings != null) {
-                    val diff = System.currentTimeMillis() - settings.breakupDateTimestamp
+                    val currentTime = System.currentTimeMillis()
+                    val diff = currentTime - settings.breakupDateTimestamp
                     userDays = (java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diff)).coerceAtLeast(0).toInt()
+
+                    val initialStart = if (settings.initialStartDateTimestamp > 0) settings.initialStartDateTimestamp else settings.breakupDateTimestamp
+                    val totalDiff = currentTime - initialStart
+                    totalAccumulatedDays = (java.util.concurrent.TimeUnit.MILLISECONDS.toDays(totalDiff)).coerceAtLeast(0).toInt().coerceAtLeast(userDays)
+
                     if (settings.userName.isNotBlank()) userName = settings.userName
                     profileFramework = try {
                         SoltarFramework.valueOf(settings.preferredFramework)
@@ -221,6 +228,7 @@ fun WidgetConfigureScreen(
             WidgetLivePreviewCard(
                 config = config,
                 days = userDays,
+                totalAccumulatedDays = totalAccumulatedDays,
                 userName = userName,
                 profileFramework = profileFramework
             )
@@ -578,6 +586,7 @@ fun WidgetSwitchRow(
 fun WidgetLivePreviewCard(
     config: SoltarWidgetConfig,
     days: Int,
+    totalAccumulatedDays: Int,
     userName: String,
     profileFramework: SoltarFramework
 ) {
@@ -709,14 +718,14 @@ fun WidgetLivePreviewCard(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            if (days == 1) "DÍA DE SOBERANÍA" else "DÍAS DE SOBERANÍA",
+                            "DÍAS DESDE LA RECAÍDA",
                             color = primaryTextColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                         if (config.showSubtext) {
                             Text(
-                                "$userName • Autonomía y Paz",
+                                "$totalAccumulatedDays días totales en tu proceso • $userName",
                                 color = secondaryTextColor,
                                 fontSize = 10.sp
                             )

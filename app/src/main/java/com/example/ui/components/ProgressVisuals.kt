@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.example.ui.theme.*
 
 @Composable
-fun KintsugiHeart(progressStage: Int, modifier: Modifier = Modifier) {
+fun KintsugiHeart(progressStage: Int, vulnerabilityScore: Int = 40, modifier: Modifier = Modifier) {
     val goldColor = RawDarkAmber
     val darkCrackColor = Color(0xFF2C3E50)
     val heartColor = Color(0xFFE57373)
@@ -31,14 +31,11 @@ fun KintsugiHeart(progressStage: Int, modifier: Modifier = Modifier) {
             cubicTo(w * 0.85f, 0f, w, h * 0.3f, w / 2f, h * 0.8f)
         }
 
-        // Draw heart background/fill
-        drawPath(heartPath, color = heartColor.copy(alpha = 0.25f + (progressStage * 0.08f)))
-        drawPath(heartPath, color = Color.White, style = Stroke(width = 3.5f))
+        val alphaMultiplier = if (vulnerabilityScore >= 70) 0.8f else 1.0f
 
-        // Progressive Kintsugi cracks and gold seams based on progressStage (1 to 8)
-        // Stage 1: Deep cracks, no gold
-        // Stage 2-7: Increasing gold seams
-        // Stage 8: Fully repaired glowing golden masterpiece veins
+        // Draw heart background/fill
+        drawPath(heartPath, color = heartColor.copy(alpha = (0.25f + (progressStage * 0.08f)) * alphaMultiplier))
+        drawPath(heartPath, color = Color.White, style = Stroke(width = 3.5f))
 
         val crack1Start = Offset(w * 0.5f, h * 0.25f)
         val crack1End = Offset(w * 0.5f, h * 0.75f)
@@ -52,12 +49,10 @@ fun KintsugiHeart(progressStage: Int, modifier: Modifier = Modifier) {
         val crack4Start = Offset(w * 0.25f, h * 0.3f)
         val crack4End = Offset(w * 0.4f, h * 0.5f)
 
-        // Draw base cracks if stage is low, or golden veins if stage is high
         if (progressStage == 1) {
             drawLine(darkCrackColor, crack1Start, crack1End, strokeWidth = 3f)
             drawLine(darkCrackColor, crack2Start, crack2End, strokeWidth = 2.5f)
         } else {
-            // Stage 2+: Gold seam 1
             drawLine(goldColor, crack1Start, crack1End, strokeWidth = 2f + (progressStage * 0.4f))
             if (progressStage >= 3) {
                 drawLine(goldColor, crack2Start, crack2End, strokeWidth = 2f + (progressStage * 0.3f))
@@ -68,7 +63,6 @@ fun KintsugiHeart(progressStage: Int, modifier: Modifier = Modifier) {
             if (progressStage >= 7) {
                 drawLine(goldColor, crack4Start, crack4End, strokeWidth = 3f + (progressStage * 0.2f))
             }
-            // Add subtle sparkling dots at nodes for high stages
             if (progressStage >= 6) {
                 drawCircle(goldColor, radius = 4f, center = crack1End)
                 drawCircle(goldColor, radius = 3.5f, center = crack2End)
@@ -82,8 +76,13 @@ fun KintsugiHeart(progressStage: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ProgressiveLandscape(progressStage: Int, modifier: Modifier = Modifier) {
-    Crossfade(targetState = progressStage, modifier = modifier) { stage ->
+fun ProgressiveLandscape(progressStage: Int, vulnerabilityScore: Int = 40, modifier: Modifier = Modifier) {
+    val animDuration = if (vulnerabilityScore >= 70) 1400 else if (vulnerabilityScore >= 35) 900 else 500
+    Crossfade(
+        targetState = progressStage,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = animDuration),
+        modifier = modifier
+    ) { stage ->
         val bgColors = when (stage) {
             1 -> listOf(Color(0xFF2C3E50), Color(0xFF1A252F)) // Stormy fog
             2 -> listOf(Color(0xFF34495E), Color(0xFF2C3E50)) // Dim twilight
