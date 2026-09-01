@@ -148,7 +148,7 @@ fun WidgetConfigureScreen(
                 title = {
                     Column {
                         Text(
-                            "Configurar Widget ADRIANA",
+                            "Configurar Widget Recuerda",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                         Text(
@@ -516,7 +516,7 @@ fun WidgetConfigureScreen(
                             )
 
                             WidgetSwitchRow(
-                                title = "💬 Botón Coach ADRIANA",
+                                title = "💬 Botón Coach Recuerda",
                                 subtitle = "Apertura directa del asistente socrático",
                                 checked = config.showCoachButton,
                                 onCheckedChange = { config = config.copy(showCoachButton = it) }
@@ -649,7 +649,7 @@ fun WidgetLivePreviewCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "ADRIANA",
+                    "Recuerda",
                     color = amberColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,

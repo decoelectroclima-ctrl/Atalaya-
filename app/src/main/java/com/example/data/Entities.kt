@@ -234,6 +234,16 @@ data class TimeCapsuleEntity(
 )
 
 @Serializable
+data class CustomNotificationItem(
+    val id: Long = System.currentTimeMillis(),
+    val hour: Int = 10,
+    val minute: Int = 0,
+    val title: String = "Recordatorio de Soberanía",
+    val message: String = "Mantén tu enfoque y respira hondo.",
+    val enabled: Boolean = true
+)
+
+@Serializable
 @Entity(tableName = "soltar_settings")
 data class SoltarSettingsEntity(
     @PrimaryKey val id: Int = 1,
@@ -276,6 +286,9 @@ data class SoltarSettingsEntity(
     val notificationsEnabled: Boolean = true,
     val reminderHour: Int = 21,
     val reminderMinute: Int = 0,
+    val mandatoryJournalHour: Int = 20,
+    val mandatoryJournalMinute: Int = 0,
+    val customNotificationsJson: String = "",
     val lastMilestoneCelebrated: Int = 0,
     val inactivityAlertsEnabled: Boolean = true,
     val lastInactivityNoticeSentTimestamp: Long = 0L,

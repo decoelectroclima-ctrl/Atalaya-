@@ -15,6 +15,15 @@ class SoltarAlarmReceiver : BroadcastReceiver() {
                 // Refresh home screen widget
                 SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
             }
+            SoltarNotificationHelper.ACTION_MANDATORY_JOURNAL -> {
+                SoltarNotificationHelper.sendMandatoryJournalNotification(context)
+                SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
+            }
+            SoltarNotificationHelper.ACTION_CUSTOM_NOTIFICATION -> {
+                val title = intent.getStringExtra("notification_title") ?: "Recordatorio de Soberanía"
+                val message = intent.getStringExtra("notification_message") ?: "Mantén tu enfoque y respira hondo."
+                SoltarNotificationHelper.sendCustomNotification(context, title, message)
+            }
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
                 // Re-schedule alarms after device reboot according to user's saved time

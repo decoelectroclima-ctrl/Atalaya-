@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -181,6 +182,15 @@ data class SoltarUiState(
     val reminderMinuteInput: Int = 0,
     val notificationsEnabled: Boolean = true,
     val inactivityAlertsEnabled: Boolean = true,
+    val mandatoryJournalHourInput: Int = 20,
+    val mandatoryJournalMinuteInput: Int = 0,
+    val customNotifications: List<CustomNotificationItem> = emptyList(),
+    val isCustomNotificationDialogVisible: Boolean = false,
+    val editingCustomNotificationId: Long? = null,
+    val customNotificationTitleInput: String = "Recordatorio de Soberanía",
+    val customNotificationMessageInput: String = "Mantén tu enfoque y respira hondo.",
+    val customNotificationHourInput: Int = 10,
+    val customNotificationMinuteInput: Int = 0,
 
     // Anticipated Risk Dates Calendar
     val isRiskDateModalVisible: Boolean = false,
@@ -237,6 +247,37 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val journalEntries: StateFlow<List<JournalEntryEntity>> = repository.allJournalEntries
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val settings: StateFlow<SoltarSettingsEntity?> = repository.settings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val isMandatoryJournalPending: StateFlow<Boolean> = combine(
+        settings,
+        journalEntries
+    ) { currentSettings, entries ->
+        if (currentSettings == null) return@combine false
+        val hour = currentSettings.mandatoryJournalHour
+        val minute = currentSettings.mandatoryJournalMinute
+
+        val calendar = Calendar.getInstance()
+        val nowMillis = calendar.timeInMillis
+        calendar.set(Calendar.HOUR_OF_DAY, hour)
+        calendar.set(Calendar.MINUTE, minute)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val scheduledMillis = calendar.timeInMillis
+
+        val isPastTime = nowMillis >= scheduledMillis
+
+        val hasWrittenToday = entries.any { entry ->
+            val entryCal = Calendar.getInstance().apply { timeInMillis = entry.timestamp }
+            val currentCal = Calendar.getInstance()
+            entryCal.get(Calendar.YEAR) == currentCal.get(Calendar.YEAR) &&
+            entryCal.get(Calendar.DAY_OF_YEAR) == currentCal.get(Calendar.DAY_OF_YEAR)
+        }
+
+        isPastTime && !hasWrittenToday
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     val aiMessages: StateFlow<List<AiMessageEntity>> = repository.allAiMessages
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -284,9 +325,6 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
         score.coerceIn(0, 100)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 40)
-
-    val settings: StateFlow<SoltarSettingsEntity?> = repository.settings
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private var urgeTimerJob: Job? = null
 
@@ -337,7 +375,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                             reminderHourInput = currentSettings.reminderHour,
                             reminderMinuteInput = currentSettings.reminderMinute,
                             notificationsEnabled = currentSettings.notificationsEnabled,
-                            inactivityAlertsEnabled = currentSettings.inactivityAlertsEnabled
+                            inactivityAlertsEnabled = currentSettings.inactivityAlertsEnabled,
+                            mandatoryJournalHourInput = currentSettings.mandatoryJournalHour,
+                            mandatoryJournalMinuteInput = currentSettings.mandatoryJournalMinute,
+                            customNotifications = try {
+                                if (currentSettings.customNotificationsJson.isNotBlank()) {
+                                    json.decodeFromString<List<CustomNotificationItem>>(currentSettings.customNotificationsJson)
+                                } else emptyList()
+                            } catch (_: Exception) { emptyList() }
                         )
                     }
                 }
@@ -1929,6 +1974,120 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             repository.deleteRiskDate(id)
             showNotification("🗑️ Fecha de riesgo eliminada.")
+        }
+    }
+
+    fun updateMandatoryJournalTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val clampedHour = hour.coerceIn(0, 23)
+            val clampedMinute = minute.coerceIn(0, 59)
+            repository.saveSettings(current.copy(mandatoryJournalHour = clampedHour, mandatoryJournalMinute = clampedMinute))
+            com.example.notifications.SoltarNotificationHelper.scheduleMandatoryJournalReminder(getApplication(), clampedHour, clampedMinute)
+            _uiState.update { it.copy(mandatoryJournalHourInput = clampedHour, mandatoryJournalMinuteInput = clampedMinute) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification(String.format(Locale.getDefault(), "Diario obligatorio programado a las %02d:%02d hs", clampedHour, clampedMinute))
+        }
+    }
+
+    private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+
+    fun addCustomNotification(hour: Int, minute: Int, title: String, message: String) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val list = try {
+                if (current.customNotificationsJson.isNotBlank()) {
+                    json.decodeFromString<List<CustomNotificationItem>>(current.customNotificationsJson)
+                } else emptyList()
+            } catch (_: Exception) { emptyList() }
+
+            val newItem = CustomNotificationItem(
+                id = System.currentTimeMillis(),
+                hour = hour.coerceIn(0, 23),
+                minute = minute.coerceIn(0, 59),
+                title = title.ifBlank { "Recordatorio de Soberanía" },
+                message = message.ifBlank { "Mantén tu enfoque y respira hondo." },
+                enabled = true
+            )
+            val updatedList = list + newItem
+            val jsonStr = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CustomNotificationItem.serializer()), updatedList)
+            repository.saveSettings(current.copy(customNotificationsJson = jsonStr))
+            com.example.notifications.SoltarNotificationHelper.scheduleCustomNotification(getApplication(), newItem)
+            _uiState.update { it.copy(customNotifications = updatedList) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification("Notificación personalizada añadida")
+        }
+    }
+
+    fun updateCustomNotification(id: Long, hour: Int, minute: Int, title: String, message: String, enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val list = try {
+                if (current.customNotificationsJson.isNotBlank()) {
+                    json.decodeFromString<List<CustomNotificationItem>>(current.customNotificationsJson)
+                } else emptyList()
+            } catch (_: Exception) { emptyList() }
+
+            val updatedList = list.map { item ->
+                if (item.id == id) {
+                    val updated = item.copy(
+                        hour = hour.coerceIn(0, 23),
+                        minute = minute.coerceIn(0, 59),
+                        title = title.ifBlank { item.title },
+                        message = message.ifBlank { item.message },
+                        enabled = enabled
+                    )
+                    if (enabled) com.example.notifications.SoltarNotificationHelper.scheduleCustomNotification(getApplication(), updated)
+                    else com.example.notifications.SoltarNotificationHelper.cancelCustomNotification(getApplication(), id)
+                    updated
+                } else item
+            }
+            val jsonStr = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CustomNotificationItem.serializer()), updatedList)
+            repository.saveSettings(current.copy(customNotificationsJson = jsonStr))
+            _uiState.update { it.copy(customNotifications = updatedList) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        }
+    }
+
+    fun deleteCustomNotification(id: Long) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val list = try {
+                if (current.customNotificationsJson.isNotBlank()) {
+                    json.decodeFromString<List<CustomNotificationItem>>(current.customNotificationsJson)
+                } else emptyList()
+            } catch (_: Exception) { emptyList() }
+
+            val updatedList = list.filter { it.id != id }
+            com.example.notifications.SoltarNotificationHelper.cancelCustomNotification(getApplication(), id)
+            val jsonStr = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CustomNotificationItem.serializer()), updatedList)
+            repository.saveSettings(current.copy(customNotificationsJson = jsonStr))
+            _uiState.update { it.copy(customNotifications = updatedList) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+            showNotification("Notificación eliminada")
+        }
+    }
+
+    fun toggleCustomNotificationEnabled(id: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val list = try {
+                if (current.customNotificationsJson.isNotBlank()) {
+                    json.decodeFromString<List<CustomNotificationItem>>(current.customNotificationsJson)
+                } else emptyList()
+            } catch (_: Exception) { emptyList() }
+
+            val updatedList = list.map { item ->
+                if (item.id == id) {
+                    val updated = item.copy(enabled = enabled)
+                    if (enabled) com.example.notifications.SoltarNotificationHelper.scheduleCustomNotification(getApplication(), updated)
+                    else com.example.notifications.SoltarNotificationHelper.cancelCustomNotification(getApplication(), id)
+                    updated
+                } else item
+            }
+            val jsonStr = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CustomNotificationItem.serializer()), updatedList)
+            repository.saveSettings(current.copy(customNotificationsJson = jsonStr))
+            _uiState.update { it.copy(customNotifications = updatedList) }
         }
     }
 }

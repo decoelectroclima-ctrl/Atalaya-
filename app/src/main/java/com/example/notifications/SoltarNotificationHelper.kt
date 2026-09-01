@@ -36,6 +36,11 @@ object SoltarNotificationHelper {
 
     const val ACTION_DAILY_REMINDER = "com.example.soltar.ACTION_DAILY_REMINDER"
     const val REQUEST_CODE_DAILY_ALARM = 2001
+    const val ACTION_MANDATORY_JOURNAL = "com.example.soltar.ACTION_MANDATORY_JOURNAL"
+    const val REQUEST_CODE_MANDATORY_JOURNAL = 2002
+    const val ACTION_CUSTOM_NOTIFICATION = "com.example.soltar.ACTION_CUSTOM_NOTIFICATION"
+
+    private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
     val MILESTONE_DAYS = setOf(1, 3, 7, 14, 21, 30, 60, 90, 180, 365)
 
     private val stoicDailyQuotes = listOf(
@@ -196,20 +201,205 @@ object SoltarNotificationHelper {
         }
     }
 
+    fun scheduleMandatoryJournalReminder(context: Context, hourOfDay: Int = 20, minute: Int = 0) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, SoltarAlarmReceiver::class.java).apply {
+            action = ACTION_MANDATORY_JOURNAL
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE_MANDATORY_JOURNAL,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hourOfDay)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            } else {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            }
+        } catch (_: SecurityException) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        }
+    }
+
+    fun cancelMandatoryJournalReminder(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, SoltarAlarmReceiver::class.java).apply {
+            action = ACTION_MANDATORY_JOURNAL
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE_MANDATORY_JOURNAL,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+        }
+    }
+
+    fun sendMandatoryJournalNotification(
+        context: Context,
+        framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
+        userName: String = "Viajero"
+    ) {
+        if (!hasNotificationPermission(context)) return
+        createNotificationChannels(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(SoltarAppWidgetProvider.EXTRA_OPEN_ACTION, SoltarAppWidgetProvider.ACTION_JOURNAL)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            5002,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_DAILY)
+            .setSmallIcon(R.drawable.ic_stat_soltar)
+            .setContentTitle("📖 Hora de tu Diario Diario Obligatorio")
+            .setContentText("Hola $userName. Es momento de escribir tu reflexión de hoy para mantener tu claridad y desbloquear tu espacio personal.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Hola $userName. Es momento de escribir tu reflexión de hoy para mantener tu claridad, registrar tu avance y desbloquear tu espacio personal."))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .addAction(0, "✍️ Escribir Diario", pendingIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(1006, notification)
+        } catch (_: SecurityException) {}
+    }
+
+    fun scheduleCustomNotification(context: Context, item: com.example.data.CustomNotificationItem) {
+        if (!item.enabled) return
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, SoltarAlarmReceiver::class.java).apply {
+            action = ACTION_CUSTOM_NOTIFICATION
+            putExtra("notification_id", item.id)
+            putExtra("notification_title", item.title)
+            putExtra("notification_message", item.message)
+        }
+        val requestCode = (3000 + (item.id % 10000)).toInt()
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, item.hour)
+            set(Calendar.MINUTE, item.minute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            } else {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            }
+        } catch (_: SecurityException) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        }
+    }
+
+    fun cancelCustomNotification(context: Context, id: Long) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(context, SoltarAlarmReceiver::class.java).apply {
+            action = ACTION_CUSTOM_NOTIFICATION
+        }
+        val requestCode = (3000 + (id % 10000)).toInt()
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+        }
+    }
+
+    fun sendCustomNotification(context: Context, title: String, message: String) {
+        if (!hasNotificationPermission(context)) return
+        createNotificationChannels(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            7000 + (System.currentTimeMillis() % 1000).toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_DAILY)
+            .setSmallIcon(R.drawable.ic_stat_soltar)
+            .setContentTitle(title.ifBlank { "Recordatorio de Soberanía" })
+            .setContentText(message.ifBlank { "Mantén tu enfoque y respira hondo." })
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message.ifBlank { "Mantén tu enfoque y respira hondo." }))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(2000 + (System.currentTimeMillis() % 1000).toInt(), notification)
+        } catch (_: SecurityException) {}
+    }
+
     fun rescheduleFromSettings(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val db = AdrianaDatabase.getDatabase(context)
                 val settings = db.soltarSettingsDao().getSettingsOnce()
-                if (settings != null && settings.notificationsEnabled) {
-                    scheduleDailyReminder(context, settings.reminderHour, settings.reminderMinute)
-                } else if (settings != null && !settings.notificationsEnabled) {
-                    cancelDailyReminder(context)
+                if (settings != null) {
+                    if (settings.notificationsEnabled) {
+                        scheduleDailyReminder(context, settings.reminderHour, settings.reminderMinute)
+                    } else {
+                        cancelDailyReminder(context)
+                    }
+
+                    // Mandatory journal reminder is always scheduled (non-disableable)
+                    scheduleMandatoryJournalReminder(context, settings.mandatoryJournalHour, settings.mandatoryJournalMinute)
+
+                    // Custom notifications
+                    if (settings.customNotificationsJson.isNotBlank()) {
+                        try {
+                            val list = json.decodeFromString<List<com.example.data.CustomNotificationItem>>(settings.customNotificationsJson)
+                            list.forEach { item ->
+                                if (item.enabled) {
+                                    scheduleCustomNotification(context, item)
+                                } else {
+                                    cancelCustomNotification(context, item.id)
+                                }
+                            }
+                        } catch (_: Exception) {}
+                    }
                 } else {
                     scheduleDailyReminder(context, 21, 0)
+                    scheduleMandatoryJournalReminder(context, 20, 0)
                 }
             } catch (_: Exception) {
                 scheduleDailyReminder(context, 21, 0)
+                scheduleMandatoryJournalReminder(context, 20, 0)
             }
         }
     }
@@ -345,15 +535,15 @@ object SoltarNotificationHelper {
 
             val (title, quotesList) = when (framework) {
                 SoltarFramework.ESTOICO -> Pair(
-                    "🏛️ ADRIANA • Temple y Soberanía Diaria",
+                    "🏛️ Recuerda • Temple y Soberanía Diaria",
                     stoicDailyQuotes
                 )
                 SoltarFramework.CATOLICO -> Pair(
-                    "✝️ ADRIANA • Paz, Esperanza y Custodia",
+                    "✝️ Recuerda • Paz, Esperanza y Custodia",
                     catholicDailyQuotes
                 )
                 SoltarFramework.PSICOLOGIA_MODERNA -> Pair(
-                    "🧠 ADRIANA • Autonomía y Claridad Emocional",
+                    "🧠 Recuerda • Autonomía y Claridad Emocional",
                     psychologyDailyQuotes
                 )
             }
@@ -368,15 +558,15 @@ object SoltarNotificationHelper {
                 if (latestCheckin != null) {
                     when {
                         latestCheckin.comparisonWithYesterday.contains("Mejor", true) || latestCheckin.urgeToContact <= 3f -> {
-                            adaptiveTitle = "🌿 ADRIANA • Seguimiento Emocional (Progreso)"
+                            adaptiveTitle = "🌿 Recuerda • Seguimiento Emocional (Progreso)"
                             adaptiveQuote = "¿Cómo estás hoy? Queremos ver si esa calma que estabas recuperando sigue ahí."
                         }
                         latestCheckin.urgeToContact > 5f || latestCheckin.comparisonWithYesterday.contains("Peor", true) -> {
-                            adaptiveTitle = "🛡️ ADRIANA • Seguimiento Emocional (Contención)"
+                            adaptiveTitle = "🛡️ Recuerda • Seguimiento Emocional (Contención)"
                             adaptiveQuote = "¿Cómo estás hoy? ¿Ha vuelto ese impulso de contactar? Detente un instante antes de actuar."
                         }
                         else -> {
-                            adaptiveTitle = "🧠 ADRIANA • Check-in Emocional Diario"
+                            adaptiveTitle = "🧠 Recuerda • Check-in Emocional Diario"
                             adaptiveQuote = "¿Cómo te encuentras hoy emocionalmente? Registra tu evolución en 1 minuto."
                         }
                     }
@@ -497,15 +687,15 @@ object SoltarNotificationHelper {
 
         val (title, bodyMessage) = when (framework) {
             SoltarFramework.ESTOICO -> Pair(
-                "🌿 ADRIANA • Regreso al centro interior",
+                "🌿 Recuerda • Regreso al centro interior",
                 "Hola $userName. Llevas $daysInactive días sin registrar cómo estás. Recuerda que no hay juicio: la virtud es la paciencia de volver a la calma sin reproches. ¿Hacemos 1 minuto de pausa consciente hoy?"
             )
             SoltarFramework.CATOLICO -> Pair(
-                "🌿 ADRIANA • Un remanso de paz y escucha",
+                "🌿 Recuerda • Un remanso de paz y escucha",
                 "Querido/a $userName, hace $daysInactive días que no pasas por aquí. 'Venid a mí los que estéis cansados...' Tu camino de sanación sigue vivo. Aquí tienes un espacio sin prisas cuando lo necesites."
             )
             SoltarFramework.PSICOLOGIA_MODERNA -> Pair(
-                "🌿 ADRIANA • Aquí estoy contigo, $userName",
+                "🌿 Recuerda • Aquí estoy contigo, $userName",
                 "Llevas $daysInactive días sin registrar datos. Sanar no es un proceso lineal y no hay nada que reprocharte. Si hoy sientes pesadez o nostalgia, regálate un minuto de autocompasión."
             )
         }
@@ -552,7 +742,7 @@ object SoltarNotificationHelper {
             .setAutoCancel(true)
             .setContentIntent(checkinPendingIntent)
             .addAction(0, "✨ Check-in Rápido", checkinPendingIntent)
-            .addAction(0, "💬 Hablar con ADRIANA", coachPendingIntent)
+            .addAction(0, "💬 Hablar con Recuerda", coachPendingIntent)
             .addAction(0, "🧘 Respirar", sosPendingIntent)
             .build()
 
@@ -615,7 +805,7 @@ object SoltarNotificationHelper {
         val title = if (daysUntil == 0) {
             "🚨 ALERTA • Hoy es ${riskDate.title}"
         } else {
-            "🛡️ ADRIANA • Fecha de Riesgo en $daysUntil días (${riskDate.title})"
+            "🛡️ Recuerda • Fecha de Riesgo en $daysUntil días (${riskDate.title})"
         }
 
         val strategyText = if (riskDate.customStrategy.isNotBlank()) {

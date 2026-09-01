@@ -82,6 +82,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val authUiState by authViewModel.uiState.collectAsStateWithLifecycle()
+                val isMandatoryJournalPending by viewModel.isMandatoryJournalPending.collectAsStateWithLifecycle()
 
                 val isAnyModalOpen = uiState.isNeedHelpSheetVisible ||
                         uiState.isUrgeSheetVisible ||
@@ -301,10 +302,14 @@ class MainActivity : ComponentActivity() {
                                 .background(SoltarBackground)
                                 .padding(innerPadding)
                         ) {
-                            when (uiState.currentTab) {
-                                SoltarTab.INICIO -> TodayScreen(viewModel = viewModel)
-                                SoltarTab.PROCESO -> ProcessScreen(viewModel = viewModel)
-                                SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel, authViewModel = authViewModel)
+                            if (isMandatoryJournalPending) {
+                                com.example.ui.screens.MandatoryJournalPendingScreen(viewModel = viewModel)
+                            } else {
+                                when (uiState.currentTab) {
+                                    SoltarTab.INICIO -> TodayScreen(viewModel = viewModel)
+                                    SoltarTab.PROCESO -> ProcessScreen(viewModel = viewModel)
+                                    SoltarTab.PERFIL -> ProfileScreen(viewModel = viewModel, authViewModel = authViewModel)
+                                }
                             }
                         }
                     }

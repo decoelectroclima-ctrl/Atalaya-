@@ -35,7 +35,7 @@
         <activity
             android:name=".widget.SoltarAppWidgetConfigureActivity"
             android:exported="true"
-            android:label="Configurar Widget ADRIANA"
+            android:label="Configurar Widget Recuerda"
             android:theme="@style/Theme.MyApplication">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />

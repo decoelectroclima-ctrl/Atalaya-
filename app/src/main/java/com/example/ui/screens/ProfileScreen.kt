@@ -54,6 +54,12 @@ fun ProfileScreen(
     val entitlements = remember(settings) { UserEntitlements.fromSettings(settings) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountConfirmDialog by remember { mutableStateOf(false) }
+    var showMandatoryJournalTimeDialog by remember { mutableStateOf(false) }
+    var showCustomNotificationDialog by remember { mutableStateOf(false) }
+    var customTitleInput by remember { mutableStateOf("Recordatorio de Soberanía") }
+    var customMessageInput by remember { mutableStateOf("Mantén tu enfoque y respira hondo.") }
+    var customHourInput by remember { mutableIntStateOf(10) }
+    var customMinuteInput by remember { mutableIntStateOf(0) }
 
     // Dialogs
     if (showResetConfirmDialog) {
@@ -298,6 +304,191 @@ fun ProfileScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = { viewModel.toggleReminderTimeDialog(false) }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Dialog para Hora de Diario Obligatorio
+    if (showMandatoryJournalTimeDialog) {
+        var tempHour by remember(uiState.mandatoryJournalHourInput) { mutableIntStateOf(uiState.mandatoryJournalHourInput) }
+        var tempMinute by remember(uiState.mandatoryJournalMinuteInput) { mutableIntStateOf(uiState.mandatoryJournalMinuteInput) }
+
+        AlertDialog(
+            onDismissRequest = { showMandatoryJournalTimeDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.MenuBook, contentDescription = null, tint = SoltarTerracotta)
+                    Text("Hora del Diario Obligatorio", color = TextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Configura la hora fija en la que se bloqueará la app si no has completado tu entrada de diario diario:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = SoltarSurface,
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, SoltarBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = String.format(java.util.Locale.getDefault(), "%02d:%02d", tempHour, tempMinute),
+                                fontSize = 38.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = SoltarTerracotta
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Hora: $tempHour", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                        Row {
+                            OutlinedButton(onClick = { if (tempHour > 0) tempHour-- }) { Text("-") }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            OutlinedButton(onClick = { if (tempHour < 23) tempHour++ }) { Text("+") }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Minutos: $tempMinute", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                        Row {
+                            OutlinedButton(onClick = { if (tempMinute >= 15) tempMinute -= 15 else tempMinute = 0 }) { Text("-15") }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            OutlinedButton(onClick = { if (tempMinute <= 45) tempMinute += 15 else tempMinute = 0 }) { Text("+15") }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.updateMandatoryJournalTime(tempHour, tempMinute)
+                        showMandatoryJournalTimeDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarTerracotta)
+                ) {
+                    Text("Guardar Hora", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showMandatoryJournalTimeDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Dialog para Notificación Personalizada
+    if (showCustomNotificationDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomNotificationDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = SoltarAmber)
+                    Text("Añadir Notificación Programada", color = TextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = customTitleInput,
+                        onValueChange = { customTitleInput = it },
+                        label = { Text("Título de la notificación") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedTextField(
+                        value = customMessageInput,
+                        onValueChange = { customMessageInput = it },
+                        label = { Text("Mensaje / Recordatorio") },
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(String.format(java.util.Locale.getDefault(), "Hora: %02d:%02d", customHourInput, customMinuteInput), color = TextPrimary, fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Hora: $customHourInput", color = TextSecondary)
+                        Row {
+                            OutlinedButton(onClick = { if (customHourInput > 0) customHourInput-- }) { Text("-") }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            OutlinedButton(onClick = { if (customHourInput < 23) customHourInput++ }) { Text("+") }
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Minutos: $customMinuteInput", color = TextSecondary)
+                        Row {
+                            OutlinedButton(onClick = { if (customMinuteInput >= 15) customMinuteInput -= 15 else customMinuteInput = 0 }) { Text("-15") }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            OutlinedButton(onClick = { if (customMinuteInput <= 45) customMinuteInput += 15 else customMinuteInput = 0 }) { Text("+15") }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.addCustomNotification(customHourInput, customMinuteInput, customTitleInput, customMessageInput)
+                        showCustomNotificationDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                ) {
+                    Text("Añadir Notificación", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showCustomNotificationDialog = false }) {
                     Text("Cancelar", color = TextSecondary)
                 }
             },
