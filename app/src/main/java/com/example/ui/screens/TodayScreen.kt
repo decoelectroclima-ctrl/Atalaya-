@@ -847,6 +847,7 @@ fun TodayScreen(
                 }
             }
         }
+        }
 
         // 4. THREE TOOL FAMILIES
         item {
