@@ -187,7 +187,7 @@ fun WisdomCardItem(card: WisdomCard, context: android.content.Context) {
                     onClick = {
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "«${card.quote}» — ${card.author} (ADRIANA App)")
+                            putExtra(Intent.EXTRA_TEXT, "«${card.quote}» — ${card.author} (Recuerda App)")
                         }
                         context.startActivity(Intent.createChooser(shareIntent, "Compartir sabiduría"))
                     },

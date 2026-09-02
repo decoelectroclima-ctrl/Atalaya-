@@ -771,7 +771,7 @@ fun ProfileScreen(
 
                     Text(
                         text = if (entitlements.isPremium) {
-                            "Tienes acceso ilimitado al Coach ADRIANA, auditorías profundas, ceremonias de cartas y biorregulación somática completa."
+                            "Tienes acceso ilimitado al Coach Recuerda, auditorías profundas, ceremonias de cartas y biorregulación somática completa."
                         } else {
                             "Acceso esencial a contador, check-in básico y 5 consultas diarias con el Coach. Mejora tu plan para acompañamiento ilimitado."
                         },
@@ -1067,7 +1067,7 @@ fun ProfileScreen(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
                                 data = Uri.parse("mailto:support@adrianaapp.com")
-                                putExtra(Intent.EXTRA_SUBJECT, "Reportar problema - ADRIANA v${BuildConfig.VERSION_NAME}")
+                                putExtra(Intent.EXTRA_SUBJECT, "Reportar problema - Recuerda v${BuildConfig.VERSION_NAME}")
                             }
                             context.startActivity(intent)
                         },
@@ -1084,7 +1084,7 @@ fun ProfileScreen(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
                                 data = Uri.parse("mailto:support@adrianaapp.com")
-                                putExtra(Intent.EXTRA_SUBJECT, "Sugerir una mejora - ADRIANA")
+                                putExtra(Intent.EXTRA_SUBJECT, "Sugerir una mejora - Recuerda")
                             }
                             context.startActivity(intent)
                         },
@@ -1101,7 +1101,7 @@ fun ProfileScreen(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
                                 data = Uri.parse("mailto:support@adrianaapp.com")
-                                putExtra(Intent.EXTRA_SUBJECT, "Contacto soporte - ADRIANA")
+                                putExtra(Intent.EXTRA_SUBJECT, "Contacto soporte - Recuerda")
                             }
                             context.startActivity(intent)
                         },
@@ -1830,7 +1830,7 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "💡 Cómo añadirlo: Ve a la pantalla de inicio de tu teléfono, mantén presionado un espacio vacío, selecciona 'Widgets', busca 'ADRIANA' y arrástralo a tu pantalla.",
+                                text = "💡 Cómo añadirlo: Ve a la pantalla de inicio de tu teléfono, mantén presionado un espacio vacío, selecciona 'Widgets', busca 'Recuerda' y arrástralo a tu pantalla.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextMuted,
                                 fontSize = 11.sp,

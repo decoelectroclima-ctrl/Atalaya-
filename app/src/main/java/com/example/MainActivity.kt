@@ -191,7 +191,7 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Column {
                                         Text(
-                                            text = "ADRIANA",
+                                            text = "Recuerda",
                                             style = MaterialTheme.typography.titleMedium,
                                             color = SoltarAmber,
                                             fontWeight = FontWeight.ExtraBold,
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Icon(
                                             Icons.Default.Psychology,
-                                            contentDescription = "ADRIANA Coach",
+                                            contentDescription = "Recuerda Coach",
                                             tint = SoltarAmber,
                                             modifier = Modifier.size(20.dp)
                                         )

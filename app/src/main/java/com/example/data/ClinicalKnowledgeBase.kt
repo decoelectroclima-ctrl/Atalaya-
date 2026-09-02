@@ -4,7 +4,7 @@ package com.example.data
  * Base de conocimiento clínico y marco de intervención reorganizado según la jerarquía rigurosa:
  * NIVEL 1: Evidencia científica (revisiones sistemáticas, metaanálisis, guías APA/WHO, apego, TCC, ACT, regulación emocional).
  * NIVEL 2: Modelos psicológicos (indicadores, contexto, hipótesis, intervención, herramienta, seguimiento).
- * NIVEL 3: Protocolos ADRIANA (Problema → detección → contexto → hipótesis → intervención → herramienta → seguimiento).
+ * NIVEL 3: Protocolos Recuerda (Problema → detección → contexto → hipótesis → intervención → herramienta → seguimiento).
  * NIVEL 4: Marcos de significado (lentes filosóficas y espirituales opcionales: Estoicismo, Humanismo/Existencialismo, Cristianismo).
  * NIVEL 5: Divulgación (referencias secundarias de lenguaje y perspectiva: Rolón, Congost, Rojas Estapé).
  *
@@ -24,7 +24,7 @@ data class KnowledgeCapsule(
     val clinicalGuidance: String,
     val socraticPrompt: String,
     val concreteAction: String,
-    // Atributos de la nueva Jerarquía de Conocimiento y Protocolos ADRIANA
+    // Atributos de la nueva Jerarquía de Conocimiento y Protocolos Recuerda
     val evidenceLevel: String = "Nivel 1: Evidencia científica consolidada (APA, Bowlby, TCC, ACT, Neff)",
     val psychologicalModel: String = "Modelo Cognitivo-Conductual y de Regulación de Apego Adulto",
     val adrianaProtocol: String = "Problema → Detección → Contexto → Hipótesis → Intervención → Herramienta → Seguimiento",

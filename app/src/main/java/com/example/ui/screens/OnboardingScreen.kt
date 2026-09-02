@@ -116,7 +116,7 @@ fun OnboardingScreen(
                     border = BorderStroke(1.dp, if (isIntroPage) Color(0xFFD5CDC3) else SoltarBorder)
                 ) {
                     Text(
-                        text = "ADRIANA • Paso ${currentStepIndex + 1} de $totalSteps",
+                        text = "Recuerda • Paso ${currentStepIndex + 1} de $totalSteps",
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isIntroPage) Color(0xFF8F1825) else SoltarAmber,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -204,7 +204,7 @@ fun OnboardingScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
 
                                     Text(
-                                        text = "Crea tu cuenta para comenzar con ADRIANA",
+                                        text = "Crea tu cuenta para comenzar con Recuerda",
                                         style = MaterialTheme.typography.headlineSmall,
                                         color = TextPrimary,
                                         fontWeight = FontWeight.Bold,
@@ -214,7 +214,7 @@ fun OnboardingScreen(
                                     Spacer(modifier = Modifier.height(8.dp))
 
                                     Text(
-                                        text = "ADRIANA requiere un registro (incluida la versión FREE) para proteger tus datos de duelo y mantener tu progreso de contacto cero de forma segura.",
+                                        text = "Recuerda requiere un registro (incluida la versión FREE) para proteger tus datos de duelo y mantener tu progreso de contacto cero de forma segura.",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextSecondary,
                                         textAlign = TextAlign.Center,
@@ -471,7 +471,7 @@ fun OnboardingScreen(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "ADRIANA adapta su protocolo si existen hijos para gestionar contacto cero funcional (estrictamente parental).",
+                                        text = "Recuerda adapta su protocolo si existen hijos para gestionar contacto cero funcional (estrictamente parental).",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = TextSecondary,
                                         textAlign = TextAlign.Center

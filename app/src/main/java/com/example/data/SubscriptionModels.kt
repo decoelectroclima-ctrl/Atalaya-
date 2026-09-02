@@ -11,7 +11,7 @@ enum class SubscriptionPlan(
 ) {
     FREE(
         tierKey = "FREE",
-        title = "ADRIANA Free",
+        title = "Recuerda Free",
         priceDisplay = "0 €",
         periodLabel = "Para siempre",
         billingDetail = "Acceso esencial a herramientas de contención y contador diario"

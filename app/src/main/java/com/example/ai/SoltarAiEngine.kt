@@ -97,7 +97,7 @@ data class LinguisticAnalysisResult(
     val nivelAutonomia: Int = 5,
     val lenguajeRumiativo: Int = 5,
     val distorsionesCognitivas: List<String> = emptyList(),
-    val cambioDesdeUltimaEntrada: String = "Registra más entradas en tu diario para activar el análisis lingüístico profundo de ADRIANA."
+    val cambioDesdeUltimaEntrada: String = "Registra más entradas en tu diario para activar el análisis lingüístico profundo de Recuerda."
 )
 
 object SoltarAiEngine {
@@ -113,14 +113,14 @@ object SoltarAiEngine {
         .build()
 
     private val SYSTEM_PROMPT_SOLTAR = """
-# SISTEMA DE IA DE ACOMPAÑAMIENTO Y COACHING CLÍNICO: ATALAYA (ADRIANA)
+# SISTEMA DE IA DE ACOMPAÑAMIENTO Y COACHING CLÍNICO: ATALAYA (Recuerda)
 
-Eres el coach y sistema de acompañamiento reflexivo, riguroso, profundo y transformador de ADRIANA. Tu propósito es guiar al usuario a través de rupturas amorosas, duelos vinculares, dependencia afectiva, relaciones intermitentes, impulsos de contacto (craving relacional), rumiación mental obsesiva e idealización del pasado, consolidando su estabilidad somática, autonomía personal y reconstrucción de identidad.
+Eres el coach y sistema de acompañamiento reflexivo, riguroso, profundo y transformador de Recuerda. Tu propósito es guiar al usuario a través de rupturas amorosas, duelos vinculares, dependencia afectiva, relaciones intermitentes, impulsos de contacto (craving relacional), rumiación mental obsesiva e idealización del pasado, consolidando su estabilidad somática, autonomía personal y reconstrucción de identidad.
 
 ## JERARQUÍA DE CONOCIMIENTO Y MARCO CLÍNICO:
 1. **Nivel 1 (Evidencia Científica):** Revisiones sistemáticas, metaanálisis, guías profesionales, apego, TCC, ACT, mindfulness y autocompasión.
 2. **Nivel 2 (Modelos Psicológicos):** Indicadores → Contexto → Hipótesis → Preguntas → Intervención → Herramienta → Seguimiento → Reevaluación.
-3. **Nivel 3 (Protocolos ADRIANA):** Problema → Detección → Contexto → Hipótesis → Intervención → Herramienta → Seguimiento.
+3. **Nivel 3 (Protocolos Recuerda):** Problema → Detección → Contexto → Hipótesis → Intervención → Herramienta → Seguimiento.
 4. **Nivel 4 (Marcos de Significado):** Filosofía (Estoicismo) y Espiritualidad (Cristianismo) como lentes opcionales elegidas por el usuario, sin sustituir la base científica.
 5. **Nivel 5 (Divulgación):** Referencias secundarias de lenguaje (Rolón, Congost, Rojas Estapé), nunca como autoridad científica primaria.
 
@@ -263,7 +263,7 @@ ${if (systemInstruction != null) "\n## INSTRUCCIÓN ADICIONAL PARA SIMULACRO:\n$
 • Micro-acción sugerida: ${capsule.concreteAction}
 
 ## INSTRUCCIÓN DEL COACH:
-Responde como el coach ADRIANA en español, con calidez, rigor, máxima empatía y profundidad terapéutica/filosófica.
+Responde como el coach Recuerda en español, con calidez, rigor, máxima empatía y profundidad terapéutica/filosófica.
 Estructura tu respuesta en:
 1. **Validación y Diagnóstico Lúcido** (Reconoce la emoción sin justificar la conducta desadaptativa).
 2. **Razonamiento Profundo del Marco ${framework.title}** (Usa la sabiduría y los principios clínicos pertinentes).
@@ -556,7 +556,7 @@ ${capsule.concreteAction}
         if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
             try {
                 val promptText = """
-Eres el mentor y coach reflexivo de ADRIANA. Analiza la siguiente entrada de diario personal:
+Eres el mentor y coach reflexivo de Recuerda. Analiza la siguiente entrada de diario personal:
 ---
 EMOCIÓN: $moodTag
 MARCO FILOSÓFICO: ${framework.name} (${framework.title})
@@ -721,7 +721,7 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
         if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
             try {
                 val prompt = """
-Eres el sistema de análisis lingüístico y clínico de ADRIANA. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
+Eres el sistema de análisis lingüístico y clínico de Recuerda. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
 Detecta con rigor clínico y devuelve un objeto JSON estricto con exactamente estas claves:
 - "nivelAutonomia" (entero de 0 a 10)
 - "lenguajeRumiativo" (entero de 0 a 10)

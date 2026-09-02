@@ -4,8 +4,8 @@ import org.json.JSONObject
 
 enum class SubscriptionTier(val label: String, val badge: String) {
     GRATUITO("Gratuito (Base)", "1 Nivel Kintsu / 3 Píldoras día"),
-    ADRIANA_PASO("ADRIANA Paso (Mensual)", "Acceso Ilimitado + Biblioteca Base"),
-    ADRIANA_CORE("ADRIANA Core (Anual / Pro)", "Acceso Total + Audios + Personalización Gold")
+    REC_PASO("Recuerda Paso (Mensual)", "Acceso Ilimitado + Biblioteca Base"),
+    REC_CORE("Recuerda Core (Anual / Pro)", "Acceso Total + Audios + Personalización Gold")
 }
 
 data class ReadingPill(

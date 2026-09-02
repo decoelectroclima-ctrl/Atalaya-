@@ -88,7 +88,7 @@ fun PaywallDialog(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "ADRIANA PREMIUM",
+                                text = "Recuerda PREMIUM",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold,
@@ -151,7 +151,7 @@ fun PaywallDialog(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "¿Qué incluye ADRIANA Premium?",
+                            text = "¿Qué incluye Recuerda Premium?",
                             style = MaterialTheme.typography.titleMedium,
                             color = SoltarAmber,
                             fontWeight = FontWeight.Bold
@@ -159,7 +159,7 @@ fun PaywallDialog(
 
                         FeatureRow(
                             icon = Icons.Default.ChatBubbleOutline,
-                            title = "Coach ADRIANA Ilimitado",
+                            title = "Coach Recuerda Ilimitado",
                             subtitle = "Sin topes diarios de conversación para contener momentos de rumiación o angustia."
                         )
                         FeatureRow(

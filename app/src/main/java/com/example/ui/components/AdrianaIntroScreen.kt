@@ -28,7 +28,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Animated Kintsugi Heart Intro Screen for ADRIANA based on the designed HTML/CSS spec.
+ * Animated Kintsugi Heart Intro Screen for Recuerda based on the designed HTML/CSS spec.
  *
  * Visual Components:
  * - Warm background with soft radial lighting (#FFFDF9 -> #F4F0EB -> #EBE4DC)
@@ -39,7 +39,7 @@ import kotlin.math.sin
  * - Ceramic Kintsugi Cracks matching background color and depth shadows
  * - Golden Thread (Kintsugi seams #C7A24D, #EFD58A) across fracture lines
  * - Golden Connection Knots with glowing radial centers
- * - Elegant typography: "ADRIANA" with wide tracking (Serif) + Golden separator + "volver a ti"
+ * - Elegant typography: "Recuerda" with wide tracking (Serif) + Golden separator + "volver a ti"
  */
 @Composable
 fun AdrianaIntroScreen(

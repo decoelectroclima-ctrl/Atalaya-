@@ -299,7 +299,7 @@ fun AiCompanionDialog(
 
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "ADRIANA acompaña tu proceso desde el rigor y la compasión, sin validar falsas ilusiones ni alimentar rumiaciones.",
+                            text = "Recuerda acompaña tu proceso desde el rigor y la compasión, sin validar falsas ilusiones ni alimentar rumiaciones.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             lineHeight = 18.sp
@@ -313,7 +313,7 @@ fun AiCompanionDialog(
                                 border = BorderStroke(1.dp, SoltarBorder)
                             ) {
                                 Text(
-                                    text = "⚖️ Aviso ético y clínico: ADRIANA es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
+                                    text = "⚖️ Aviso ético y clínico: Recuerda es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted,
                                     modifier = Modifier.padding(10.dp),
@@ -359,7 +359,7 @@ fun AiCompanionDialog(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Text(
-                                        text = "ADRIANA",
+                                        text = "Recuerda",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = SoltarAmber,
                                         fontWeight = FontWeight.Bold

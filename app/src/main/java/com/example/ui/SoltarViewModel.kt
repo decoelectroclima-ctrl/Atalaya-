@@ -581,7 +581,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             }
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("✨ ¡Bienvenido a ADRIANA! Tu perfil y contexto han sido configurados.")
+            showNotification("✨ ¡Bienvenido a Recuerda! Tu perfil y contexto han sido configurados.")
         }
     }
 
@@ -1611,7 +1611,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             )
             _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("💎 ¡Bienvenido/a a ADRIANA Premium! Tu acceso completo está activo.")
+            showNotification("💎 ¡Bienvenido/a a Recuerda Premium! Tu acceso completo está activo.")
         }
     }
 
@@ -1630,7 +1630,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             )
             _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("🌟 Has iniciado tus 7 días de prueba gratis en ADRIANA Premium.")
+            showNotification("🌟 Has iniciado tus 7 días de prueba gratis en Recuerda Premium.")
         }
     }
 
@@ -1645,7 +1645,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             )
             playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-            showNotification("ℹ️ Tu suscripción ha sido cancelada. Mantienes el acceso a ADRIANA Free.")
+            showNotification("ℹ️ Tu suscripción ha sido cancelada. Mantienes el acceso a Recuerda Free.")
         }
     }
 

@@ -87,7 +87,7 @@ fun AuthDialog(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = if (uiState.authDialogMode == "LOGIN") "Acceso ADRIANA" else "Configurar PIN",
+                    text = if (uiState.authDialogMode == "LOGIN") "Acceso Recuerda" else "Configurar PIN",
                     style = MaterialTheme.typography.headlineMedium,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold

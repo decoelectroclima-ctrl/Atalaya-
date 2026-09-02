@@ -56,7 +56,7 @@ fun EmotionalCheckinDialog(
                     title = {
                         Column {
                             Text(
-                                text = "ADRIANA • CHECK-IN EMOCIONAL",
+                                text = "Recuerda • CHECK-IN EMOCIONAL",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold,
@@ -114,7 +114,7 @@ fun EmotionalCheckinDialog(
                             }
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Tus respuestas adaptan las recomendaciones de ADRIANA y alimentan tu evolución personal sin juicios.",
+                                text = "Tus respuestas adaptan las recomendaciones de Recuerda y alimentan tu evolución personal sin juicios.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = TextSecondary,
                                 lineHeight = 20.sp

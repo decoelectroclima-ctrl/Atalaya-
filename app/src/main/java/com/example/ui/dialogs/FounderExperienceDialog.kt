@@ -19,7 +19,7 @@ fun FounderExperienceDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
         text = {
             Column(modifier = Modifier.padding(8.dp)) {
                 Text(
-                    text = "ADRIANA no es solo una herramienta, es un compromiso con tu propia autonomía. " +
+                    text = "Recuerda no es solo una herramienta, es un compromiso con tu propia autonomía. " +
                            "Esta aplicación nació del reconocimiento de que el dolor no debe ser gestionado " +
                            "desde la desesperación, sino desde la dignidad y la razón.",
                     style = MaterialTheme.typography.bodyMedium

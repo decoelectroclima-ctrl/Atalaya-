@@ -56,7 +56,7 @@ fun EncounterSimulatorDialog(
                                 isLoading = true
                                 chatMessages = chatMessages + ("Tú" to msg)
                                 val response = viewModel.sendEncounterMessage(msg, chatMessages, selectedScenario!!)
-                                chatMessages = chatMessages + ("ADRIANA" to response.replyText)
+                                chatMessages = chatMessages + ("Recuerda" to response.replyText)
                                 isLoading = false
                             }
                         },
