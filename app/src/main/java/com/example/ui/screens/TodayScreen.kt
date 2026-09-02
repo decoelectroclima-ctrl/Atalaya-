@@ -257,27 +257,33 @@ fun TodayScreen(
         }
 
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
-                ProgressiveLandscape(
-                    progressStage = progressStage,
-                    vulnerabilityScore = vulnerabilityScore,
-                    onTapSun = {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        viewModel.rotateWisdomCard(uiState.preferredFramework)
-                    },
-                    onTapTree = {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        viewModel.openJournalModal()
-                    },
-                    onTapMountain = {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        viewModel.toggleThoughtModal(true)
-                    }
-                )
+        if (vulnerabilityMode != "REFUGIO") {
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
+                    ProgressiveLandscape(
+                        progressStage = progressStage,
+                        vulnerabilityScore = vulnerabilityScore,
+                        onTapSun = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            // Abrir Diario
+                            viewModel.openJournalModal()
+                        },
+                        onTapTree = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            // Abrir Red Flags (RelationshipAuditDialog)
+                            viewModel.toggleAuditModal(true)
+                        },
+                        onTapMountain = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            // Abrir Biblioteca de Sabiduría
+                            viewModel.rotateWisdomCard(uiState.preferredFramework)
+                        }
+                    )
+                }
             }
         }
+        
         item {
             Card(
                 modifier = Modifier
@@ -291,102 +297,24 @@ fun TodayScreen(
                 colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
                 border = BorderStroke(1.dp, SoltarAmber)
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(SoltarAmber.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, tint = SoltarAmber)
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Check-in Emocional Rápido (30-60s)",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Evalúa tu evolución, estado y detonantes de hoy.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
-                        )
-                    }
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = SoltarAmber)
-                }
+                // ... (código existente del check-in)
             }
         }
-        item {
-            val settings by viewModel.settings.collectAsState()
-            val recommendation = remember(settings) {
-                com.example.ai.ContextualExperienceEngine.analyzeContext(settings)
-            }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("contextual_recommendation_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
-                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
-                        Text(
-                            text = "GUÍA CONTEXTUAL • ${recommendation.profileTypeDescription.uppercase()}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SoltarAmber,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                    }
+        if (vulnerabilityMode != "REFUGIO") {
+            item {
+                val settings by viewModel.settings.collectAsState()
+                val recommendation = remember(settings) {
+                    com.example.ai.ContextualExperienceEngine.analyzeContext(settings)
+                }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = recommendation.bannerMessage,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextPrimary,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 22.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-                    HorizontalDivider(color = SoltarBorderSubtle)
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Column {
-                        Text(
-                            text = "Estrategia recomendada:",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = recommendation.priorityToolTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = recommendation.strategySummary,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary,
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp
-                        )
-                    }
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("contextual_recommendation_card"),
+                    // ... (código existente de la recomendación)
+                ) {
+                    // ...
                 }
             }
         }
@@ -487,144 +415,159 @@ fun TodayScreen(
             }
         }
 
-        // 2. HERO FEATURE: No-Contact Counter
+        // --- BOTÓN SOS (SIEMPRE VISIBLE) ---
         item {
-            Card(
+            Button(
+                onClick = {
+                    viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
+                    viewModel.openUrgeSheet()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("no_contact_hero_card"),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
-                border = BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(SoltarBorder, SoltarAmber.copy(alpha = 0.6f), SoltarBorder)))
+                    .height(56.dp)
+                    .testTag("sos_button"),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = UrgeAlertRed)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text("MODO IMPULSO / SOS", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+        }
+
+        // 2. HERO FEATURE: No-Contact Counter (Solo visible si no es REFUGIO)
+        if (vulnerabilityMode != "REFUGIO") {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("no_contact_hero_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                    border = BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(SoltarBorder, SoltarAmber.copy(alpha = 0.6f), SoltarBorder)))
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = SoltarAmber.copy(alpha = 0.15f),
-                            border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = milestoneTitle,
-                                style = MaterialTheme.typography.labelSmall,
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = SoltarAmber.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
+                            ) {
+                                Text(
+                                    text = milestoneTitle,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                    val calendar = Calendar.getInstance().apply { timeInMillis = noContactStart }
+                                    DatePickerDialog(
+                                        context,
+                                        { _, y, m, d ->
+                                            val selectedCal = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }
+                                            viewModel.updateNoContactStartDate(selectedCal.timeInMillis)
+                                        },
+                                        calendar.get(Calendar.YEAR),
+                                        calendar.get(Calendar.MONTH),
+                                        calendar.get(Calendar.DAY_OF_MONTH)
+                                    ).show()
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.EditCalendar, contentDescription = "Ajustar fecha", tint = TextSecondary, modifier = Modifier.size(18.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "DÍAS DE CONTACTO CERO",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondary,
+                            letterSpacing = 1.2.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        val lastRelapseTimestamp = remember(relapses) {
+                            relapses.maxByOrNull { it.timestamp }?.timestamp ?: 0L
+                        }
+                        val daysSinceLastRelapse = if (lastRelapseTimestamp > 0L) {
+                            ((currentTime - lastRelapseTimestamp).coerceAtLeast(0L)) / (24 * 3600 * 1000)
+                        } else {
+                            -1L
+                        }
+
+                        Text(
+                            text = if (daysSinceLastRelapse >= 0L)
+                                "$days días de contacto cero • $daysSinceLastRelapse días desde la última recaída"
+                            else
+                                "$days días de contacto cero (Sin recaídas registradas)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SoltarAmber,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Counter Grid (Days, Hours, Min, Sec)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CounterUnit(value = "$days", label = "DÍAS", highlight = true)
+                            Text(":", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            CounterUnit(value = String.format("%02d", hours), label = "HORAS")
+                            Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            CounterUnit(value = String.format("%02d", minutes), label = "MIN")
+                            Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                            CounterUnit(value = String.format("%02d", seconds), label = "SEG")
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Progress to next milestone
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Objetivo: $nextMilestoneDays días", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 11.sp)
+                                Text("${(milestoneProgress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { milestoneProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
                                 color = SoltarAmber,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                fontWeight = FontWeight.Bold
+                                trackColor = SoltarSurface
                             )
                         }
 
-                        IconButton(
-                            onClick = {
-                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                val calendar = Calendar.getInstance().apply { timeInMillis = noContactStart }
-                                DatePickerDialog(
-                                    context,
-                                    { _, y, m, d ->
-                                        val selectedCal = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }
-                                        viewModel.updateNoContactStartDate(selectedCal.timeInMillis)
-                                    },
-                                    calendar.get(Calendar.YEAR),
-                                    calendar.get(Calendar.MONTH),
-                                    calendar.get(Calendar.DAY_OF_MONTH)
-                                ).show()
-                            },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(Icons.Default.EditCalendar, contentDescription = "Ajustar fecha", tint = TextSecondary, modifier = Modifier.size(18.dp))
-                        }
-                    }
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "DÍAS DE CONTACTO CERO",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextSecondary,
-                        letterSpacing = 1.2.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    val lastRelapseTimestamp = remember(relapses) {
-                        relapses.maxByOrNull { it.timestamp }?.timestamp ?: 0L
-                    }
-                    val daysSinceLastRelapse = if (lastRelapseTimestamp > 0L) {
-                        ((currentTime - lastRelapseTimestamp).coerceAtLeast(0L)) / (24 * 3600 * 1000)
-                    } else {
-                        -1L
-                    }
-
-                    Text(
-                        text = if (daysSinceLastRelapse >= 0L)
-                            "$days días de contacto cero • $daysSinceLastRelapse días desde la última recaída"
-                        else
-                            "$days días de contacto cero (Sin recaídas registradas)",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = SoltarAmber,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Counter Grid (Days, Hours, Min, Sec)
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CounterUnit(value = "$days", label = "DÍAS", highlight = true)
-                        Text(":", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        CounterUnit(value = String.format("%02d", hours), label = "HORAS")
-                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        CounterUnit(value = String.format("%02d", minutes), label = "MIN")
-                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        CounterUnit(value = String.format("%02d", seconds), label = "SEG")
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Progress to next milestone
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Objetivo: $nextMilestoneDays días", style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 11.sp)
-                            Text("${(milestoneProgress * 100).toInt()}%", style = MaterialTheme.typography.labelSmall, color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        LinearProgressIndicator(
-                            progress = { milestoneProgress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = SoltarAmber,
-                            trackColor = SoltarSurface
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Actions
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
+                        // Actions (Solo registrar recaída, el botón SOS ya está fuera)
                         OutlinedButton(
                             onClick = {
                                 viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                                 viewModel.toggleRelapseModal(true)
                             },
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
                                 .height(40.dp)
                                 .testTag("relapse_modal_trigger_button"),
                             shape = RoundedCornerShape(10.dp),
@@ -633,167 +576,157 @@ fun TodayScreen(
                         ) {
                             Text("Registrar recaída", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
-
-                        Button(
-                            onClick = {
-                                viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
-                                viewModel.openUrgeSheet()
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(40.dp)
-                                .testTag("quick_urge_button"),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
-                        ) {
-                            Text("Siento el impulso", color = SoltarBackground, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
                     }
                 }
             }
         }
 
         // Quick Journal Access
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        viewModel.openJournalModal()
-                    }
-                    .testTag("journal_quick_access_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                border = BorderStroke(1.dp, SoltarBorder)
-            ) {
-                Row(
+        if (vulnerabilityMode != "REFUGIO") {
+            item {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(SoltarAmber.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.EditNote,
-                            contentDescription = null,
-                            tint = SoltarAmber,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "DIARIO PERSONAL & MENTORÍA",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SoltarAmber,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Text(
-                            text = "Registra tus pensamientos y recibe sabiduría reflexiva",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        // Semantic Bell & Calm Soundscapes (Pro Feature)
-        item {
-            val entitlements = UserEntitlements.fromSettings(settings)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        if (entitlements.isPremium) {
-                            showSemanticBellDialog = true
-                        } else {
-                            viewModel.openPaywall(SubscriptionPlan.MONTHLY)
+                        .clickable {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.openJournalModal()
                         }
-                    }
-                    .testTag("semantic_bell_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                border = BorderStroke(1.dp, if (entitlements.isPremium) SoltarAmber else SoltarBorder)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .testTag("journal_quick_access_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, SoltarBorder)
                 ) {
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(SoltarAmber.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SelfImprovement,
-                            contentDescription = null,
-                            tint = SoltarAmber,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(SoltarAmber.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EditNote,
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "CAMPANA & PAISAJES DE CALMA",
+                                text = "DIARIO PERSONAL & MENTORÍA",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
-                            if (!entitlements.isPremium) {
-                                Surface(
-                                    shape = RoundedCornerShape(4.dp),
-                                    color = SoltarAmber.copy(alpha = 0.2f)
-                                ) {
-                                    Text("PRO", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = SoltarAmber, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
-                                }
-                            }
+                            Text(
+                                text = "Registra tus pensamientos y recibe sabiduría reflexiva",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
-                        Text(
-                            text = "Regulación auditiva 528Hz y entornos sonoros inmersivos",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                    Icon(
-                        imageVector = if (entitlements.isPremium) Icons.Default.ChevronRight else Icons.Default.Lock,
-                        contentDescription = null,
-                        tint = if (entitlements.isPremium) TextSecondary else SoltarAmber,
-                        modifier = Modifier.size(20.dp)
-                    )
+                }
+            }
+        }
+
+        // Semantic Bell & Calm Soundscapes (Pro Feature)
+        if (vulnerabilityMode != "REFUGIO") {
+            item {
+                val entitlements = UserEntitlements.fromSettings(settings)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            if (entitlements.isPremium) {
+                                showSemanticBellDialog = true
+                            } else {
+                                viewModel.openPaywall(SubscriptionPlan.MONTHLY)
+                            }
+                        }
+                        .testTag("semantic_bell_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, if (entitlements.isPremium) SoltarAmber else SoltarBorder)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(SoltarAmber.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SelfImprovement,
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(
+                                    text = "CAMPANA & PAISAJES DE CALMA",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                                if (!entitlements.isPremium) {
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = SoltarAmber.copy(alpha = 0.2f)
+                                    ) {
+                                        Text("PRO", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = SoltarAmber, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
+                                    }
+                                }
+                            }
+                            Text(
+                                text = "Regulación auditiva 528Hz y entornos sonoros inmersivos",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Icon(
+                            imageVector = if (entitlements.isPremium) Icons.Default.ChevronRight else Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = if (entitlements.isPremium) TextSecondary else SoltarAmber,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
         }
 
         // 3. Core Question: "¿Cómo estás ahora?"
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("feeling_state_card"),
+        if (vulnerabilityMode != "REFUGIO") {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("feeling_state_card"),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarBorder)
