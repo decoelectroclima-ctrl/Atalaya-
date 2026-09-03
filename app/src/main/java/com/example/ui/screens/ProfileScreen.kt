@@ -2318,6 +2318,125 @@ fun ProfileScreen(
             }
         }
 
+        // Estado del Modelo On-Device (Gemma 3)
+        item {
+            val modelState by com.example.ai.OnDeviceModelManager.modelState.collectAsState()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.Memory, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                            Text(
+                                text = "Motor On-Device: Gemma 3",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = when (modelState) {
+                                is com.example.ai.OnDeviceModelManager.ModelState.Ready -> SoltarAmber.copy(alpha = 0.2f)
+                                is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> SoltarSurfaceElevated
+                                else -> SoltarBorder
+                            }
+                        ) {
+                            Text(
+                                text = when (modelState) {
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Ready -> "Listo"
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> "Descargando"
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Error -> "Error"
+                                    is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded -> "Pendiente"
+                                },
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = when (modelState) {
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Ready -> SoltarAmber
+                                    else -> TextSecondary
+                                },
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Gemma 3 (270M Instruct Q8) procesa el simulador de encuentros, reestructuración cognitiva y análisis de recaídas localmente en tu teléfono, sin enviar tus datos a la nube.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 18.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    when (val state = modelState) {
+                        is com.example.ai.OnDeviceModelManager.ModelState.Ready -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                                Text(
+                                    text = "Modelo local instalado (${state.modelFile.name})",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
+                        is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Descargando gemma3-270m-it-q8.task...",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = SoltarAmber
+                                    )
+                                    Text(
+                                        text = "${(state.progress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = SoltarAmber,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
+                                LinearProgressIndicator(
+                                    progress = { state.progress },
+                                    modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
+                                    color = SoltarAmber,
+                                    trackColor = SoltarSurfaceElevated
+                                )
+                            }
+                        }
+                        is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded,
+                        is com.example.ai.OnDeviceModelManager.ModelState.Error -> {
+                            OutlinedButton(
+                                onClick = { com.example.ai.OnDeviceModelManager.startDownloadInBackground(context) },
+                                modifier = Modifier.fillMaxWidth().height(42.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                border = BorderStroke(1.dp, SoltarAmber)
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Descargar modelo Gemma 3 (270M)", color = SoltarAmber, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Privacidad & Seguridad (Derecho al Olvido)
         item {
             Card(
