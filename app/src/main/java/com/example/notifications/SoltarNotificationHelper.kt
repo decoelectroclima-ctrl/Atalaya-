@@ -292,7 +292,7 @@ object SoltarNotificationHelper {
             putExtra("notification_title", item.title)
             putExtra("notification_message", item.message)
         }
-        val requestCode = (3000 + (item.id % 10000)).toInt()
+        val requestCode = (3000 + (Math.abs(item.id) % 10000)).toInt()
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             requestCode,
@@ -324,7 +324,7 @@ object SoltarNotificationHelper {
         val intent = Intent(context, SoltarAlarmReceiver::class.java).apply {
             action = ACTION_CUSTOM_NOTIFICATION
         }
-        val requestCode = (3000 + (id % 10000)).toInt()
+        val requestCode = (3000 + (Math.abs(id) % 10000)).toInt()
         val pendingIntent = PendingIntent.getBroadcast(
             context,
             requestCode,
@@ -333,6 +333,22 @@ object SoltarNotificationHelper {
         )
         if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent)
+        }
+    }
+
+    fun rescheduleCustomNotificationNextDay(context: Context, id: Long) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val db = AdrianaDatabase.getDatabase(context)
+                val settings = db.soltarSettingsDao().getSettingsOnce() ?: return@launch
+                if (settings.customNotificationsJson.isNotBlank()) {
+                    val list = json.decodeFromString<List<com.example.data.CustomNotificationItem>>(settings.customNotificationsJson)
+                    val item = list.find { it.id == id }
+                    if (item != null && item.enabled) {
+                        scheduleCustomNotification(context, item)
+                    }
+                }
+            } catch (_: Exception) {}
         }
     }
 

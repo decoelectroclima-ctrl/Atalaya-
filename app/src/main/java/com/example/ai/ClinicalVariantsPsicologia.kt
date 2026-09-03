@@ -34,11 +34,11 @@ Para que tu sistema nervioso empiece a desintoxicarse de la abstinencia afectiva
                     """.trimIndent()
                 ),
                 ClinicalVariant(
-                    headerGreeting = "**Rompe el ciclo de sumisión afectiva y falsas expectativas.**",
+                    headerGreeting = "**Rompe el ciclo de sumisión afectiva y falsas esperanzas.**",
                     bodyText = """
-Buscar tácticas para provocar el arrepentimiento del otro es una forma sutil de cederle todo el control sobre tu estado anímico. Si te busca te alegras, si no te busca te hundes: quedas a merced de su conducta.
+Buscar tácticas de manipulación para provocar el arrepentimiento del otro o intentar reconquistar es una forma sutil de cederle todo el control sobre tu estado anímico. Si te busca te alegras, si no te busca te hundes: quedas a merced de su conducta.
 
-La verdadera recuperación psicológica empieza cuando retiras tu energía de la ecuación del otro. Tu valor no depende de que alguien reconsidere su partida, sino de tu capacidad para validar tu propio bienestar.
+La verdadera recuperación psicológica empieza cuando sostienes el contacto cero y retiras tu energía de la ecuación del otro. Tu dignidad y tu valor no dependen de que alguien reconsidere su partida o regrese, sino de tu capacidad para validar tu propio bienestar.
                     """.trimIndent()
                 )
             )
@@ -178,9 +178,9 @@ La ruptura, con todo su dolor, es la oportunidad de repatriar tu centro de grave
                 ClinicalVariant(
                     headerGreeting = "**La herida del abandono no se sana mendigando presencia.**",
                     bodyText = """
-Cuando decimos 'sin ti no soy nada', estamos proyectando una herida infantil no resuelta en una relación de pareja adulta. Ninguna persona tiene la obligación ni la capacidad de cargar con tu vacío existencial.
+Desde la psicología del apego y el desarrollo afectivo, cuando decimos 'sin ti no soy nada', estamos proyectando una herida infantil no resuelta en una relación de pareja adulta. Ninguna persona tiene la obligación ni la capacidad de cargar con tu vacío existencial.
 
-Asume la responsabilidad compasiva de tu propia vida. Trátate con la ternura y el cuidado que esperabas recibir del otro; tú eres la única persona que estará contigo hasta el último día.
+Asume la autorregulación emocional y la responsabilidad compasiva de tu propia vida psicológica. Trátate con la ternura y el cuidado que esperabas recibir del otro; tú eres la única persona que estará contigo hasta el último día.
                     """.trimIndent()
                 ),
                 ClinicalVariant(

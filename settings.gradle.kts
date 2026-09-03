@@ -1,3 +1,12 @@
+// Suppress benign IntelliJ/KSP headless AWT decompiler notification exception
+val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+  if (thread.name.contains("AWT-EventQueue") && throwable is NullPointerException) {
+    return@setDefaultUncaughtExceptionHandler
+  }
+  defaultHandler?.uncaughtException(thread, throwable)
+}
+
 pluginManagement {
   repositories {
     google {

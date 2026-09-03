@@ -381,9 +381,21 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                             customNotifications = try {
                                 if (currentSettings.customNotificationsJson.isNotBlank()) {
                                     json.decodeFromString<List<CustomNotificationItem>>(currentSettings.customNotificationsJson)
-                                } else emptyList()
-                            } catch (_: Exception) { emptyList() }
+                                } else {
+                                    DEFAULT_PRESET_REMINDERS
+                                }
+                            } catch (_: Exception) { DEFAULT_PRESET_REMINDERS }
                         )
+                    }
+
+                    if (currentSettings.customNotificationsJson.isBlank()) {
+                        val jsonStr = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CustomNotificationItem.serializer()), DEFAULT_PRESET_REMINDERS)
+                        repository.saveSettings(currentSettings.copy(customNotificationsJson = jsonStr))
+                        DEFAULT_PRESET_REMINDERS.forEach { item ->
+                            if (item.enabled) {
+                                com.example.notifications.SoltarNotificationHelper.scheduleCustomNotification(getApplication(), item)
+                            }
+                        }
                     }
                 }
             }
@@ -2089,5 +2101,149 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             repository.saveSettings(current.copy(customNotificationsJson = jsonStr))
             _uiState.update { it.copy(customNotifications = updatedList) }
         }
+    }
+
+    fun openAddCustomNotificationDialog(
+        defaultTitle: String = "Recordatorio de Soberanía",
+        defaultMessage: String = "Mantén tu enfoque y respira hondo.",
+        defaultHour: Int = 12,
+        defaultMinute: Int = 0
+    ) {
+        _uiState.update {
+            it.copy(
+                isCustomNotificationDialogVisible = true,
+                editingCustomNotificationId = null,
+                customNotificationTitleInput = defaultTitle,
+                customNotificationMessageInput = defaultMessage,
+                customNotificationHourInput = defaultHour.coerceIn(0, 23),
+                customNotificationMinuteInput = defaultMinute.coerceIn(0, 59)
+            )
+        }
+    }
+
+    fun openEditCustomNotificationDialog(item: CustomNotificationItem) {
+        _uiState.update {
+            it.copy(
+                isCustomNotificationDialogVisible = true,
+                editingCustomNotificationId = item.id,
+                customNotificationTitleInput = item.title,
+                customNotificationMessageInput = item.message,
+                customNotificationHourInput = item.hour,
+                customNotificationMinuteInput = item.minute
+            )
+        }
+    }
+
+    fun dismissCustomNotificationDialog() {
+        _uiState.update { it.copy(isCustomNotificationDialogVisible = false, editingCustomNotificationId = null) }
+    }
+
+    fun setCustomNotificationTitleInput(title: String) {
+        _uiState.update { it.copy(customNotificationTitleInput = title) }
+    }
+
+    fun setCustomNotificationMessageInput(msg: String) {
+        _uiState.update { it.copy(customNotificationMessageInput = msg) }
+    }
+
+    fun setCustomNotificationHourInput(hour: Int) {
+        _uiState.update { it.copy(customNotificationHourInput = hour.coerceIn(0, 23)) }
+    }
+
+    fun setCustomNotificationMinuteInput(min: Int) {
+        _uiState.update { it.copy(customNotificationMinuteInput = min.coerceIn(0, 59)) }
+    }
+
+    fun saveCustomNotificationFromDialog() {
+        val s = _uiState.value
+        val id = s.editingCustomNotificationId
+        if (id != null) {
+            updateCustomNotification(
+                id = id,
+                hour = s.customNotificationHourInput,
+                minute = s.customNotificationMinuteInput,
+                title = s.customNotificationTitleInput,
+                message = s.customNotificationMessageInput,
+                enabled = true
+            )
+        } else {
+            addCustomNotification(
+                hour = s.customNotificationHourInput,
+                minute = s.customNotificationMinuteInput,
+                title = s.customNotificationTitleInput,
+                message = s.customNotificationMessageInput
+            )
+        }
+        dismissCustomNotificationDialog()
+    }
+
+    fun triggerTestCustomNotification(title: String, message: String) {
+        com.example.notifications.SoltarNotificationHelper.sendCustomNotification(
+            getApplication(),
+            title.ifBlank { "Recordatorio de Soberanía" },
+            message.ifBlank { "Mantén tu enfoque y respira hondo." }
+        )
+        playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+        showNotification("🔔 Notificación de prueba enviada")
+    }
+
+    fun restoreDefaultPresetReminders() {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            val existing = try {
+                if (current.customNotificationsJson.isNotBlank()) {
+                    json.decodeFromString<List<CustomNotificationItem>>(current.customNotificationsJson)
+                } else emptyList()
+            } catch (_: Exception) { emptyList() }
+
+            val merged = existing + DEFAULT_PRESET_REMINDERS.filter { p -> existing.none { it.title == p.title } }
+            val jsonStr = json.encodeToString(kotlinx.serialization.builtins.ListSerializer(CustomNotificationItem.serializer()), merged)
+            repository.saveSettings(current.copy(customNotificationsJson = jsonStr))
+            merged.forEach { item ->
+                if (item.enabled) {
+                    com.example.notifications.SoltarNotificationHelper.scheduleCustomNotification(getApplication(), item)
+                }
+            }
+            _uiState.update { it.copy(customNotifications = merged) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            showNotification("✨ Plantillas de recordatorios programables cargadas")
+        }
+    }
+
+    companion object {
+        val DEFAULT_PRESET_REMINDERS = listOf(
+            CustomNotificationItem(
+                id = 101L,
+                hour = 8,
+                minute = 30,
+                title = "🌅 Intención Matutina",
+                message = "Respira hondo: hoy eliges tu paz mental y tu soberanía emocional.",
+                enabled = true
+            ),
+            CustomNotificationItem(
+                id = 102L,
+                hour = 14,
+                minute = 0,
+                title = "🛡️ Pausa Antirrumiación",
+                message = "Si surge urgencia de buscar o escribir, haz una pausa. El impulso pasará.",
+                enabled = true
+            ),
+            CustomNotificationItem(
+                id = 103L,
+                hour = 18,
+                minute = 30,
+                title = "🌿 Chequeo de Calma & Autocuidado",
+                message = "Tómate un respiro, bebe agua y valida el camino que has recorrido.",
+                enabled = true
+            ),
+            CustomNotificationItem(
+                id = 104L,
+                hour = 22,
+                minute = 30,
+                title = "🌙 Serenidad & Cierre Nocturno",
+                message = "Un día más que has protegido tu dignidad. Descansa y suelta lo que no controlas.",
+                enabled = true
+            )
+        )
     }
 }

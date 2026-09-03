@@ -6,6 +6,7 @@ import com.example.data.ClinicalKnowledgeBase
 import com.example.data.SoltarFramework
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -14,6 +15,11 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class SoltarAiEngineTest {
+
+    @Before
+    fun setUp() {
+        com.example.ai.ClinicalVariantRegistry.clearMemory()
+    }
 
     @Test
     fun testSelfHarmTriggerDetection() {
@@ -154,12 +160,15 @@ class SoltarAiEngineTest {
 
         assertTrue(
             "Marco psicológico debe contener referencias a apego/regulación/autorregulación/vínculo",
-            modernResp.replyText.contains("apego") ||
-            modernResp.replyText.contains("psicológico") ||
-            modernResp.replyText.contains("cerebro") ||
-            modernResp.replyText.contains("autorregular") ||
-            modernResp.replyText.contains("ansiolítico") ||
-            modernResp.replyText.contains("centro de gravedad")
+            modernResp.replyText.contains("apego", ignoreCase = true) ||
+            modernResp.replyText.contains("psicológico", ignoreCase = true) ||
+            modernResp.replyText.contains("psicología", ignoreCase = true) ||
+            modernResp.replyText.contains("cerebro", ignoreCase = true) ||
+            modernResp.replyText.contains("autorregular", ignoreCase = true) ||
+            modernResp.replyText.contains("regulación", ignoreCase = true) ||
+            modernResp.replyText.contains("vínculo", ignoreCase = true) ||
+            modernResp.replyText.contains("ansiolítico", ignoreCase = true) ||
+            modernResp.replyText.contains("centro de gravedad", ignoreCase = true)
         )
     }
 

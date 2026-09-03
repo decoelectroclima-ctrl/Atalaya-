@@ -20,9 +20,13 @@ class SoltarAlarmReceiver : BroadcastReceiver() {
                 SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
             }
             SoltarNotificationHelper.ACTION_CUSTOM_NOTIFICATION -> {
+                val id = intent.getLongExtra("notification_id", -1L)
                 val title = intent.getStringExtra("notification_title") ?: "Recordatorio de Soberanía"
                 val message = intent.getStringExtra("notification_message") ?: "Mantén tu enfoque y respira hondo."
                 SoltarNotificationHelper.sendCustomNotification(context, title, message)
+                if (id != -1L) {
+                    SoltarNotificationHelper.rescheduleCustomNotificationNextDay(context, id)
+                }
             }
             Intent.ACTION_BOOT_COMPLETED,
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
