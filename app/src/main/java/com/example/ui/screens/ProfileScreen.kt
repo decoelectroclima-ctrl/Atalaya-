@@ -58,8 +58,41 @@ fun ProfileScreen(
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountConfirmDialog by remember { mutableStateOf(false) }
     var showMandatoryJournalTimeDialog by remember { mutableStateOf(false) }
+    var showDeleteModelDialog by remember { mutableStateOf(false) }
 
     // Dialogs
+    if (showDeleteModelDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteModelDialog = false },
+            title = { Text("¿Eliminar modelo Gemma 3?", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Se borrará el archivo de Gemma 3 de tu dispositivo (~270MB) liberando espacio de almacenamiento. Si lo eliminas, la app utilizará los motores clínicos deterministas y podrás reinstalarlo en cualquier momento.",
+                    color = TextSecondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        com.example.ai.OnDeviceModelManager.deleteModel(context)
+                        showDeleteModelDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = UrgeAlertRed)
+                ) {
+                    Text("Eliminar del móvil", color = TextPrimary, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDeleteModelDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
@@ -2346,21 +2379,25 @@ fun ProfileScreen(
                             shape = RoundedCornerShape(12.dp),
                             color = when (modelState) {
                                 is com.example.ai.OnDeviceModelManager.ModelState.Ready -> SoltarAmber.copy(alpha = 0.2f)
+                                is com.example.ai.OnDeviceModelManager.ModelState.Disconnected -> SoltarBorder
                                 is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> SoltarSurfaceElevated
-                                else -> SoltarBorder
+                                is com.example.ai.OnDeviceModelManager.ModelState.Error -> UrgeAlertRed.copy(alpha = 0.2f)
+                                is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded -> SoltarBorder
                             }
                         ) {
                             Text(
-                                text = when (modelState) {
-                                    is com.example.ai.OnDeviceModelManager.ModelState.Ready -> "Listo"
+                                text = when (val s = modelState) {
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Ready -> "Listo y Conectado"
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Disconnected -> "Desconectado"
                                     is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> "Descargando"
                                     is com.example.ai.OnDeviceModelManager.ModelState.Error -> "Error"
-                                    is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded -> "Pendiente"
+                                    is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded -> if (s.isExplicitlyDeleted) "Eliminado" else "Instalando por defecto"
                                 },
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = when (modelState) {
                                     is com.example.ai.OnDeviceModelManager.ModelState.Ready -> SoltarAmber
+                                    is com.example.ai.OnDeviceModelManager.ModelState.Error -> UrgeAlertRed
                                     else -> TextSecondary
                                 },
                                 fontWeight = FontWeight.Bold
@@ -2370,13 +2407,13 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Gemma 3 (270M Instruct Q8) procesa el simulador de encuentros, reestructuración cognitiva y análisis de recaídas localmente en tu teléfono, sin enviar tus datos a la nube.",
+                        text = "Gemma 3 (270M Instruct Q8) se instala por defecto para procesar el simulador de encuentros, reestructuración cognitiva y análisis de recaídas 100% en tu teléfono. Puedes desconectarlo o eliminarlo cuando prefieras.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                         lineHeight = 18.sp
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     when (val state = modelState) {
                         is com.example.ai.OnDeviceModelManager.ModelState.Ready -> {
@@ -2390,6 +2427,71 @@ fun ProfileScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextPrimary
                                 )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { com.example.ai.OnDeviceModelManager.disconnectModel(context) },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, SoltarBorder)
+                                ) {
+                                    Icon(Icons.Default.PowerSettingsNew, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Desconectar", color = TextSecondary, fontSize = 12.sp)
+                                }
+                                OutlinedButton(
+                                    onClick = { showDeleteModelDialog = true },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, UrgeAlertRed.copy(alpha = 0.6f))
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = null, tint = UrgeAlertRed, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Eliminar", color = UrgeAlertRed, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                        is com.example.ai.OnDeviceModelManager.ModelState.Disconnected -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(Icons.Default.PauseCircle, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                Text(
+                                    text = "Modelo desconectado. Usando fallbacks deterministas.",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { com.example.ai.OnDeviceModelManager.connectModel(context) },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                                ) {
+                                    Icon(Icons.Default.Power, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Conectar", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                                OutlinedButton(
+                                    onClick = { showDeleteModelDialog = true },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, UrgeAlertRed.copy(alpha = 0.6f))
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = null, tint = UrgeAlertRed, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Eliminar", color = UrgeAlertRed, fontSize = 12.sp)
+                                }
                             }
                         }
                         is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> {
@@ -2417,19 +2519,58 @@ fun ProfileScreen(
                                     color = SoltarAmber,
                                     trackColor = SoltarSurfaceElevated
                                 )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                OutlinedButton(
+                                    onClick = { com.example.ai.OnDeviceModelManager.disconnectModel(context) },
+                                    modifier = Modifier.fillMaxWidth().height(36.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, SoltarBorder)
+                                ) {
+                                    Text("Cancelar descarga", color = TextSecondary, fontSize = 12.sp)
+                                }
                             }
                         }
-                        is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded,
+                        is com.example.ai.OnDeviceModelManager.ModelState.NotDownloaded -> {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = if (state.isExplicitlyDeleted)
+                                        "El modelo fue eliminado para liberar espacio (~270MB). Puedes reinstalarlo cuando desees."
+                                    else
+                                        "Instalación por defecto pendiente o pausada.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Button(
+                                    onClick = { com.example.ai.OnDeviceModelManager.reinstallModel(context) },
+                                    modifier = Modifier.fillMaxWidth().height(40.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                                ) {
+                                    Icon(Icons.Default.Download, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(if (state.isExplicitlyDeleted) "Reinstalar Gemma 3" else "Instalar Gemma 3 ahora", color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
                         is com.example.ai.OnDeviceModelManager.ModelState.Error -> {
-                            OutlinedButton(
-                                onClick = { com.example.ai.OnDeviceModelManager.startDownloadInBackground(context) },
-                                modifier = Modifier.fillMaxWidth().height(42.dp),
-                                shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, SoltarAmber)
-                            ) {
-                                Icon(Icons.Default.Download, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Descargar modelo Gemma 3 (270M)", color = SoltarAmber, fontSize = 13.sp)
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = "Error al descargar: ${state.message}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = UrgeAlertRed
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Button(
+                                    onClick = { com.example.ai.OnDeviceModelManager.reinstallModel(context) },
+                                    modifier = Modifier.fillMaxWidth().height(40.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                                ) {
+                                    Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Reintentar descarga", color = Color.Black, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
