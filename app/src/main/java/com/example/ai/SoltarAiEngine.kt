@@ -332,176 +332,20 @@ Sé conciso pero contundente (máximo 250-300 palabras).
         systemInstruction: String? = null
     ): SoltarAiResponse {
         val capsule = ClinicalKnowledgeBase.findRelevantCapsule(input, framework)
-        val lower = input.lowercase()
 
-        // Identificación de patrón contextual
-        val (state, headerGreeting, coreAnalysis) = when {
-            lower.contains("recuperar") || lower.contains("volver con") || lower.contains("hacer que vuelva") || lower.contains("hacer que me busque") || lower.contains("darle celos") || lower.contains("estrategia para que") -> {
-                Triple(
-                    "ACEPTAR",
-                    "**Atalaya no fomenta estrategias de manipulación ni falsas esperanzas.**",
-                    """
-El distanciamiento y el contacto cero no son tácticas de seducción para manipular la voluntad de otra persona; son el límite firme para proteger tu propia paz y reconstruir tu dignidad.
+        // Selección de variante clínica no repetitiva, profunda y adaptada al marco filosófico/clínico
+        val (state, headerGreeting, coreText) = ClinicalVariantRegistry.getResolvedVariant(
+            input = input,
+            isRumination = isRumination,
+            framework = framework,
+            userContext = userContext
+        )
 
-Alimentar la fantasía de 'hacer que regrese' prolonga la agonía del duelo y te mantiene en una postura de subordinación afectiva. Lo único fértil hoy es recuperar el gobierno sobre ti mismo/a.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("vio mi historia") || lower.contains("miró mi estado") || lower.contains("me desbloqueó") || lower.contains("está en línea") || lower.contains("a quién sigue") || lower.contains("le dio like") -> {
-                Triple(
-                    "DEJAR_DE_PERSEGUIR",
-                    "**Interpretar señales digitales es una trampa dopaminérgica.**",
-                    """
-Una visualización en redes, un estado o un 'me gusta' no constituyen una disculpa, un compromiso ni un proyecto de vida compartido.
-
-No hagas lectura de mente ni intentes descifrar algoritmos. Cada minuto que inviertes inspeccionando sus redes es un minuto que le robas a tu propia reconstrucción. Protege tu atención y sostén el contacto cero digital.
+        val coreAnalysis = """
+$coreText
 
 ${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            isRumination || lower.contains("por qué") || lower.contains("porque hizo") || lower.contains("descifrar") || lower.contains("analizar") -> {
-                Triple(
-                    "DEJAR_DE_PERSEGUIR",
-                    "**Frenemos el bucle: Ya tienes suficiente información para comprender esto.**",
-                    """
-Seguir intentando descifrar las intenciones, silencios o contradicciones de la otra persona solo mantiene encendido el circuito de la rumiación.
-
-Distingamos los hechos observables de la fantasía:
-• **El Hecho:** El vínculo se rompió o la distancia es un hecho real en el presente.
-• **La Hipótesis:** Las mil explicaciones que tu mente inventa intentando calmar la incertidumbre.
-• **La Soberanía:** Lo único que puedes gobernar hoy son tus decisiones, tu descanso y tu atención.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("impulso") || lower.contains("escribir") || lower.contains("llamar") || lower.contains("contactar") || lower.contains("buscarlo") || lower.contains("buscarla") || lower.contains("mensaje") -> {
-                Triple(
-                    "REGULAR",
-                    "**El impulso es solo una ola neuroquímica; no es una orden que debas obedecer.**",
-                    """
-Lo que sientes en el pecho no es una señal mística de que debas romper la distancia. Es la respuesta biológica de alarma y abstinencia de tu sistema nervioso ante la pérdida de la figura vincular.
-
-Antes de mover las manos, analicemos con rigor:
-1. **¿Qué buscas realmente?** Un alivio fugaz de 10 minutos a cambio de reiniciar semanas de cicatrización emocional.
-2. **¿Qué no depende de ti?** Cómo responderá o qué sentirá la otra persona.
-3. **¿Qué sí depende de ti?** Tu honor, tu palabra y tu templanza en este momento exacto.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("no puedo vivir sin") || lower.contains("le necesito") || lower.contains("la necesito") || lower.contains("no soy nada sin") || lower.contains("dependo de") || lower.contains("vacío") -> {
-                Triple(
-                    "COMPRENDER",
-                    "**Diferenciemos el afecto legítimo de la dependencia emocional.**",
-                    """
-Sentir que "no puedes vivir sin esa persona" es la forma en que tu cerebro traduce el miedo al desamparo.
-
-Revisemos esta distinción fundamental:
-• **Amor:** Desear compartir la vida desde la propia plenitud y dignidad.
-• **Dependencia:** Usar la presencia del otro como único ansiolítico para no sentir la soledad.
-
-Tu valor como ser humano no está hipotecado a la aprobación de nadie.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("extraño") || lower.contains("nostalgia") || lower.contains("idealiz") || lower.contains("recuerdo") || lower.contains("echo de menos") || lower.contains("duele") || lower.contains("triste") -> {
-                Triple(
-                    "ACEPTAR",
-                    "**La nostalgia tiende a embellecer el pasado y borrar las heridas reales.**",
-                    """
-Es totalmente legítimo y humano extrañar momentos cálidos o la sensación de refugio. Sin embargo, no permitas que la memoria selectiva te engañe:
-• **Extrañar no significa que la relación fuera viable ni sana.**
-• **El dolor que sientes es el trabajo psíquico de despedir una etapa, no una invitación a volver.**
-• **El duelo oscila:** Habrá días de calma y días de oleaje; esto no es un retroceso, es cicatrización.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("culpa") || lower.contains("perdón") || lower.contains("rencor") || lower.contains("injusto") || lower.contains("odio") || lower.contains("rabia") -> {
-                Triple(
-                    "ACEPTAR",
-                    "**Sostener el rencor o la culpa es seguir atado/a a lo que ya pasó.**",
-                    """
-La culpa te atrapa en la fantasía de que podías haberlo previsto todo. El rencor te hace rehén de la persona que te hirió.
-
-Ni el autorreproche ni la amargura tienen el poder de reescribir la historia. El verdadero cierre no viene de que te pidan perdón; viene de decidir que tu presente no le pertenece al daño del ayer.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("límite") || lower.contains("contacto cero") || lower.contains("bloque") || lower.contains("redes") || lower.contains("espiar") || lower.contains("ver su") -> {
-                Triple(
-                    "REGULAR",
-                    "**El límite firme es el espacio aséptico donde tu herida puede sanar.**",
-                    """
-Revisar perfiles, estados o buscar intermediarios es mantener una microdosis de toxicidad y alerta en tu sistema nervioso.
-
-El contacto cero y la distancia absoluta no son un castigo para el otro: son la muralla protectora que le pones a tu salud mental y a tu dignidad.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("autoestima") || lower.contains("no valgo") || lower.contains("inútil") || lower.contains("rechazo") || lower.contains("vergüenza") || lower.contains("fracaso") -> {
-                Triple(
-                    "COMPRENDER",
-                    "**El desinterés o la incapacidad de alguien de amarte no define tu valor.**",
-                    """
-Tu valor intrínseco no fluctúa según el trato que recibes de una persona desregulada o incompatible.
-
-La herida del rechazo confunde 'no haber sido elegido/a por alguien' con 'no ser valioso/a'. Eres una persona completa, con dignidad y capacidad intacta de florecer.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            lower.contains("soledad") || lower.contains("solo") || lower.contains("sola") || lower.contains("vacío") || lower.contains("desamparo") -> {
-                Triple(
-                    "ACEPTAR",
-                    "**La soledad no es un abismo de castigo, sino el espacio para reencontrarte.**",
-                    """
-El silencio que queda tras una ruptura asusta porque revela cuánto te habías abandonado para complacer al otro.
-
-Estar contigo mismo/a no es estar vacío/a; es recuperar el espacio sagrado donde tú vuelves a ser el protagonista de tu propia existencia.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-
-            else -> {
-                Triple(
-                    "RECONSTRUIR",
-                    "**Acompaño tu proceso con rigor, presencia y claridad.**",
-                    """
-En el camino de soltar y reconstruirte hay una verdad innegociable:
-*«Puedes seguir queriendo a alguien y, al mismo tiempo, dejar de organizar tu vida alrededor de esa persona.»*
-
-Hoy estás dando un paso más hacia tu soberanía afectiva. Cada vez que eliges tu tranquilidad por encima de la desesperación, forjas una versión de ti más libre y madura.
-
-${capsule.clinicalGuidance}
-                    """.trimIndent()
-                )
-            }
-        }
+        """.trimIndent()
 
         // Ensamblar respuesta clínica completa y estructurada
         val reply = """
