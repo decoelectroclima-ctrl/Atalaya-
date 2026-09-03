@@ -245,6 +245,34 @@ object ClinicalKnowledgeBase {
             concreteAction = "Reza el Salmo 91 o haz 5 minutos de silencio de entrega pidiendo fidelidad a tus propósitos.",
             meaningLens = "Lente Espiritual Cristiana (Marco de Significado Opcional)",
             divulgationRef = "Espiritualidad Ignaciana"
+        ),
+        KnowledgeCapsule(
+            id = "cat_hope_1",
+            framework = SoltarFramework.CATOLICO,
+            category = "DUELO",
+            title = "La Renovación en la Esperanza",
+            author = "Lamentaciones 3:22-24",
+            quoteOrSource = "«El gran amor del Señor nunca se acaba, y su compasión jamás se agota. Cada mañana se renuevan sus bondades; ¡muy grande es su fidelidad!»",
+            diagnosisPrinciple = "Sentir que el duelo es un pozo sin fondo y que el futuro ha perdido su color.",
+            clinicalGuidance = "El duelo es una travesía, no un destino final. La fidelidad de Dios se experimenta en la capacidad de empezar de nuevo cada mañana, confiando en que el consuelo llegará conforme tu corazón se disponga a recibirlo.",
+            socraticPrompt = "¿Qué pequeña bondad has podido identificar hoy a pesar de tu dolor?",
+            concreteAction = "Al despertar, agradece tres pequeñas cosas que te dan vida hoy antes de revisar el móvil.",
+            meaningLens = "Lente Espiritual Cristiana (Marco de Significado Opcional)",
+            divulgationRef = "Sabiduría Bíblica"
+        ),
+        KnowledgeCapsule(
+            id = "cat_peace_1",
+            framework = SoltarFramework.CATOLICO,
+            category = "RUMIACION",
+            title = "La Paz que sobrepasa el Entendimiento",
+            author = "Filipenses 4:6-7",
+            quoteOrSource = "«No se inquieten por nada; más bien, en toda ocasión, con oración y ruego, presenten sus peticiones a Dios y denle gracias. Y la paz de Dios, que sobrepasa todo entendimiento, cuidará sus corazones.»",
+            diagnosisPrinciple = "La ansiedad intentando resolver y entender obsesivamente las causas de la ruptura.",
+            clinicalGuidance = "La paz de Dios no es una respuesta lógica a tu problema, es un refugio que protege tu interior de la desintegración emocional causada por la rumiación ansiosa.",
+            socraticPrompt = "¿Puedes entregarle a Dios la necesidad de 'entender' lo que no está bajo tu control hoy?",
+            concreteAction = "Realiza la oración de entrega: 'Señor, te entrego mi necesidad de controlar esto, dame tu paz que sobrepasa mi entendimiento'.",
+            meaningLens = "Lente Espiritual Cristiana (Marco de Significado Opcional)",
+            divulgationRef = "Sabiduría Bíblica"
         )
     )
 

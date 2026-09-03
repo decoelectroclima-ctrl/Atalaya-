@@ -343,7 +343,456 @@ object WisdomBank {
             quote = "«Porque no nos ha dado Dios espíritu de cobardía, sino de poder, de amor y de dominio propio.»",
             author = "2 Timoteo 1:7",
             reflection = "Tienes la gracia y la capacidad para resistir el impulso momentáneo y elegir el camino de la vida y la dignidad."
-        )
+        ),
+        WisdomCard(
+            id = "cat_9",
+            framework = SoltarFramework.CATOLICO,
+            title = "ALGO NUEVO",
+            quote = "«No recuerden las cosas pasadas ni se fijen en lo antiguo. Miren que hago algo nuevo; ya está brotando, ¿no lo notan?»",
+            author = "Isaías 43:18-19",
+            reflection = "Dios está obrando en tu presente. No te quedes atrapado en el pasado; abre tus ojos a la novedad que Él está preparando para ti."
+        ),
+        WisdomCard(
+            id = "cat_10",
+            framework = SoltarFramework.CATOLICO,
+            title = "PAZ ANTE LA ANSIEDAD",
+            quote = "«No se inquieten por nada; más bien, en toda ocasión, con oración y ruego, presenten sus peticiones a Dios y denle gracias. Y la paz de Dios, que sobrepasa todo entendimiento, cuidará sus corazones.»",
+            author = "Filipenses 4:6-7",
+            reflection = "Entrega tu ansiedad en oración. La paz de Dios es un regalo que protege tu interior más allá de lo que la lógica humana puede explicar."
+        ),
+        WisdomCard(
+            id = "cat_11",
+            framework = SoltarFramework.CATOLICO,
+            title = "NADA TE SEPARA",
+            quote = "«Estoy convencido de que... ni cosa alguna en toda la creación podrá apartarnos del amor que Dios nos ha manifestado en Cristo Jesús.»",
+            author = "Romanos 8:38-39",
+            reflection = "Tu valor no disminuye por una ruptura. Estás sostenido/a por un amor incondicional que ninguna circunstancia humana puede alterar."
+        ),
+        WisdomCard(
+            id = "cat_12",
+            framework = SoltarFramework.CATOLICO,
+            title = "RENOVACIÓN DIARIA",
+            quote = "«El gran amor del Señor nunca se acaba, y su compasión jamás se agota. Cada mañana se renuevan sus bondades.»",
+            author = "Lamentaciones 3:22-23",
+            reflection = "Aunque el duelo sea profundo, cada nuevo amanecer es una oportunidad para experimentar la fidelidad y el consuelo renovador de Dios."
+        ),
+        WisdomCard(
+            id = "cat_13",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMPARO SEGURO",
+            quote = "«Dios es nuestro amparo y fortaleza, nuestro pronto auxilio en los problemas.»",
+            author = "Salmo 46:1",
+            reflection = "En medio de la tormenta de tus emociones, busca refugio en la presencia segura y firme de Dios. Él sostiene tu ser."
+        ),
+        WisdomCard(
+            id = "cat_14",
+            framework = SoltarFramework.CATOLICO,
+            title = "CERCANÍA EN EL DOLOR",
+            quote = "«El Señor está cerca de los quebrantados de corazón, y salva a los de espíritu abatido.»",
+            author = "Salmo 34:18",
+            reflection = "No estás solo/a en tu tristeza. En tu mayor vulnerabilidad, la presencia de Dios es más íntima y restauradora."
+        ),
+        // Nuevas Tarjetas Católicas (Batch 2)
+        WisdomCard(
+            id = "cat_41",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR QUE TODO LO PUEDE",
+            quote = "«El amor es paciente, es servicial; el amor no es envidioso, no hace alarde, no se envanece.»",
+            author = "1 Corintios 13:4",
+            reflection = "Usa esta medida para evaluar tus acciones diarias contigo mismo/a."
+        ),
+        WisdomCard(
+            id = "cat_42",
+            framework = SoltarFramework.CATOLICO,
+            title = "CONFIANZA TOTAL",
+            quote = "«Confía en el Señor con todo tu corazón, y no te apoyes en tu propio entendimiento.»",
+            author = "Proverbios 3:5",
+            reflection = "Soltar significa dejar de intentar entenderlo todo y confiar en la providencia."
+        ),
+        WisdomCard(
+            id = "cat_43",
+            framework = SoltarFramework.CATOLICO,
+            title = "ESPÍRITU DE VALENTÍA",
+            quote = "«No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios.»",
+            author = "Isaías 41:10",
+            reflection = "Tu fuerza no es tuya, es la fuerza de Dios que habita en ti."
+        ),
+        WisdomCard(
+            id = "cat_44",
+            framework = SoltarFramework.CATOLICO,
+            title = "PAZ QUE DA VIDA",
+            quote = "«La paz os dejo, mi paz os doy.»",
+            author = "Juan 14:27",
+            reflection = "La paz de Dios no se encuentra en las circunstancias, se encuentra en Él."
+        ),
+        WisdomCard(
+            id = "cat_45",
+            framework = SoltarFramework.CATOLICO,
+            title = "NUEVA CREACIÓN",
+            quote = "«Si alguien está en Cristo, es una nueva creación; lo viejo ha pasado, ha llegado lo nuevo.»",
+            author = "2 Corintios 5:17",
+            reflection = "Eres una nueva persona. Lo que pasó no define quién eres ahora."
+        ),
+        WisdomCard(
+            id = "cat_46",
+            framework = SoltarFramework.CATOLICO,
+            title = "EL SEÑOR ES MI PASTOR",
+            quote = "«El Señor es mi pastor, nada me faltará.»",
+            author = "Salmo 23:1",
+            reflection = "Él provee lo necesario para tu sanación."
+        ),
+        WisdomCard(
+            id = "cat_47",
+            framework = SoltarFramework.CATOLICO,
+            title = "SABIDURÍA PARA EL PRESENTE",
+            quote = "«Enséñanos a contar nuestros días, para que traigamos al corazón sabiduría.»",
+            author = "Salmo 90:12",
+            reflection = "Vive cada día con propósito, soltando el pasado que ya no está."
+        ),
+        WisdomCard(
+            id = "cat_48",
+            framework = SoltarFramework.CATOLICO,
+            title = "FUERZA Y CORAJE",
+            quote = "«Esfuérzate y sé valiente; no temas ni desmayes, porque el Señor tu Dios estará contigo.»",
+            author = "Josué 1:9",
+            reflection = "El coraje es necesario para dejar ir lo que te daña."
+        ),
+        WisdomCard(
+            id = "cat_49",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR INCONDICIONAL",
+            quote = "«Porque tanto amó Dios al mundo que dio a su Hijo único.»",
+            author = "Juan 3:16",
+            reflection = "Tu valor es inmenso. No permitas que nadie te haga sentir menos."
+        ),
+        WisdomCard(
+            id = "cat_50",
+            framework = SoltarFramework.CATOLICO,
+            title = "DESCANSAR EN LA GRACIA",
+            quote = "«Bástate mi gracia, porque mi poder se perfecciona en la debilidad.»",
+            author = "2 Corintios 12:9",
+            reflection = "No tienes que ser perfecto/a. Tu debilidad es el lugar de la obra de Dios."
+        ),
+        WisdomCard(
+            id = "cat_51",
+            framework = SoltarFramework.CATOLICO,
+            title = "SEGUIR ADELANTE",
+            quote = "«Olvidando lo que queda atrás y esforzándome por lo que tengo delante, prosigo a la meta.»",
+            author = "Filipenses 3:13-14",
+            reflection = "Soltar es mirar hacia la meta, no hacia el pasado."
+        ),
+        WisdomCard(
+            id = "cat_52",
+            framework = SoltarFramework.CATOLICO,
+            title = "CUIDADO DIVINO",
+            quote = "«Echen toda su ansiedad sobre él porque él tiene cuidado de ustedes.»",
+            author = "1 Pedro 5:7",
+            reflection = "Deja que Dios se encargue de lo que te angustia."
+        ),
+        WisdomCard(
+            id = "cat_53",
+            framework = SoltarFramework.CATOLICO,
+            title = "LA FUERZA DEL SEÑOR",
+            quote = "«El Señor es mi fuerza y mi escudo; en él confía mi corazón.»",
+            author = "Salmo 28:7",
+            reflection = "Confía en que Él te sostiene en este proceso."
+        ),
+        WisdomCard(
+            id = "cat_54",
+            framework = SoltarFramework.CATOLICO,
+            title = "LUZ PARA EL CAMINO",
+            quote = "«Tu palabra es una lámpara a mis pies y una luz en mi camino.»",
+            author = "Salmo 119:105",
+            reflection = "La sabiduría bíblica te dará claridad cuando el camino parezca confuso."
+        ),
+        WisdomCard(
+            id = "cat_55",
+            framework = SoltarFramework.CATOLICO,
+            title = "PERDÓN QUE LIBERA",
+            quote = "«Soportándoos unos a otros, y perdonándoos unos a otros; como Cristo os perdonó, así también hacedlo vosotros.»",
+            author = "Colosenses 3:13",
+            reflection = "El perdón es un camino de sanación personal, no una justificación del otro."
+        ),
+        WisdomCard(
+            id = "cat_56",
+            framework = SoltarFramework.CATOLICO,
+            title = "LA PAZ DE DIOS",
+            quote = "«Y la paz de Dios, que sobrepasa todo entendimiento, guardará sus corazones y sus pensamientos en Cristo Jesús.»",
+            author = "Filipenses 4:7",
+            reflection = "La paz de Dios está contigo, incluso cuando no entiendes el porqué de las cosas."
+        ),
+        WisdomCard(
+            id = "cat_57",
+            framework = SoltarFramework.CATOLICO,
+            title = "NUEVA ESPERANZA",
+            quote = "«Porque yo sé los planes que tengo para ustedes, planes de bienestar y no de calamidad, para darles un futuro y una esperanza.»",
+            author = "Jeremías 29:11",
+            reflection = "Dios tiene un futuro bueno para ti, confía en su plan."
+        ),
+        WisdomCard(
+            id = "cat_58",
+            framework = SoltarFramework.CATOLICO,
+            title = "VALOR EN EL SEÑOR",
+            quote = "«El Señor está conmigo; no tengo miedo. ¿Qué me puede hacer el hombre?»",
+            author = "Salmo 118:6",
+            reflection = "Tu seguridad está en Dios, no en las opiniones de otros."
+        ),
+        WisdomCard(
+            id = "cat_59",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR VERDADERO",
+            quote = "«En esto se manifestó el amor de Dios en nosotros, en que Dios envió a su Hijo único al mundo para que vivamos por medio de él.»",
+            author = "1 Juan 4:9",
+            reflection = "Tu vida tiene un propósito divino."
+        ),
+        WisdomCard(
+            id = "cat_60",
+            framework = SoltarFramework.CATOLICO,
+            title = "SABIDURÍA Y CONSEJO",
+            quote = "«El temor del Señor es el principio de la sabiduría.»",
+            author = "Proverbios 9:10",
+            reflection = "Honrar a Dios es el inicio de entender la vida con claridad."
+        ),
+        WisdomCard(
+            id = "cat_61",
+            framework = SoltarFramework.CATOLICO,
+            title = "FUERZA RENOVADA",
+            quote = "«Pero los que esperan en Jehová tendrán nuevas fuerzas; levantarán alas como las águilas; correrán, y no se cansarán; caminarán, y no se fatigarán.»",
+            author = "Isaías 40:31",
+            reflection = "Renueva tus fuerzas en el Señor cada día."
+        ),
+        WisdomCard(
+            id = "cat_62",
+            framework = SoltarFramework.CATOLICO,
+            title = "PAZ Y SEGURIDAD",
+            quote = "«En paz me acostaré, y asimismo dormiré; porque solo tú, Jehová, me haces vivir confiado.»",
+            author = "Salmo 4:8",
+            reflection = "Duerme en la seguridad de que Dios cuida de ti."
+        ),
+        WisdomCard(
+            id = "cat_63",
+            framework = SoltarFramework.CATOLICO,
+            title = "EL SEÑOR TE SOSTIENE",
+            quote = "«Echa sobre Jehová tu carga, y él te sustentará; no dejará para siempre caído al justo.»",
+            author = "Salmo 55:22",
+            reflection = "Entrégale tus cargas, Él te sostendrá."
+        ),
+        WisdomCard(
+            id = "cat_64",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR ETERNO",
+            quote = "«Con amor eterno te he amado; por eso te he prolongado mi misericordia.»",
+            author = "Jeremías 31:3",
+            reflection = "Su amor por ti no tiene límites ni final."
+        ),
+        WisdomCard(
+            id = "cat_65",
+            framework = SoltarFramework.CATOLICO,
+            title = "SABIDURÍA DE DIOS",
+            quote = "«La sabiduría es un árbol de vida para los que se echan mano de ella; bienaventurado el que la retiene.»",
+            author = "Proverbios 3:18",
+            reflection = "Aprende de esta experiencia y retén la sabiduría que te deja."
+        ),
+        WisdomCard(
+            id = "cat_66",
+            framework = SoltarFramework.CATOLICO,
+            title = "LUZ EN LA OSCURIDAD",
+            quote = "«Dios es luz, y no hay ningunas tinieblas en él.»",
+            author = "1 Juan 1:5",
+            reflection = "En Dios siempre encontrarás claridad, nunca confusión."
+        ),
+        WisdomCard(
+            id = "cat_67",
+            framework = SoltarFramework.CATOLICO,
+            title = "FORTALEZA EN EL SEÑOR",
+            quote = "«El Señor es mi luz y mi salvación; ¿de quién temeré? El Señor es la fortaleza de mi vida; ¿de quién me he de atemorizar?»",
+            author = "Salmo 27:1",
+            reflection = "No hay nada que temer si Dios está contigo."
+        ),
+        WisdomCard(
+            id = "cat_68",
+            framework = SoltarFramework.CATOLICO,
+            title = "DESCANSAR EN ÉL",
+            quote = "«Vengan a mí todos ustedes que están cansados y agobiados, y yo les daré descanso.»",
+            author = "Mateo 11:28",
+            reflection = "Él te ofrece descanso cuando el peso de la vida es demasiado."
+        ),
+        WisdomCard(
+            id = "cat_69",
+            framework = SoltarFramework.CATOLICO,
+            title = "PAZ INTERIOR",
+            quote = "«La paz os dejo, mi paz os doy; yo no os la doy como el mundo la da. No se turbe vuestro corazón, ni tenga miedo.»",
+            author = "Juan 14:27",
+            reflection = "La paz que el mundo no puede darte, Dios te la entrega hoy."
+        ),
+        WisdomCard(
+            id = "cat_70",
+            framework = SoltarFramework.CATOLICO,
+            title = "VALOR DIVINO",
+            quote = "«Ustedes fueron comprados por precio; no se hagan esclavos de los hombres.»",
+            author = "1 Corintios 7:23",
+            reflection = "Tu valor viene de Dios, no de la aprobación humana."
+        ),
+        WisdomCard(
+            id = "cat_71",
+            framework = SoltarFramework.CATOLICO,
+            title = "FE QUE MUEVE MONTAÑAS",
+            quote = "«Si tuvieran fe como un grano de mostaza, dirían a este monte: Pásate de aquí allá, y se pasará; y nada les será imposible.»",
+            author = "Mateo 17:20",
+            reflection = "La fe pequeña es suficiente para grandes cambios."
+        ),
+        WisdomCard(
+            id = "cat_72",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR DE DIOS",
+            quote = "«En esto consiste el amor: no en que nosotros hayamos amado a Dios, sino en que él nos amó a nosotros.»",
+            author = "1 Juan 4:10",
+            reflection = "Su amor te precede y te envuelve siempre."
+        ),
+        WisdomCard(
+            id = "cat_73",
+            framework = SoltarFramework.CATOLICO,
+            title = "SABIDURÍA PRÁCTICA",
+            quote = "«Mejor es el paciente que el arrogante.»",
+            author = "Eclesiastés 7:8",
+            reflection = "La paciencia es tu mejor aliada en este camino de sanación."
+        ),
+        WisdomCard(
+            id = "cat_74",
+            framework = SoltarFramework.CATOLICO,
+            title = "CONFIANZA TOTAL",
+            quote = "«Fíate de Jehová de todo tu corazón, y no te apoyes en tu propia prudencia.»",
+            author = "Proverbios 3:5",
+            reflection = "Suelta tu necesidad de controlarlo todo."
+        ),
+        WisdomCard(
+            id = "cat_75",
+            framework = SoltarFramework.CATOLICO,
+            title = "FORTALEZA EN LA PRUEBA",
+            quote = "«Consideren como un gran gozo, hermanos míos, cuando se hallen en diversas pruebas.»",
+            author = "Santiago 1:2",
+            reflection = "Tu prueba está forjando tu carácter y acercándote más a Dios."
+        ),
+        WisdomCard(
+            id = "cat_76",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR AL PRÓJIMO",
+            quote = "«Ama a tu prójimo como a ti mismo.»",
+            author = "Marcos 12:31",
+            reflection = "Recuerda que también eres parte de ese prójimo que debes amar y cuidar."
+        ),
+        WisdomCard(
+            id = "cat_77",
+            framework = SoltarFramework.CATOLICO,
+            title = "DIOS NOS CONOCE",
+            quote = "«Señor, tú me examinas y me conoces. Tú conoces mi sentarme y mi levantarme.»",
+            author = "Salmo 139:1-2",
+            reflection = "Dios entiende perfectamente lo que estás sintiendo ahora mismo."
+        ),
+        WisdomCard(
+            id = "cat_78",
+            framework = SoltarFramework.CATOLICO,
+            title = "FUERZA Y CORAJE",
+            quote = "«¡Sé fuerte y valiente! ¡No tengas miedo ni te desanimes! Porque el Señor tu Dios te acompañará dondequiera que vayas.»",
+            author = "Josué 1:9",
+            reflection = "No caminas solo/a, Dios está a tu lado en cada paso."
+        ),
+        WisdomCard(
+            id = "cat_79",
+            framework = SoltarFramework.CATOLICO,
+            title = "PAZ EN EL CORAZÓN",
+            quote = "«Que la paz de Cristo reine en sus corazones.»",
+            author = "Colosenses 3:15",
+            reflection = "Deja que Su paz gobierne tus emociones más intensas."
+        ),
+        WisdomCard(
+            id = "cat_80",
+            framework = SoltarFramework.CATOLICO,
+            title = "DIOS ES BUENO",
+            quote = "«Bueno es el Señor con los que en él esperan, con el alma que lo busca.»",
+            author = "Lamentaciones 3:25",
+            reflection = "Su bondad se manifestará en tu vida conforme busques sanar."
+        ),
+        WisdomCard(
+            id = "cat_81",
+            framework = SoltarFramework.CATOLICO,
+            title = "VALOR DEL TIEMPO",
+            quote = "«Aprende a vivir el día a día, no te angusties por el mañana.»",
+            author = "Inspirado en Mateo 6:34",
+            reflection = "Céntrate en sanar hoy, el mañana tiene su propio cuidado."
+        ),
+        WisdomCard(
+            id = "cat_82",
+            framework = SoltarFramework.CATOLICO,
+            title = "DIOS ES TU ROCA",
+            quote = "«El Señor es mi roca, mi fortaleza y mi libertador.»",
+            author = "Salmo 18:2",
+            reflection = "Apóyate en Él como tu base sólida en este proceso."
+        ),
+        WisdomCard(
+            id = "cat_83",
+            framework = SoltarFramework.CATOLICO,
+            title = "ESPERANZA EN LA AFLICCIÓN",
+            quote = "«Los que siembran con lágrimas, cosecharán con regocijo.»",
+            author = "Salmo 126:5",
+            reflection = "Tu dolor actual es semilla de una alegría futura."
+        ),
+        WisdomCard(
+            id = "cat_84",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR INCONDICIONAL",
+            quote = "«Porque el Señor es bueno; para siempre es su misericordia.»",
+            author = "Salmo 100:5",
+            reflection = "Su misericordia te acompaña en cada momento de debilidad."
+        ),
+        WisdomCard(
+            id = "cat_85",
+            framework = SoltarFramework.CATOLICO,
+            title = "SABIDURÍA DIVINA",
+            quote = "«El principio de la sabiduría es el temor del Señor.»",
+            author = "Salmo 111:10",
+            reflection = "Reconocer a Dios es el inicio de entender tu propia vida."
+        ),
+        WisdomCard(
+            id = "cat_86",
+            framework = SoltarFramework.CATOLICO,
+            title = "PAZ QUE DA VIDA",
+            quote = "«Dichosos los que trabajan por la paz, porque serán llamados hijos de Dios.»",
+            author = "Mateo 5:9",
+            reflection = "Trabaja por tu propia paz interior, eres hijo/a de Dios."
+        ),
+        WisdomCard(
+            id = "cat_87",
+            framework = SoltarFramework.CATOLICO,
+            title = "LUZ PARA TU CAMINO",
+            quote = "«El camino de los justos es como la luz de la aurora, que va aumentando en resplandor hasta que el día es perfecto.»",
+            author = "Proverbios 4:18",
+            reflection = "Tu sanación es progresiva, cada día un poco más de luz."
+        ),
+        WisdomCard(
+            id = "cat_88",
+            framework = SoltarFramework.CATOLICO,
+            title = "CONFIANZA TOTAL",
+            quote = "«En Dios he puesto mi confianza; no temeré.»",
+            author = "Salmo 56:11",
+            reflection = "Tu confianza en Dios elimina el miedo que paraliza."
+        ),
+        WisdomCard(
+            id = "cat_89",
+            framework = SoltarFramework.CATOLICO,
+            title = "AMOR QUE TRANSFORMA",
+            quote = "«El amor de Dios ha sido derramado en nuestros corazones.»",
+            author = "Romanos 5:5",
+            reflection = "Ese amor es el motor de tu transformación y sanación."
+        ),
+        WisdomCard(
+            id = "cat_90",
+            framework = SoltarFramework.CATOLICO,
+            title = "ESPERANZA ETERNA",
+            quote = "«Mi esperanza está en ti, Señor.»",
+            author = "Salmo 39:7",
+            reflection = "Pon tu esperanza en Dios, Él no falla nunca."
+        ),
     )
 
     fun getRandomCard(framework: SoltarFramework, recentIds: List<String>): WisdomCard {
