@@ -13,5 +13,6 @@ data class AdrianaExportData(
     val redFlags: List<RedFlagEntity>,
     val triggerEvents: List<TriggerEventEntity>,
     val thoughtLabEntries: List<ThoughtLabEntity>,
-    val settings: SoltarSettingsEntity?
+    val settings: SoltarSettingsEntity?,
+    val clinicalProgressSummary: String? = null
 )

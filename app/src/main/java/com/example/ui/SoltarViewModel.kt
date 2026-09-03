@@ -244,6 +244,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val relapses: StateFlow<List<RelapseEntity>> = repository.allRelapses
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val triggerEvents: StateFlow<List<TriggerEventEntity>> = repository.allTriggerEvents
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val journalEntries: StateFlow<List<JournalEntryEntity>> = repository.allJournalEntries
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -287,6 +290,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val riskDates: StateFlow<List<RiskDateEntity>> = repository.allRiskDates
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val timeCapsules: StateFlow<List<TimeCapsuleEntity>> = repository.allTimeCapsules
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val vulnerabilityScore: StateFlow<Int> = combine(
         checkins,
         riskDates,
@@ -326,6 +332,40 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         score.coerceIn(0, 100)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 40)
 
+    val vulnerabilityExplanation: StateFlow<String> = combine(
+        vulnerabilityScore,
+        checkins,
+        riskDates,
+        relapses
+    ) { score, checkinList, riskList, relapseList ->
+        val latest = checkinList.firstOrNull()
+        val now = System.currentTimeMillis()
+        val nowCal = java.util.Calendar.getInstance()
+        val currentYr = nowCal.get(java.util.Calendar.YEAR)
+        val upcoming = riskList.mapNotNull { rd ->
+            val target = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.YEAR, currentYr)
+                set(java.util.Calendar.MONTH, rd.month - 1)
+                set(java.util.Calendar.DAY_OF_MONTH, rd.day)
+            }
+            if (target.timeInMillis < nowCal.timeInMillis) {
+                target.add(java.util.Calendar.YEAR, 1)
+            }
+            val diffDays = ((target.timeInMillis - now) / (1000L * 3600 * 24)).toInt()
+            if (diffDays in 0..7) Pair(rd.title, diffDays) else null
+        }.minByOrNull { it.second }
+
+        val hasRelapse48h = relapseList.any { r -> (now - r.timestamp) < (48L * 3600 * 1000) }
+
+        com.example.ai.OnDeviceLlmEngine.explainVulnerabilityScore(
+            score = score,
+            latestCheckin = latest,
+            upcomingRiskTitle = upcoming?.first,
+            daysToRisk = upcoming?.second,
+            hasRelapse48h = hasRelapse48h
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Evaluando estado y balance emocional...")
+
     private var urgeTimerJob: Job? = null
 
     init {
@@ -352,8 +392,15 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                         .filter { it.isNotBlank() }
 
                     val currentCard = _uiState.value.currentWisdomCard
+                    val frameworkCards = WisdomBank.cards.filter { it.framework == framework }
+                    val latestCheckin = checkins.value.firstOrNull()
                     val newCard = if (currentCard == null || currentCard.framework != framework) {
-                        WisdomBank.getRandomCard(framework, recentList)
+                        com.example.ai.OnDeviceLlmEngine.selectOptimalWisdomCard(
+                            availableCards = frameworkCards,
+                            latestCheckin = latestCheckin,
+                            framework = framework,
+                            recentCardIds = recentList
+                        )
                     } else {
                         currentCard
                     }
@@ -439,7 +486,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val current = settings.value ?: SoltarSettingsEntity()
             val recentList = current.recentCardIds.split(",").filter { it.isNotBlank() }
-            val newCard = WisdomBank.getRandomCard(framework, recentList)
+            val frameworkCards = WisdomBank.cards.filter { it.framework == framework }
+            val latestCheckin = checkins.value.firstOrNull()
+            val newCard = com.example.ai.OnDeviceLlmEngine.selectOptimalWisdomCard(
+                availableCards = frameworkCards,
+                latestCheckin = latestCheckin,
+                framework = framework,
+                recentCardIds = recentList
+            )
             val updatedRecent = (recentList + newCard.id).takeLast(5).joinToString(",")
 
             repository.saveSettings(current.copy(recentCardIds = updatedRecent))
@@ -559,7 +613,13 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             val current = settings.value ?: SoltarSettingsEntity()
             val recentList = current.recentCardIds.split(",").filter { it.isNotBlank() }
-            val newCard = WisdomBank.getRandomCard(framework, recentList)
+            val frameworkCards = WisdomBank.cards.filter { it.framework == framework }
+            val newCard = com.example.ai.OnDeviceLlmEngine.selectOptimalWisdomCard(
+                availableCards = frameworkCards,
+                latestCheckin = checkins.value.firstOrNull(),
+                framework = framework,
+                recentCardIds = recentList
+            )
             val updatedRecent = (recentList + newCard.id).takeLast(5).joinToString(",")
 
             repository.saveSettings(
@@ -1130,12 +1190,26 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setAiInputMessage(t: String) = _uiState.update { it.copy(aiInputMessage = t) }
 
-    // AI Engine exposed for Encounter Simulator
-    suspend fun sendEncounterMessage(message: String, history: List<Pair<String, String>>, scenario: String): SoltarAiResponse {
-        val userCtx = buildUserPersonalizationContext()
-        val journals = journalEntries.value.take(3).joinToString("\n") { "- ${it.title}: ${it.content.take(200)}" }
-        val systemInstruction = "Actúa como la expareja del usuario en el escenario: '$scenario'. Utiliza estrictamente el contexto de la relación, los patrones emocionales y las notas del diario del usuario:\n$journals\nMantén un tono realista, no diagnóstico, constructivo y basado en los límites sanos."
-        return SoltarAiEngine.generateResponse(message, history, userCtx.framework, userCtx, systemInstruction = systemInstruction)
+    // AI Engine exposed for Encounter Simulator (On-Device LLM prioritized)
+    suspend fun sendEncounterMessage(
+        message: String,
+        history: List<Pair<String, String>>,
+        scenario: String,
+        tone: com.example.ai.EncounterTone = com.example.ai.EncounterTone.COLD
+    ): SoltarAiResponse {
+        val exName = "tu expareja"
+        val onDeviceReply = com.example.ai.OnDeviceLlmEngine.generateEncounterExResponse(
+            userMessage = message,
+            tone = tone,
+            interactionHistory = history,
+            exName = exName
+        )
+        return SoltarAiResponse(
+            replyText = onDeviceReply,
+            isRuminationDetected = false,
+            suggestedAction = "",
+            stateDetected = "REGULAR"
+        )
     }
     
     fun toggleMemoryModal(visible: Boolean) = _uiState.update { it.copy(isMemoryModalVisible = visible) }
@@ -1155,6 +1229,13 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             )
             showNotification("⏳ Cápsula del tiempo sellada. Nos vemos en el futuro.")
+        }
+    }
+
+    fun unlockTimeCapsule(id: Long) {
+        viewModelScope.launch {
+            repository.unlockTimeCapsule(id)
+            showNotification("🔓 Cápsula del tiempo desbloqueada.")
         }
     }
 

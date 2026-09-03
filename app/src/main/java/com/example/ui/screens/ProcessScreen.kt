@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.SoltarSoundManager
 import com.example.data.CheckinEntity
+import com.example.data.UnsentLetterEntity
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 import android.content.Intent
@@ -50,6 +51,8 @@ fun ProcessScreen(
     val letters by viewModel.letters.collectAsState()
     val relapses by viewModel.relapses.collectAsState()
     val journalEntries by viewModel.journalEntries.collectAsState()
+
+    var selectedLetterForTimeCapsule by remember { mutableStateOf<UnsentLetterEntity?>(null) }
 
     var selectedFilter by remember { mutableStateOf("Todos") }
     val filterOptions = listOf("Todos", "Diario", "Impulsos", "Pensamientos", "Auditorías", "Cartas", "Idealización", "Recaídas")
@@ -424,6 +427,46 @@ fun ProcessScreen(
                     )
                 }
 
+                item {
+                    val checkins by viewModel.checkins.collectAsState()
+                    val relapseAnalysis = remember(relapses, urgeEpisodes, checkins) {
+                        com.example.ai.OnDeviceLlmEngine.analyzeRelapsePatterns(
+                            relapses = relapses,
+                            urgeEpisodes = urgeEpisodes,
+                            recentCheckins = checkins
+                        )
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                        border = BorderStroke(1.5.dp, SoltarAmber)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                                Text(
+                                    text = "Análisis de Causa Raíz (IA On-Device)",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = relapseAnalysis,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+
                 items(relapses) { relapse ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -685,6 +728,43 @@ fun ProcessScreen(
                     )
                 }
 
+                item {
+                    val aggregatedRedFlagPattern = remember(audits) {
+                        com.example.ai.OnDeviceLlmEngine.synthesizeRedFlagsPattern(
+                            audits.map { "${it.title}: ${it.otherResponsibility}. Patrón: ${it.patternIdentified}" }
+                        )
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                        border = BorderStroke(1.dp, SoltarSage)
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarSage, modifier = Modifier.size(18.dp))
+                                Text(
+                                    text = "Patrón Estructural de Fondo (IA On-Device)",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = SoltarSage,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = aggregatedRedFlagPattern,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextPrimary,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
+
                 items(audits) { audit ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -785,6 +865,24 @@ fun ProcessScreen(
                                 color = TextSecondary,
                                 maxLines = 4
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(
+                                    onClick = { selectedLetterForTimeCapsule = letter },
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+                                        Text("Hallazgo de Cambio (IA)", style = MaterialTheme.typography.labelSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -863,6 +961,14 @@ fun ProcessScreen(
                 }
             }
         }
+    }
+
+    selectedLetterForTimeCapsule?.let { letter ->
+        com.example.ui.dialogs.TimeCapsuleComparisonDialog(
+            letter = letter,
+            recentJournals = journalEntries,
+            onDismiss = { selectedLetterForTimeCapsule = null }
+        )
     }
 }
 

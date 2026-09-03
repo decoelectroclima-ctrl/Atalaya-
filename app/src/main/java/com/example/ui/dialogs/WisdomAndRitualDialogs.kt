@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -210,6 +211,7 @@ fun WisdomCardItem(card: WisdomCard, context: android.content.Context) {
 fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
     val settings = viewModel.settings.collectAsState().value
     val checkins = viewModel.checkins.collectAsState().value
+    val journals = viewModel.journalEntries.collectAsState().value
     val framework = SoltarFramework.fromKey(settings?.preferredFramework)
 
     val startTs = settings?.breakupDateTimestamp ?: (System.currentTimeMillis() - (14L * 24 * 3600 * 1000))
@@ -219,10 +221,23 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
     val isUnlocked = days >= 3 || checkins.size >= 3
 
     var step by remember { mutableIntStateOf(0) }
+    val userName = settings?.userName ?: ""
+
+    val generatedSteps = remember(checkins, journals, days, settings) {
+        com.example.ai.OnDeviceLlmEngine.generateClosingRitualSteps(
+            checkins = checkins,
+            journals = journals,
+            userName = userName,
+            breakupDays = days.toInt(),
+            relDuration = settings?.relDuration ?: "",
+            breakupReason = settings?.breakupReason ?: "",
+            framework = framework
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isUnlocked) "Ritual de Cierre • ${framework.title}" else "🔒 Ritual Bloqueado") },
+        title = { Text(if (isUnlocked) "Ritual de Cierre Personalizado (IA On-Device)" else "🔒 Ritual Bloqueado") },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 if (!isUnlocked) {
@@ -233,29 +248,87 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                         lineHeight = 22.sp
                     )
                 } else {
-                    when (framework) {
-                        SoltarFramework.ESTOICO -> {
-                            when (step) {
-                                0 -> StepContent("Paso 1: Dicotomía de Control", "Reconoce con absoluta claridad qué dependía de ti en la relación y qué era completamente ajeno a tu voluntad. Libera la carga de lo que no pudiste gobernar.")
-                                1 -> StepContent("Paso 2: Amor Fati (Aceptar el destino)", "Observa la ruptura no como una injusticia cruel, sino como el material estóico sobre el cual construirás tu fortaleza, templanza y sabiduría.")
-                                2 -> StepContent("Paso 3: Apatheia (Soberanía de pasiones)", "Examina tus impulsos de búsqueda o nostalgia. Detente a sentir la emoción sin otorgarle el poder de dictar tus acciones.")
-                                3 -> StepContent("Paso 4: La Ciudadela Interior", "Sella el ritual reafirmando que tu paz mental y tu dignidad son tu posesión más valiosa y nadie puede arrebatártelas.")
+                    val currentStepData = generatedSteps.getOrNull(step)
+                    if (currentStepData != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = SoltarAmber.copy(alpha = 0.15f),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+                                Text(
+                                    text = "Paso ${step + 1} de 4 • ${currentStepData.phaseName}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
-                        SoltarFramework.PSICOLOGIA_MODERNA -> {
-                            when (step) {
-                                0 -> StepContent("Paso 1: Procesamiento Emocional del Duelo", "Permítete sentir la tristeza y la abstinencia del apego sin juzgarte. Valida que el dolor es el trabajo biológico de reorganización cerebral.")
-                                1 -> StepContent("Paso 2: Regulación del Sistema Nervioso", "Inhala profundamente exhalando el estrés acumulado. Tu cuerpo está saliendo del estado de alerta y alarma por separación.")
-                                2 -> StepContent("Paso 3: Restructuración Cognitiva y Límites", "Identifica las narrativas idealizadas y sustitúyelas por el registro objetivo de los hechos vividos y las incompatibilidades reales.")
-                                3 -> StepContent("Paso 4: Integración e Identidad Autónoma", "Consolida tu compromiso contigo mismo/a, reconectando con tus proyectos, valores y autonomía personal.")
+                        Text(
+                            text = currentStepData.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = currentStepData.guidance,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            lineHeight = 22.sp
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Card(
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                            border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "DECLARACIÓN Y COMPROMISO:",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = currentStepData.reflectionPrompt,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextPrimary,
+                                    lineHeight = 18.sp
+                                )
                             }
                         }
-                        SoltarFramework.CATOLICO -> {
-                            when (step) {
-                                0 -> StepContent("Paso 1: Examen de Conciencia y Entrega", "Coloca ante Dios tus cargas, tus heridas y tus expectativas no cumplidas. Entrégaselas en oración con confianza absoluta.")
-                                1 -> StepContent("Paso 2: Perdón y Liberación", "Perdona de corazón a la otra persona y perdónate a ti mismo/a, liberando todo resentimiento para que tu alma recupere la paz.")
-                                2 -> StepContent("Paso 3: Custodia del Corazón", "Decide guardar tu corazón con esperanza, sabiendo que tu dignidad como hijo/a de Dios está intacta y protegida.")
-                                3 -> StepContent("Paso 4: Renovación en el Desierto", "Acepta este tiempo de prueba como un espacio de gracia donde tu fe y tu propósito se purifican y renuevan.")
+                    } else {
+                        when (framework) {
+                            SoltarFramework.ESTOICO -> {
+                                when (step) {
+                                    0 -> StepContent("Paso 1: Dicotomía de Control", "Reconoce con absoluta claridad qué dependía de ti en la relación y qué era completamente ajeno a tu voluntad. Libera la carga de lo que no pudiste gobernar.")
+                                    1 -> StepContent("Paso 2: Amor Fati (Aceptar el destino)", "Observa la ruptura no como una injusticia cruel, sino como el material estóico sobre el cual construirás tu fortaleza, templanza y sabiduría.")
+                                    2 -> StepContent("Paso 3: Apatheia (Soberanía de pasiones)", "Examina tus impulsos de búsqueda o nostalgia. Detente a sentir la emoción sin otorgarle el poder de dictar tus acciones.")
+                                    3 -> StepContent("Paso 4: La Ciudadela Interior", "Sella el ritual reafirmando que tu paz mental y tu dignidad son tu posesión más valiosa y nadie puede arrebatártelas.")
+                                }
+                            }
+                            SoltarFramework.PSICOLOGIA_MODERNA -> {
+                                when (step) {
+                                    0 -> StepContent("Paso 1: Procesamiento Emocional del Duelo", "Permítete sentir la tristeza y la abstinencia del apego sin juzgarte. Valida que el dolor es el trabajo biológico de reorganización cerebral.")
+                                    1 -> StepContent("Paso 2: Regulación del Sistema Nervioso", "Inhala profundamente exhalando el estrés acumulado. Tu cuerpo está saliendo del estado de alerta y alarma por separación.")
+                                    2 -> StepContent("Paso 3: Restructuración Cognitiva y Límites", "Identifica las narrativas idealizadas y sustitúyelas por el registro objetivo de los hechos vividos y las incompatibilidades reales.")
+                                    3 -> StepContent("Paso 4: Integración e Identidad Autónoma", "Consolida tu compromiso contigo mismo/a, reconectando con tus proyectos, valores y autonomía personal.")
+                                }
+                            }
+                            SoltarFramework.CATOLICO -> {
+                                when (step) {
+                                    0 -> StepContent("Paso 1: Examen de Conciencia y Entrega", "Coloca ante Dios tus cargas, tus heridas y tus expectativas no cumplidas. Entrégaselas en oración con confianza absoluta.")
+                                    1 -> StepContent("Paso 2: Perdón y Liberación", "Perdona de corazón a la otra persona y perdónate a ti mismo/a, liberando todo resentimiento para que tu alma recupere la paz.")
+                                    2 -> StepContent("Paso 3: Custodia del Corazón", "Decide guardar tu corazón con esperanza, sabiendo que tu dignidad como hijo/a de Dios está intacta y protegida.")
+                                    3 -> StepContent("Paso 4: Renovación en el Desierto", "Acepta este tiempo de prueba como un espacio de gracia donde tu fe y tu propósito se purifican y renuevan.")
+                                }
                             }
                         }
                     }
@@ -264,13 +337,20 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
         },
         confirmButton = {
             if (isUnlocked) {
-                Button(
-                    onClick = {
-                        if (step < 3) step++ else onDismiss()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
-                ) {
-                    Text(if (step < 3) "Siguiente Paso" else "Finalizar Ritual", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (step > 0) {
+                        OutlinedButton(onClick = { step-- }) {
+                            Text("Anterior", color = TextSecondary)
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            if (step < 3) step++ else onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                    ) {
+                        Text(if (step < 3) "Siguiente Paso" else "Finalizar Ritual", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                    }
                 }
             } else {
                 Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)) {

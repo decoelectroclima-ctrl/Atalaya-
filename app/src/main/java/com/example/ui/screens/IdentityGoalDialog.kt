@@ -1,11 +1,13 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.*
@@ -18,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.ai.OnDeviceLlmEngine
+import com.example.data.SoltarFramework
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 
@@ -109,6 +113,84 @@ fun IdentityGoalDialog(
                     }
                 }
 
+                val journals by viewModel.journalEntries.collectAsState()
+                val settings by viewModel.settings.collectAsState()
+                val framework = SoltarFramework.fromKey(settings?.preferredFramework)
+                val suggestions = remember(journals, framework) {
+                    OnDeviceLlmEngine.generateIdentityGoalSuggestions(
+                        journals = journals,
+                        onboardingAnswers = mapOf(
+                            "breakupReason" to (settings?.breakupReason ?: ""),
+                            "userName" to (settings?.userName ?: "")
+                        ),
+                        currentPhase = "Reconstrucción",
+                        framework = framework
+                    )
+                }
+
+                if (suggestions.isNotEmpty()) {
+                    Column {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                            Text(
+                                text = "Sugerencias según tu proceso (IA On-Device):",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        suggestions.forEach { sug ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 3.dp)
+                                    .clickable {
+                                        viewModel.setNewGoalTitle(sug.actionTitle)
+                                        viewModel.setWhoIWantToBe(sug.whoIWantToBe)
+                                        if (areas.contains(sug.area)) {
+                                            viewModel.setIdentityArea(sug.area)
+                                        }
+                                    },
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, SoltarBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(10.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = sug.actionTitle,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = sug.area,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = SoltarSage,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Identidad: ${sug.whoIWantToBe}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Área
                 Column {
                     Text("Área de Vida", style = MaterialTheme.typography.labelMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
@@ -156,7 +238,31 @@ fun IdentityGoalDialog(
 
                 // Título de la meta / hábito
                 Column {
-                    Text("Acción o Hábito Concreto", style = MaterialTheme.typography.labelMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Acción o Hábito Concreto", style = MaterialTheme.typography.labelMedium, color = TextPrimary, fontWeight = FontWeight.SemiBold)
+                        TextButton(
+                            onClick = {
+                                val habits = com.example.ai.OnDeviceLlmEngine.suggestIdentityHabits(
+                                    lifeArea = uiState.identityAreaSelected,
+                                    whoIWantToBe = uiState.whoIWantToBeInput,
+                                    framework = framework
+                                )
+                                if (habits.isNotEmpty()) {
+                                    viewModel.setNewGoalTitle(habits.first())
+                                }
+                            },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+                                Text("Sugerir hábito (IA)", style = MaterialTheme.typography.labelSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = uiState.newGoalTitleInput,

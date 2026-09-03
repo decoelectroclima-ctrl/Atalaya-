@@ -25,7 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.platform.LocalContext
+import com.example.ai.OnDeviceLlmEngine
 import com.example.audio.SoltarSoundManager
+import com.example.audio.SoltarTtsManager
+import com.example.data.SoltarFramework
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 import kotlinx.coroutines.delay
@@ -35,10 +39,13 @@ fun SemanticBellAndSoundscapesDialog(
     viewModel: SoltarViewModel,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val checkins by viewModel.checkins.collectAsState()
+    val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
     
-    var selectedTab by remember { mutableIntStateOf(0) } // 0 = Campana Semántica, 1 = Paisajes de Calma
+    var selectedTab by remember { mutableIntStateOf(0) } // 0 = Campana Semántica, 1 = Paisajes de Calma, 2 = Voz Guiada
 
     // Semantic Bell state
     var isBellPlaying by remember { mutableStateOf(false) }
@@ -47,6 +54,15 @@ fun SemanticBellAndSoundscapesDialog(
 
     // Soundscape state
     var activeSoundscape by remember { mutableStateOf<SoltarSoundManager.SoundscapeType?>(null) }
+
+    // TTS state
+    var isTtsSpeaking by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        SoltarTtsManager.initialize(context)
+        SoltarTtsManager.onSpeakingStateChanged = { speaking ->
+            isTtsSpeaking = speaking
+        }
+    }
 
     // Timer coroutine for semantic bell
     LaunchedEffect(bellRoundsRemaining, isBellPlaying) {
@@ -63,12 +79,14 @@ fun SemanticBellAndSoundscapesDialog(
     DisposableEffect(Unit) {
         onDispose {
             SoltarSoundManager.stopSoundscape()
+            SoltarTtsManager.stop()
         }
     }
 
     Dialog(
         onDismissRequest = {
             SoltarSoundManager.stopSoundscape()
+            SoltarTtsManager.stop()
             onDismiss()
         },
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -145,20 +163,32 @@ fun SemanticBellAndSoundscapesDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     TabButton(
-                        title = "Campana Semántica",
+                        title = "Campana",
                         selected = selectedTab == 0,
                         modifier = Modifier.weight(1f)
                     ) {
                         selectedTab = 0
                         SoltarSoundManager.stopSoundscape()
+                        SoltarTtsManager.stop()
                         isBellPlaying = false
                     }
                     TabButton(
-                        title = "Paisajes de Calma",
+                        title = "Paisajes",
                         selected = selectedTab == 1,
                         modifier = Modifier.weight(1f)
                     ) {
                         selectedTab = 1
+                        SoltarTtsManager.stop()
+                        isBellPlaying = false
+                        bellRoundsRemaining = 0
+                    }
+                    TabButton(
+                        title = "Voz Guiada",
+                        selected = selectedTab == 2,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        selectedTab = 2
+                        SoltarSoundManager.stopSoundscape()
                         isBellPlaying = false
                         bellRoundsRemaining = 0
                     }
@@ -355,6 +385,128 @@ fun SemanticBellAndSoundscapesDialog(
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (selectedTab == 2) {
+                    // TAB 2: MEDITACIÓN GUIADA POR VOZ (IA On-Device)
+                    val framework = uiState.preferredFramework
+                    val userName = settings?.userName ?: ""
+                    val latestCheckin = checkins.firstOrNull()
+                    val script = remember(vulnerabilityScore, framework, latestCheckin) {
+                        OnDeviceLlmEngine.generateGuidedMeditationScript(
+                            vulnerabilityScore = vulnerabilityScore.toInt(),
+                            framework = framework,
+                            userName = userName,
+                            latestCheckin = latestCheckin
+                        )
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                                border = BorderStroke(1.5.dp, SoltarAmber)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.RecordVoiceOver, contentDescription = null, tint = SoltarAmber)
+                                        Text(
+                                            text = script.targetVulnerabilityBand,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = SoltarAmber,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = script.title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    Text(
+                                        text = "Cadencia: ${script.toneInstruction}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                                    )
+
+                                    Spacer(modifier = Modifier.height(14.dp))
+
+                                    Button(
+                                        onClick = {
+                                            if (isTtsSpeaking) {
+                                                SoltarTtsManager.stop()
+                                            } else {
+                                                SoltarTtsManager.speakMeditation(
+                                                    text = script.fullText,
+                                                    vulnerabilityScore = vulnerabilityScore
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (isTtsSpeaking) Color(0xFFEF4444) else SoltarAmber,
+                                            contentColor = if (isTtsSpeaking) Color.White else SoltarBackground
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isTtsSpeaking) Icons.Default.Stop else Icons.Default.VolumeUp,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = if (isTtsSpeaking) "Detener Voz Guiada" else "Escuchar Meditación Guiada (Voz AI)",
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                                border = BorderStroke(1.dp, SoltarBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Text(
+                                        text = "TEXTO DE LA MEDITACIÓN:",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = script.fullText,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        lineHeight = 24.sp
+                                    )
                                 }
                             }
                         }

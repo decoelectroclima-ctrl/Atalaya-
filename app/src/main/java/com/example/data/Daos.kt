@@ -19,6 +19,9 @@ interface CheckinDao {
     @Query("SELECT * FROM daily_checkins ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLatestCheckin(): CheckinEntity?
 
+    @Query("SELECT * FROM daily_checkins ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun getRecentCheckins(limit: Int): List<CheckinEntity>
+
     @Query("SELECT COUNT(*) FROM daily_checkins")
     suspend fun getCheckinCount(): Int
 

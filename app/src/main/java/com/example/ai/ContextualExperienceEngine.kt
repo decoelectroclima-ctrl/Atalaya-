@@ -51,7 +51,7 @@ object ContextualExperienceEngine {
         val hasCycles = settings.previousBreakupsCount > 1
         val isLongRelation = settings.relDuration.contains("1_3_anios", true) || settings.relDuration.contains("3_5_anios", true) || settings.relDuration.contains("5_10_anios", true) || settings.relDuration.contains("mas", true) || settings.relDuration.contains("anos", true)
 
-        return when {
+        val baseRec = when {
             contactCategory == "PARENTAL" -> ContextualRecommendation(
                 profileTypeDescription = "Perfil Parental (Hijos a Cargo)",
                 bannerMessage = "«Contacto funcional con tus hijos + límites emocionales estrictos con tu expareja. La logística parental no justifica la cercanía afectiva.»",
@@ -162,6 +162,8 @@ object ContextualExperienceEngine {
                 contactCategory = "NONE"
             )
         }
+
+        return OnDeviceLlmEngine.personalizeContextualRecommendation(baseRec, settings)
     }
 
     fun enrichUserContextForAi(settings: SoltarSettingsEntity?): SoltarUserContext {

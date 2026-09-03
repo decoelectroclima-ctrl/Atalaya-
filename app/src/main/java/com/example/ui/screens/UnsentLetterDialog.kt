@@ -28,7 +28,7 @@ fun UnsentLetterDialog(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val categories = listOf("Despedida", "Rabia / Enfadado", "Agradecimiento", "Cosas que no dije")
+    val categories = listOf("Despedida", "Rabia / Enfadado", "Agradecimiento", "Cosas que no dije", "Cápsula al Yo Futuro")
 
     Dialog(
         onDismissRequest = onDismiss,

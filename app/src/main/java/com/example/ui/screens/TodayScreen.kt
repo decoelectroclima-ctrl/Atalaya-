@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.SoltarSoundManager
+import com.example.data.SoltarFramework
 import com.example.data.SubscriptionPlan
 import com.example.data.UserEntitlements
 import com.example.data.WisdomBank
@@ -176,10 +177,19 @@ fun TodayScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = if (vulnerabilityMode == "REFUGIO") Color(0xFF991B1B) else TextPrimary
                             )
+                            val vulnerabilityExplanation by viewModel.vulnerabilityExplanation.collectAsState()
                             Text(
-                                text = "Puntuación: $vulnerabilityScore/100 • Interfaz adaptada a tu momento emocional.",
+                                text = "Puntuación: $vulnerabilityScore/100",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
+                                color = TextSecondary,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "💡 $vulnerabilityExplanation",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (vulnerabilityMode == "REFUGIO") Color(0xFFEF4444) else SoltarAmber,
+                                lineHeight = 16.sp
                             )
                         }
                     }
@@ -190,6 +200,7 @@ fun TodayScreen(
         // Anticipated Risk Date Proactive Banner
         item {
             val riskDates by viewModel.riskDates.collectAsState()
+            val triggers by viewModel.triggerEvents.collectAsState()
             val nowCal = remember { Calendar.getInstance() }
             val currentYr = nowCal.get(Calendar.YEAR)
             
@@ -212,6 +223,15 @@ fun TodayScreen(
 
             if (upcomingRisk != null) {
                 val (rd, days, _) = upcomingRisk
+                val aiStrategy = remember(rd.id, days, triggers) {
+                    com.example.ai.OnDeviceLlmEngine.generateRiskDateCopingStrategy(
+                        riskDateTitle = rd.title,
+                        daysUntil = days,
+                        pastTriggers = triggers,
+                        framework = uiState.preferredFramework
+                    )
+                }
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -236,16 +256,25 @@ fun TodayScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = if (days == 0) "Hoy se cumple ${rd.title}. El riesgo de impulso es alto. Ya tienes preparada tu estrategia: ${rd.customStrategy.ifBlank { "Mantén contacto cero y respira." }}" else "Se acerca ${rd.title} en $days días. Nos anticipamos al momento difícil para sostener tu soberanía.",
+                            text = if (days == 0) "Hoy se cumple ${rd.title}. El riesgo de impulso es alto." else "Se acerca ${rd.title} en $days días. Nos anticipamos al momento difícil para sostener tu soberanía.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextPrimary,
                             fontWeight = FontWeight.SemiBold
                         )
 
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = aiStrategy,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SoltarAmber,
+                            lineHeight = 18.sp
+                        )
+
                         if (rd.customStrategy.isNotBlank()) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Estrategia: ${rd.customStrategy}",
+                                text = "Tu nota personal: ${rd.customStrategy}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = SoltarSage,
                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic

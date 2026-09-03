@@ -71,6 +71,13 @@ fun OnboardingScreen(
     var selectedContactType by remember { mutableStateOf("CONTACTO_CERO_REAL") }
     var selectedFramework by remember(uiState.preferredFramework) { mutableStateOf(uiState.preferredFramework) }
 
+    // AI Framework Recommendation questionnaire
+    var showAiFrameworkSurvey by remember { mutableStateOf(false) }
+    var q1Choice by remember { mutableStateOf<Int?>(null) }
+    var q2Choice by remember { mutableStateOf<Int?>(null) }
+    var q3Choice by remember { mutableStateOf<Int?>(null) }
+    var frameworkRec by remember { mutableStateOf<com.example.ai.OnDeviceLlmEngine.FrameworkRecommendation?>(null) }
+
     val pages = remember {
         listOf(
             OnboardingPage.IntroHero,
@@ -763,6 +770,122 @@ fun OnboardingScreen(
                                                         fontSize = 12.sp
                                                     )
                                                 }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    if (!showAiFrameworkSurvey && frameworkRec == null) {
+                                        OutlinedButton(
+                                            onClick = { showAiFrameworkSurvey = true },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .testTag("ai_framework_quiz_btn"),
+                                            shape = RoundedCornerShape(10.dp),
+                                            border = BorderStroke(1.dp, SoltarAmber)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                                                Text("¿Indeciso? Descubre tu marco ideal con IA", color = SoltarAmber, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                            }
+                                        }
+                                    } else if (showAiFrameworkSurvey && frameworkRec == null) {
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                                            border = BorderStroke(1.dp, SoltarAmber)
+                                        ) {
+                                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
+                                                    Text("Cuestionario de Afinidad (IA On-Device)", style = MaterialTheme.typography.titleSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                                                }
+
+                                                Text("1. ¿Qué tipo de voz necesitas ahora?", style = MaterialTheme.typography.labelSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                                                listOf(
+                                                    "Firme y racional: enfocarme en lo que controlo",
+                                                    "Científica y compasiva: entender mi cerebro y apego",
+                                                    "Profunda y espiritual: refugio de fe y sentido"
+                                                ).forEachIndexed { index, option ->
+                                                    FilterChip(
+                                                        selected = q1Choice == index,
+                                                        onClick = { q1Choice = index },
+                                                        label = { Text(option, fontSize = 11.sp) }
+                                                    )
+                                                }
+
+                                                Text("2. ¿Cuál es tu mayor desafío actual?", style = MaterialTheme.typography.labelSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                                                listOf(
+                                                    "Aceptar la realidad y no desear que sea distinta",
+                                                    "El dolor punzante y las ganas compulsivas de buscarle",
+                                                    "El vacío de sentido y la necesidad de perdón interior"
+                                                ).forEachIndexed { index, option ->
+                                                    FilterChip(
+                                                        selected = q2Choice == index,
+                                                        onClick = { q2Choice = index },
+                                                        label = { Text(option, fontSize = 11.sp) }
+                                                    )
+                                                }
+
+                                                Text("3. ¿Qué actitud deseas cultivar?", style = MaterialTheme.typography.labelSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                                                listOf(
+                                                    "Fortaleza de carácter y sobriedad interior",
+                                                    "Autocompasión y reconstrucción de autoestima",
+                                                    "Confianza trascendente y serenidad del corazón"
+                                                ).forEachIndexed { index, option ->
+                                                    FilterChip(
+                                                        selected = q3Choice == index,
+                                                        onClick = { q3Choice = index },
+                                                        label = { Text(option, fontSize = 11.sp) }
+                                                    )
+                                                }
+
+                                                if (q1Choice != null && q2Choice != null && q3Choice != null) {
+                                                    Button(
+                                                        onClick = {
+                                                            val rec = com.example.ai.OnDeviceLlmEngine.evaluateOnboardingFrameworkRecommendation(
+                                                                q1Choice!!, q2Choice!!, q3Choice!!
+                                                            )
+                                                            frameworkRec = rec
+                                                            selectedFramework = rec.recommendedFramework
+                                                        },
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .testTag("ai_evaluate_framework_btn"),
+                                                        shape = RoundedCornerShape(10.dp),
+                                                        colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber, contentColor = SoltarBackground)
+                                                    ) {
+                                                        Text("Obtener recomendación de marco", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else if (frameworkRec != null) {
+                                        val rec = frameworkRec!!
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                                            border = BorderStroke(1.5.dp, SoltarAmber)
+                                        ) {
+                                            Column(modifier = Modifier.padding(14.dp)) {
+                                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
+                                                    Text("Recomendación: ${rec.recommendedFramework.title} (${rec.matchConfidencePercentage}% afinidad)", style = MaterialTheme.typography.titleSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                                                }
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(rec.rationale, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text("💡 ${rec.primaryBenefit}", style = MaterialTheme.typography.bodySmall, color = SoltarSage, fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                     }

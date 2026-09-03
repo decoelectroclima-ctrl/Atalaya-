@@ -30,16 +30,34 @@ class DataExportManager(private val database: AdrianaDatabase) {
 
     fun exportData(pin: String, outputFile: File) {
         val data = runBlocking {
+            val checkins = database.checkinDao().getAllCheckins().first()
+            val journals = database.journalDao().getAllJournalEntries().first()
+            val letters = database.unsentLetterDao().getAllLetters().first()
+            val settings = database.soltarSettingsDao().getSettingsOnce()
+            val breakupDays = settings?.let { s ->
+                val start = if (s.initialStartDateTimestamp > 0) s.initialStartDateTimestamp else s.breakupDateTimestamp
+                ((System.currentTimeMillis() - start) / (1000L * 3600 * 24)).toInt().coerceAtLeast(0)
+            } ?: checkins.size
+
+            val clinicalSummary = com.example.ai.OnDeviceLlmEngine.generateClinicalProgressSummary(
+                checkins = checkins,
+                journals = journals,
+                letters = letters,
+                breakupDays = breakupDays,
+                userName = settings?.userName ?: "Usuario"
+            )
+
             AdrianaExportData(
-                checkins = database.checkinDao().getAllCheckins().first(),
-                journalEntries = database.journalDao().getAllJournalEntries().first(),
-                unsentLetters = database.unsentLetterDao().getAllLetters().first(),
+                checkins = checkins,
+                journalEntries = journals,
+                unsentLetters = letters,
                 relationshipAudits = database.relationshipAuditDao().getAllAudits().first(),
                 aiMessages = database.aiMessageDao().getAllMessages().first(),
                 redFlags = database.redFlagDao().getAllRedFlags().first(),
                 triggerEvents = database.triggerEventDao().getAllTriggerEvents().first(),
                 thoughtLabEntries = database.thoughtLabDao().getAllEntries().first(),
-                settings = database.soltarSettingsDao().getSettingsOnce()
+                settings = settings,
+                clinicalProgressSummary = clinicalSummary
             )
         }
         val jsonData = json.encodeToString(data)
@@ -104,6 +122,33 @@ class DataExportManager(private val database: AdrianaDatabase) {
         } catch (e: Exception) {
             e.printStackTrace()
             false
+        }
+    }
+
+    suspend fun generateClinicalNarrativeReport(): String {
+        val checkins = database.checkinDao().getAllCheckins().first()
+        val journals = database.journalDao().getAllJournalEntries().first()
+        val letters = database.unsentLetterDao().getAllLetters().first()
+        val settings = database.soltarSettingsDao().getSettingsOnce()
+        val breakupDays = settings?.let { s ->
+            val start = if (s.initialStartDateTimestamp > 0) s.initialStartDateTimestamp else s.breakupDateTimestamp
+            ((System.currentTimeMillis() - start) / (1000L * 3600 * 24)).toInt().coerceAtLeast(0)
+        } ?: checkins.size
+        val userName = settings?.userName ?: "Usuario"
+
+        return com.example.ai.OnDeviceLlmEngine.generateClinicalProgressSummary(
+            checkins = checkins,
+            journals = journals,
+            letters = letters,
+            breakupDays = breakupDays,
+            userName = userName
+        )
+    }
+
+    suspend fun exportClinicalNarrativeToFile(outputFile: File) {
+        val report = generateClinicalNarrativeReport()
+        FileOutputStream(outputFile).use {
+            it.write(report.toByteArray(Charsets.UTF_8))
         }
     }
 }

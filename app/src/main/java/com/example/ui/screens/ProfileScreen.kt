@@ -2727,10 +2727,34 @@ private fun AnticipatedRiskDatesSection(viewModel: SoltarViewModel) {
                         )
                     }
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Estrategia / Plan de contención", style = MaterialTheme.typography.labelMedium, color = TextPrimary)
+                        TextButton(
+                            onClick = {
+                                val strategy = com.example.ai.OnDeviceLlmEngine.generateRiskDateCopingStrategy(
+                                    riskDateTitle = uiState.riskDateTitleInput.ifBlank { "Fecha de Riesgo" },
+                                    daysUntil = 3,
+                                    pastTriggers = viewModel.triggerEvents.value,
+                                    framework = uiState.preferredFramework
+                                ).replace("**", "")
+                                viewModel.setRiskDateStrategy(strategy)
+                            },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Sugerir plan (IA)", color = SoltarAmber, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
                     OutlinedTextField(
                         value = uiState.riskDateStrategyInput,
                         onValueChange = { viewModel.setRiskDateStrategy(it) },
-                        label = { Text("Estrategia / Plan de contención preparado") },
+                        label = { Text("Plan preparado") },
                         modifier = Modifier.fillMaxWidth(),
                         placeholder = { Text("Ej. Contacto cero estricto, cena con amigos, apagar móvil.") },
                         maxLines = 3,

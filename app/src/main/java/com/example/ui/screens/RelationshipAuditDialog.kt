@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Balance
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -27,6 +28,7 @@ fun RelationshipAuditDialog(
     onDismiss: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showGuidedAssistant by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -103,6 +105,84 @@ fun RelationshipAuditDialog(
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
+                    }
+                }
+
+                // Asistente Guiado de Señales de Alarma (Red Flags)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (showGuidedAssistant) SoltarAmber else SoltarBorder)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
+                                Text(
+                                    text = "Asistencia Guiada de Red Flags",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            TextButton(
+                                onClick = { showGuidedAssistant = !showGuidedAssistant },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = if (showGuidedAssistant) "Ocultar" else "✨ Ayúdame a identificar",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        if (showGuidedAssistant) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Elige una pregunta exploratoria para identificar señales que a veces normalizamos:",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            val prompts = remember { com.example.ai.OnDeviceLlmEngine.getRedFlagGuidedPrompts() }
+                            prompts.forEachIndexed { idx, prompt ->
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 3.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = SoltarSurface,
+                                    border = androidx.compose.foundation.BorderStroke(0.5.dp, SoltarBorder),
+                                    onClick = {
+                                        val synthesized = com.example.ai.OnDeviceLlmEngine.synthesizeRedFlagFromDescription(prompt)
+                                        viewModel.setAuditTitle("Patrón: $synthesized")
+                                        viewModel.setAuditOtherResp(synthesized)
+                                        viewModel.setAuditMyResp("Haber tolerado o justificado esta conducta repetidamente")
+                                        viewModel.setAuditPattern("No permanecer donde este límite sea vulnerado")
+                                        showGuidedAssistant = false
+                                    }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text("${idx + 1}.", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        Text(prompt, style = MaterialTheme.typography.bodySmall, color = TextPrimary, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -187,7 +267,33 @@ fun RelationshipAuditDialog(
 
                 // Patrón identificado para mi futuro
                 Column {
-                    Text("Patrón identificado para no repetir", style = MaterialTheme.typography.labelMedium, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Patrón identificado para no repetir", style = MaterialTheme.typography.labelMedium, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                        if (uiState.auditOtherRespInput.isNotBlank() || uiState.auditTitleInput.isNotBlank()) {
+                            TextButton(
+                                onClick = {
+                                    val flags = listOf(
+                                        uiState.auditTitleInput,
+                                        uiState.auditMyRespInput,
+                                        uiState.auditOtherRespInput,
+                                        uiState.auditSharedRespInput
+                                    ).filter { it.isNotBlank() }
+                                    val synthesized = com.example.ai.OnDeviceLlmEngine.synthesizeRedFlagsPattern(flags)
+                                    viewModel.setAuditPattern(synthesized)
+                                },
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+                                    Text("Sintetizar con IA", style = MaterialTheme.typography.labelSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = uiState.auditPatternInput,

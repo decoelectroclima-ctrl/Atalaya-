@@ -570,20 +570,31 @@ object SoltarNotificationHelper {
             var adaptiveTitle = title
             try {
                 val db = AdrianaDatabase.getDatabase(context)
-                val latestCheckin = db.checkinDao().getLatestCheckin()
-                if (latestCheckin != null) {
-                    when {
-                        latestCheckin.comparisonWithYesterday.contains("Mejor", true) || latestCheckin.urgeToContact <= 3f -> {
-                            adaptiveTitle = "🌿 Recuerda • Seguimiento Emocional (Progreso)"
-                            adaptiveQuote = "¿Cómo estás hoy? Queremos ver si esa calma que estabas recuperando sigue ahí."
-                        }
-                        latestCheckin.urgeToContact > 5f || latestCheckin.comparisonWithYesterday.contains("Peor", true) -> {
-                            adaptiveTitle = "🛡️ Recuerda • Seguimiento Emocional (Contención)"
-                            adaptiveQuote = "¿Cómo estás hoy? ¿Ha vuelto ese impulso de contactar? Detente un instante antes de actuar."
-                        }
-                        else -> {
-                            adaptiveTitle = "🧠 Recuerda • Check-in Emocional Diario"
-                            adaptiveQuote = "¿Cómo te encuentras hoy emocionalmente? Registra tu evolución en 1 minuto."
+                val recentCheckins = db.checkinDao().getRecentCheckins(5)
+                if (recentCheckins.isNotEmpty()) {
+                    val aiNotification = com.example.ai.OnDeviceLlmEngine.generateDailyNotification(
+                        checkins = recentCheckins,
+                        framework = framework,
+                        userName = userName
+                    )
+                    adaptiveTitle = aiNotification.title
+                    adaptiveQuote = aiNotification.body
+                } else {
+                    val latestCheckin = db.checkinDao().getLatestCheckin()
+                    if (latestCheckin != null) {
+                        when {
+                            latestCheckin.comparisonWithYesterday.contains("Mejor", true) || latestCheckin.urgeToContact <= 3f -> {
+                                adaptiveTitle = "🌿 Recuerda • Seguimiento Emocional (Progreso)"
+                                adaptiveQuote = "¿Cómo estás hoy? Queremos ver si esa calma que estabas recuperando sigue ahí."
+                            }
+                            latestCheckin.urgeToContact > 5f || latestCheckin.comparisonWithYesterday.contains("Peor", true) -> {
+                                adaptiveTitle = "🛡️ Recuerda • Seguimiento Emocional (Contención)"
+                                adaptiveQuote = "¿Cómo estás hoy? ¿Ha vuelto ese impulso de contactar? Detente un instante antes de actuar."
+                            }
+                            else -> {
+                                adaptiveTitle = "🧠 Recuerda • Check-in Emocional Diario"
+                                adaptiveQuote = "¿Cómo te encuentras hoy emocionalmente? Registra tu evolución en 1 minuto."
+                            }
                         }
                     }
                 }
@@ -825,9 +836,14 @@ object SoltarNotificationHelper {
         }
 
         val strategyText = if (riskDate.customStrategy.isNotBlank()) {
-            "Estrategia preparada: ${riskDate.customStrategy}"
+            "Estrategia: ${riskDate.customStrategy}"
         } else {
-            "Mantén tu soberanía emocional, evita la exposición y activa tu red de apoyo si sientes impulso."
+            com.example.ai.OnDeviceLlmEngine.generateRiskDateCopingStrategy(
+                riskDateTitle = riskDate.title,
+                daysUntil = daysUntil,
+                pastTriggers = emptyList(),
+                framework = framework
+            ).replace("**", "")
         }
 
         val bodyMessage = if (daysUntil == 0) {
