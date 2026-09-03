@@ -1784,6 +1784,247 @@ fun ProfileScreen(
                                         Text("Cambiar Hora", color = SoltarAmber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Sub-sección integrada: Recordatorios Programables adicionales
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = SoltarSurface,
+                                    border = BorderStroke(1.dp, SoltarBorderSubtle)
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.AlarmAdd,
+                                                    contentDescription = null,
+                                                    tint = SoltarAmber,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                                Column {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                    ) {
+                                                        Text(
+                                                            "Otros Horarios & Recordatorios",
+                                                            style = MaterialTheme.typography.bodySmall,
+                                                            color = TextPrimary,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        Surface(
+                                                            shape = CircleShape,
+                                                            color = SoltarAmber.copy(alpha = 0.18f)
+                                                        ) {
+                                                            Text(
+                                                                text = "${uiState.customNotifications.count { it.enabled }} activos",
+                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                                fontSize = 9.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = SoltarAmber
+                                                            )
+                                                        }
+                                                    }
+                                                    Text(
+                                                        "Avisos diarios adicionales para tu paz mental",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = TextSecondary,
+                                                        fontSize = 10.sp
+                                                    )
+                                                }
+                                            }
+
+                                            IconButton(
+                                                onClick = { viewModel.openAddCustomNotificationDialog() },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(Icons.Default.AddCircle, contentDescription = "Añadir recordatorio", tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
+                                        if (uiState.customNotifications.isEmpty()) {
+                                            Column(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text(
+                                                    "No tienes otros horarios programados.",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = TextMuted,
+                                                    textAlign = TextAlign.Center,
+                                                    fontSize = 11.sp
+                                                )
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Button(
+                                                    onClick = { viewModel.restoreDefaultPresetReminders() },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                                ) {
+                                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.Black, modifier = Modifier.size(13.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Cargar Horarios Sugeridos", color = Color.Black, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                                }
+                                            }
+                                        } else {
+                                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                uiState.customNotifications.forEach { item ->
+                                                    Surface(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(8.dp),
+                                                        color = if (item.enabled) SoltarSurfaceElevated else SoltarSurfaceElevated.copy(alpha = 0.5f),
+                                                        border = BorderStroke(
+                                                            1.dp,
+                                                            if (item.enabled) SoltarBorder else SoltarBorderSubtle
+                                                        )
+                                                    ) {
+                                                        Column(modifier = Modifier.padding(8.dp)) {
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                            ) {
+                                                                Row(
+                                                                    verticalAlignment = Alignment.CenterVertically,
+                                                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                                    modifier = Modifier.weight(1f)
+                                                                ) {
+                                                                    Surface(
+                                                                        shape = RoundedCornerShape(4.dp),
+                                                                        color = if (item.enabled) SoltarAmber.copy(alpha = 0.15f) else SoltarSurface,
+                                                                        border = BorderStroke(1.dp, if (item.enabled) SoltarAmber.copy(alpha = 0.4f) else SoltarBorderSubtle)
+                                                                    ) {
+                                                                        Text(
+                                                                            text = String.format(java.util.Locale.getDefault(), "%02d:%02d", item.hour, item.minute),
+                                                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                                                            fontWeight = FontWeight.Bold,
+                                                                            fontSize = 11.sp,
+                                                                            color = if (item.enabled) SoltarAmber else TextMuted
+                                                                        )
+                                                                    }
+
+                                                                    Text(
+                                                                        text = item.title,
+                                                                        style = MaterialTheme.typography.bodySmall,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        color = if (item.enabled) TextPrimary else TextMuted,
+                                                                        maxLines = 1
+                                                                    )
+                                                                }
+
+                                                                Switch(
+                                                                    checked = item.enabled,
+                                                                    onCheckedChange = { viewModel.toggleCustomNotificationEnabled(item.id, it) },
+                                                                    colors = SwitchDefaults.colors(
+                                                                        checkedThumbColor = SoltarAmber,
+                                                                        checkedTrackColor = SoltarAmber.copy(alpha = 0.3f),
+                                                                        uncheckedThumbColor = TextMuted,
+                                                                        uncheckedTrackColor = SoltarSurface
+                                                                    ),
+                                                                    modifier = Modifier.scale(0.8f)
+                                                                )
+                                                            }
+
+                                                            if (item.message.isNotBlank()) {
+                                                                Spacer(modifier = Modifier.height(3.dp))
+                                                                Text(
+                                                                    text = item.message,
+                                                                    style = MaterialTheme.typography.bodySmall,
+                                                                    color = if (item.enabled) TextSecondary else TextMuted,
+                                                                    fontSize = 10.sp,
+                                                                    lineHeight = 14.sp
+                                                                )
+                                                            }
+
+                                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                                            Row(
+                                                                modifier = Modifier.fillMaxWidth(),
+                                                                horizontalArrangement = Arrangement.End,
+                                                                verticalAlignment = Alignment.CenterVertically
+                                                            ) {
+                                                                TextButton(
+                                                                    onClick = {
+                                                                        viewModel.triggerTestCustomNotification(item.title, item.message)
+                                                                    },
+                                                                    contentPadding = PaddingValues(horizontal = 5.dp, vertical = 1.dp)
+                                                                ) {
+                                                                    Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(12.dp), tint = SoltarAmber)
+                                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                                    Text("Probar", fontSize = 10.sp, color = SoltarAmber)
+                                                                }
+
+                                                                TextButton(
+                                                                    onClick = {
+                                                                        viewModel.openEditCustomNotificationDialog(item)
+                                                                    },
+                                                                    contentPadding = PaddingValues(horizontal = 5.dp, vertical = 1.dp)
+                                                                ) {
+                                                                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(12.dp), tint = TextSecondary)
+                                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                                    Text("Editar", fontSize = 10.sp, color = TextSecondary)
+                                                                }
+
+                                                                TextButton(
+                                                                    onClick = {
+                                                                        viewModel.deleteCustomNotification(item.id)
+                                                                    },
+                                                                    contentPadding = PaddingValues(horizontal = 5.dp, vertical = 1.dp)
+                                                                ) {
+                                                                    Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(12.dp), tint = SoltarTerracotta)
+                                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                                    Text("Eliminar", fontSize = 10.sp, color = SoltarTerracotta)
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(6.dp))
+
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Button(
+                                                    onClick = { viewModel.openAddCustomNotificationDialog() },
+                                                    modifier = Modifier.weight(1f),
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Black)
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Añadir Horario", color = Color.Black, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                                }
+
+                                                OutlinedButton(
+                                                    onClick = { viewModel.restoreDefaultPresetReminders() },
+                                                    shape = RoundedCornerShape(6.dp),
+                                                    border = BorderStroke(1.dp, SoltarBorder),
+                                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                                ) {
+                                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(12.dp), tint = SoltarAmber)
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text("Plantillas", color = TextPrimary, fontSize = 10.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
                             HorizontalDivider(
@@ -1918,257 +2159,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // 2. Recordatorios Programables Adicionales
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = SoltarSurfaceElevated,
-                        border = BorderStroke(1.dp, SoltarBorderSubtle)
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            // Header
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AlarmAdd,
-                                        contentDescription = null,
-                                        tint = SoltarAmber,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                    Column {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            Text(
-                                                "Recordatorios Programables",
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = TextPrimary,
-                                                fontWeight = FontWeight.SemiBold
-                                            )
-                                            Surface(
-                                                shape = CircleShape,
-                                                color = SoltarAmber.copy(alpha = 0.18f)
-                                            ) {
-                                                Text(
-                                                    text = "${uiState.customNotifications.count { it.enabled }} activos",
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                    fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = SoltarAmber
-                                                )
-                                            }
-                                        }
-                                        Text(
-                                            "Avisos diarios para tu paz mental y autocuidado",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = TextSecondary,
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                }
-
-                                IconButton(
-                                    onClick = {
-                                        viewModel.openAddCustomNotificationDialog()
-                                    }
-                                ) {
-                                    Icon(Icons.Default.AddCircle, contentDescription = "Añadir recordatorio", tint = SoltarAmber)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            if (uiState.customNotifications.isEmpty()) {
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = SoltarSurface,
-                                    border = BorderStroke(1.dp, SoltarBorderSubtle)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(12.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            "No tienes recordatorios programados adicionales activos.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = TextMuted,
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 12.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Button(
-                                            onClick = { viewModel.restoreDefaultPresetReminders() },
-                                            colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
-                                            shape = RoundedCornerShape(8.dp),
-                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                                        ) {
-                                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.Black, modifier = Modifier.size(14.dp))
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text("Cargar Recordatorios Sugeridos", color = Color.Black, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    uiState.customNotifications.forEach { item ->
-                                        Surface(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = if (item.enabled) SoltarSurface else SoltarSurface.copy(alpha = 0.5f),
-                                            border = BorderStroke(
-                                                1.dp,
-                                                if (item.enabled) SoltarBorder else SoltarBorderSubtle
-                                            )
-                                        ) {
-                                            Column(modifier = Modifier.padding(10.dp)) {
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween
-                                                ) {
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                        modifier = Modifier.weight(1f)
-                                                    ) {
-                                                        Surface(
-                                                            shape = RoundedCornerShape(6.dp),
-                                                            color = if (item.enabled) SoltarAmber.copy(alpha = 0.15f) else SoltarSurface,
-                                                            border = BorderStroke(1.dp, if (item.enabled) SoltarAmber.copy(alpha = 0.4f) else SoltarBorderSubtle)
-                                                        ) {
-                                                            Text(
-                                                                text = String.format(java.util.Locale.getDefault(), "%02d:%02d", item.hour, item.minute),
-                                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                                                                fontWeight = FontWeight.Bold,
-                                                                fontSize = 12.sp,
-                                                                color = if (item.enabled) SoltarAmber else TextMuted
-                                                            )
-                                                        }
-
-                                                        Text(
-                                                            text = item.title,
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = if (item.enabled) TextPrimary else TextMuted,
-                                                            maxLines = 1
-                                                        )
-                                                    }
-
-                                                    Switch(
-                                                        checked = item.enabled,
-                                                        onCheckedChange = { viewModel.toggleCustomNotificationEnabled(item.id, it) },
-                                                        colors = SwitchDefaults.colors(
-                                                            checkedThumbColor = SoltarAmber,
-                                                            checkedTrackColor = SoltarAmber.copy(alpha = 0.3f),
-                                                            uncheckedThumbColor = TextMuted,
-                                                            uncheckedTrackColor = SoltarSurface
-                                                        ),
-                                                        modifier = Modifier.scale(0.85f)
-                                                    )
-                                                }
-
-                                                if (item.message.isNotBlank()) {
-                                                    Spacer(modifier = Modifier.height(4.dp))
-                                                    Text(
-                                                        text = item.message,
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = if (item.enabled) TextSecondary else TextMuted,
-                                                        fontSize = 11.sp,
-                                                        lineHeight = 15.sp
-                                                    )
-                                                }
-
-                                                Spacer(modifier = Modifier.height(6.dp))
-
-                                                Row(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    horizontalArrangement = Arrangement.End,
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    TextButton(
-                                                        onClick = {
-                                                            viewModel.triggerTestCustomNotification(item.title, item.message)
-                                                        },
-                                                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                                                    ) {
-                                                        Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(13.dp), tint = SoltarAmber)
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("Probar", fontSize = 11.sp, color = SoltarAmber)
-                                                    }
-
-                                                    TextButton(
-                                                        onClick = {
-                                                            viewModel.openEditCustomNotificationDialog(item)
-                                                        },
-                                                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                                                    ) {
-                                                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(13.dp), tint = TextSecondary)
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("Editar", fontSize = 11.sp, color = TextSecondary)
-                                                    }
-
-                                                    TextButton(
-                                                        onClick = {
-                                                            viewModel.deleteCustomNotification(item.id)
-                                                        },
-                                                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                                                    ) {
-                                                        Icon(Icons.Default.DeleteOutline, contentDescription = null, modifier = Modifier.size(13.dp), tint = SoltarTerracotta)
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("Eliminar", fontSize = 11.sp, color = SoltarTerracotta)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Button(
-                                        onClick = { viewModel.openAddCustomNotificationDialog() },
-                                        modifier = Modifier.weight(1f),
-                                        shape = RoundedCornerShape(8.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Black)
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Añadir Recordatorio", color = Color.Black, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                    }
-
-                                    OutlinedButton(
-                                        onClick = { viewModel.restoreDefaultPresetReminders() },
-                                        shape = RoundedCornerShape(8.dp),
-                                        border = BorderStroke(1.dp, SoltarBorder),
-                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                    ) {
-                                        Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(14.dp), tint = SoltarAmber)
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Plantillas", color = TextPrimary, fontSize = 11.sp)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // 3. Widget de Pantalla de Inicio
+                    // 2. Widget de Pantalla de Inicio
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
