@@ -786,30 +786,28 @@ fun TodayScreen(
         }
 
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
-        if (vulnerabilityMode != "REFUGIO") {
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
-                    ProgressiveLandscape(
-                        progressStage = progressStage,
-                        vulnerabilityScore = vulnerabilityScore,
-                        onTapSun = {
-                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            // Abrir Diario
-                            viewModel.openJournalModal()
-                        },
-                        onTapTree = {
-                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            // Abrir Red Flags (RelationshipAuditDialog)
-                            viewModel.toggleAuditModal(true)
-                        },
-                        onTapMountain = {
-                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            // Abrir Biblioteca de Sabiduría
-                            viewModel.rotateWisdomCard(uiState.preferredFramework)
-                        }
-                    )
-                }
+        item {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
+                ProgressiveLandscape(
+                    progressStage = progressStage,
+                    vulnerabilityScore = vulnerabilityScore,
+                    onTapSun = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        // Abrir Diario
+                        viewModel.openJournalModal()
+                    },
+                    onTapTree = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        // Abrir Red Flags (RelationshipAuditDialog)
+                        viewModel.toggleAuditModal(true)
+                    },
+                    onTapMountain = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        // Abrir Biblioteca de Sabiduría
+                        viewModel.rotateWisdomCard(uiState.preferredFramework)
+                    }
+                )
             }
         }
         
@@ -962,108 +960,109 @@ fun TodayScreen(
             }
         }
 
-        // 2. HERO FEATURE: No-Contact Counter (Solo visible si no es REFUGIO)
-        if (vulnerabilityMode != "REFUGIO") {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("no_contact_hero_card"),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
-                    border = BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(SoltarBorder, SoltarAmber.copy(alpha = 0.6f), SoltarBorder)))
+        // 2. HERO FEATURE: No-Contact Counter (Siempre visible en todos los modos)
+        item {
+            val isRefugio = vulnerabilityMode == "REFUGIO"
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("no_contact_hero_card"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                border = BorderStroke(1.5.dp, Brush.horizontalGradient(listOf(SoltarBorder, SoltarAmber.copy(alpha = 0.6f), SoltarBorder)))
+            ) {
+                Column(
+                    modifier = Modifier.padding(if (isRefugio) 14.dp else 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = SoltarAmber.copy(alpha = 0.15f),
+                            border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = SoltarAmber.copy(alpha = 0.15f),
-                                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
-                            ) {
-                                Text(
-                                    text = milestoneTitle,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = SoltarAmber,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                    val calendar = Calendar.getInstance().apply { timeInMillis = noContactStart }
-                                    DatePickerDialog(
-                                        context,
-                                        { _, y, m, d ->
-                                            val selectedCal = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }
-                                            viewModel.updateNoContactStartDate(selectedCal.timeInMillis)
-                                        },
-                                        calendar.get(Calendar.YEAR),
-                                        calendar.get(Calendar.MONTH),
-                                        calendar.get(Calendar.DAY_OF_MONTH)
-                                    ).show()
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(Icons.Default.EditCalendar, contentDescription = "Ajustar fecha", tint = TextSecondary, modifier = Modifier.size(18.dp))
-                            }
+                            Text(
+                                text = milestoneTitle,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "DÍAS DE CONTACTO CERO",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextSecondary,
-                            letterSpacing = 1.2.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        val lastRelapseTimestamp = remember(relapses) {
-                            relapses.maxByOrNull { it.timestamp }?.timestamp ?: 0L
-                        }
-                        val daysSinceLastRelapse = if (lastRelapseTimestamp > 0L) {
-                            ((currentTime - lastRelapseTimestamp).coerceAtLeast(0L)) / (24 * 3600 * 1000)
-                        } else {
-                            -1L
-                        }
-
-                        Text(
-                            text = if (daysSinceLastRelapse >= 0L)
-                                "$days días de contacto cero • $daysSinceLastRelapse días desde la última recaída"
-                            else
-                                "$days días de contacto cero (Sin recaídas registradas)",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = SoltarAmber,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Counter Grid (Days, Hours, Min, Sec)
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        IconButton(
+                            onClick = {
+                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                val calendar = Calendar.getInstance().apply { timeInMillis = noContactStart }
+                                DatePickerDialog(
+                                    context,
+                                    { _, y, m, d ->
+                                        val selectedCal = Calendar.getInstance().apply { set(y, m, d, 0, 0, 0) }
+                                        viewModel.updateNoContactStartDate(selectedCal.timeInMillis)
+                                    },
+                                    calendar.get(Calendar.YEAR),
+                                    calendar.get(Calendar.MONTH),
+                                    calendar.get(Calendar.DAY_OF_MONTH)
+                                ).show()
+                            },
+                            modifier = Modifier.size(32.dp)
                         ) {
-                            CounterUnit(value = "$days", label = "DÍAS", highlight = true)
-                            Text(":", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                            CounterUnit(value = String.format("%02d", hours), label = "HORAS")
-                            Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                            CounterUnit(value = String.format("%02d", minutes), label = "MIN")
-                            Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                            CounterUnit(value = String.format("%02d", seconds), label = "SEG")
+                            Icon(Icons.Default.EditCalendar, contentDescription = "Ajustar fecha", tint = TextSecondary, modifier = Modifier.size(18.dp))
                         }
+                    }
 
+                    Spacer(modifier = Modifier.height(if (isRefugio) 8.dp else 16.dp))
+
+                    Text(
+                        text = "DÍAS DE CONTACTO CERO",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSecondary,
+                        letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    val lastRelapseTimestamp = remember(relapses) {
+                        relapses.maxByOrNull { it.timestamp }?.timestamp ?: 0L
+                    }
+                    val daysSinceLastRelapse = if (lastRelapseTimestamp > 0L) {
+                        ((currentTime - lastRelapseTimestamp).coerceAtLeast(0L)) / (24 * 3600 * 1000)
+                    } else {
+                        -1L
+                    }
+
+                    Text(
+                        text = if (daysSinceLastRelapse >= 0L)
+                            "$days días de contacto cero • $daysSinceLastRelapse días desde la última recaída"
+                        else
+                            "$days días de contacto cero (Sin recaídas registradas)",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SoltarAmber,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Counter Grid (Days, Hours, Min, Sec)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CounterUnit(value = "$days", label = "DÍAS", highlight = true)
+                        Text(":", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        CounterUnit(value = String.format("%02d", hours), label = "HORAS")
+                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        CounterUnit(value = String.format("%02d", minutes), label = "MIN")
+                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        CounterUnit(value = String.format("%02d", seconds), label = "SEG")
+                    }
+
+                    if (!isRefugio) {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Progress to next milestone
