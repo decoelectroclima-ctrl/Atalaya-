@@ -2398,6 +2398,19 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update { it.copy(isTermsConditionsVisible = visible) }
     }
 
+    fun openPriorityTool(title: String) {
+        when {
+            title.contains("Impulso", true) -> openUrgeSheet()
+            title.contains("Simulacro", true) -> _uiState.update { it.copy(isEncounterSimulatorVisible = true) }
+            title.contains("Auditoría", true) -> _uiState.update { it.copy(isAuditModalVisible = true) }
+            title.contains("Idealización", true) -> _uiState.update { it.copy(isIdealizationModalVisible = true) }
+            title.contains("Diario", true) -> openJournalModal()
+            title.contains("Pensamientos", true) -> _uiState.update { it.copy(isThoughtModalVisible = true) }
+            title.contains("Metas", true) -> _uiState.update { it.copy(isIdentityGoalModalVisible = true) }
+            else -> openUrgeSheet()
+        }
+    }
+
     companion object {
         val DEFAULT_PRESET_REMINDERS = listOf(
             CustomNotificationItem(

@@ -295,13 +295,10 @@ ${if (systemInstruction != null) "\n## INSTRUCCIÓN ADICIONAL PARA SIMULACRO:\n$
 
 ## INSTRUCCIÓN DEL COACH:
 Responde como el coach Recuerda en español, con calidez, rigor, máxima empatía y profundidad terapéutica/filosófica.
-Estructura tu respuesta en:
-1. **Validación y Diagnóstico Lúcido** (Reconoce la emoción sin justificar la conducta desadaptativa).
-2. **Razonamiento Profundo del Marco ${framework.title}** (Usa la sabiduría y los principios clínicos pertinentes).
-3. **Pregunta Socrática de Confrontación Amorosa** (Para que el usuario mire hacia su propio poder).
-4. **Micro-Paso de Acción Inmediata**.
+Escribe un mensaje de chat breve y conversacional (3 a 5 frases en total), como alguien que te conoce bien.
+Integra de forma fluida y natural (sin listas con viñetas ni etiquetas de bloques con emojis como "Principio Rector", "Pregunta" o "Acción Inmediata") la idea central del marco, una referencia sutil a la sabiduría de ${capsule.author} si aporta valor, una pregunta para que reflexiones por ti mismo, y una sugerencia práctica de acción como parte del propio consejo.
 
-Sé conciso pero contundente (máximo 250-300 palabras).
+Sé conciso y cercano (máximo 120-150 palabras).
                 """.trimIndent()
 
                 val jsonBody = JSONObject().apply {
@@ -372,28 +369,27 @@ Sé conciso pero contundente (máximo 250-300 palabras).
             userContext = userContext
         )
 
-        val coreAnalysis = """
-$coreText
+        val cleanGreeting = headerGreeting.replace("**", "").trim()
+        val cleanBody = coreText.trim()
+        val quoteRef = if (capsule.quoteOrSource.isNotBlank()) " Como recordaba ${capsule.author}: «${capsule.quoteOrSource}»." else ""
+        val questionPart = if (capsule.socraticPrompt.isNotBlank()) " ¿${capsule.socraticPrompt.removeSuffix("?")}?" else ""
+        val actionPart = if (capsule.concreteAction.isNotBlank()) " Hoy puedes dar este paso: ${capsule.concreteAction.replaceFirstChar { it.lowercase() }}." else ""
 
-${capsule.clinicalGuidance}
-        """.trimIndent()
-
-        // Ensamblar respuesta clínica completa y estructurada
-        val reply = """
-$headerGreeting
-
-$coreAnalysis
-
----
-💡 **Principio Rector (${capsule.author}):**
-${capsule.quoteOrSource}
-
-❓ **Pregunta de Autoindagación:**
-${capsule.socraticPrompt}
-
-🎯 **Paso de Acción Inmediata:**
-${capsule.concreteAction}
-        """.trimIndent()
+        val reply = buildString {
+            if (cleanGreeting.isNotBlank()) {
+                append(cleanGreeting).append(" ")
+            }
+            append(cleanBody)
+            if (quoteRef.isNotBlank()) {
+                append(quoteRef)
+            }
+            if (questionPart.isNotBlank()) {
+                append(questionPart)
+            }
+            if (actionPart.isNotBlank()) {
+                append(actionPart)
+            }
+        }.trim()
 
         return SoltarAiResponse(
             replyText = reply,

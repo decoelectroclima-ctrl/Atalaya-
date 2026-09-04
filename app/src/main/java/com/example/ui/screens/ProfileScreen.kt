@@ -2472,7 +2472,6 @@ fun ProfileScreen(
             }
         }
         
-        // ... dialog placeholder or something ...
         
         item {
             Column(

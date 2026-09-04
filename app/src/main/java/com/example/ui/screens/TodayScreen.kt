@@ -824,7 +824,56 @@ fun TodayScreen(
                 colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
                 border = BorderStroke(1.dp, SoltarAmber)
             ) {
-                // ... (código existente del check-in)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(SoltarAmber.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Favorite,
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Check-in Emocional Rápido",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Evalúa tu nivel de ansiedad, calma y claridad para calibrar tu día y proteger tu bienestar.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = "Abrir check-in emocional",
+                        tint = SoltarAmber,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
 
@@ -839,9 +888,100 @@ fun TodayScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("contextual_recommendation_card"),
-                    // ... (código existente de la recomendación)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, SoltarBorder)
                 ) {
-                    // ...
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Lightbulb,
+                                    contentDescription = null,
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = recommendation.profileTypeDescription,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = SoltarAmber.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "Recomendado",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = recommendation.bannerMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                            lineHeight = 18.sp
+                        )
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = SoltarSurfaceElevated,
+                            border = BorderStroke(1.dp, SoltarBorderSubtle),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                    viewModel.openPriorityTool(recommendation.priorityToolTitle)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = recommendation.priorityToolTitle,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = SoltarAmber
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = recommendation.priorityToolDescription,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextPrimary,
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.ArrowForward,
+                                    contentDescription = null,
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
