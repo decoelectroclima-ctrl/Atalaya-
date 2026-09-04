@@ -243,17 +243,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val identityGoals: StateFlow<List<IdentityGoalEntity>> = repository.allIdentityGoals
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val coachGoals: StateFlow<List<CoachGoalEntity>> = repository.allCoachGoals
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val bodyMetrics: StateFlow<List<BodyMetricRecordEntity>> = repository.allBodyMetrics
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val coachCheckins: StateFlow<List<CoachDailyCheckinEntity>> = repository.allCoachCheckins
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val coachPlans: StateFlow<List<CoachPlanEntity>> = repository.allCoachPlans
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val relapses: StateFlow<List<RelapseEntity>> = repository.allRelapses
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -445,6 +435,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         loadTodayCheckin()
         observeSettings()
         observeJournalEntriesForLinguisticAnalysis()
+        evaluateJourneyStage()
     }
 
     fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
@@ -557,63 +548,27 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun saveCoachGoal(title: String, category: String, targetValue: String) {
+    fun evaluateJourneyStage() {
         viewModelScope.launch {
-            if (title.isBlank()) return@launch
-            repository.saveCoachGoal(CoachGoalEntity(title = title, category = category, targetValue = targetValue))
-            showNotification("Nuevo propósito registrado.")
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-        }
-    }
+            val currentSettings = settings.value ?: return@launch
+            if (currentSettings.journeyStage == "LIFE_COACH") return@launch
 
-    fun toggleCoachGoal(id: Long, completed: Boolean) {
-        viewModelScope.launch {
-            repository.toggleCoachGoal(id, completed)
-            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-        }
-    }
+            val currentCheckins = checkins.value
+            val currentRelapses = relapses.value
+            val userContext = repository.getUnifiedUserContext()
 
-    fun deleteCoachGoal(id: Long) {
-        viewModelScope.launch {
-            repository.deleteCoachGoal(id)
-            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-        }
-    }
-
-    fun saveBodyMetric(weight: Float, height: Float, waist: Float, arm: Float, leg: Float, notes: String) {
-        viewModelScope.launch {
-            val dateKey = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            repository.saveBodyMetric(
-                BodyMetricRecordEntity(
-                    dateKey = dateKey,
-                    weightKg = weight,
-                    heightCm = height,
-                    waistCm = waist,
-                    armCm = arm,
-                    legCm = leg,
-                    notes = notes
-                )
+            val evaluation = com.example.ui.managers.JourneyStageEvaluator.evaluate(
+                settings = currentSettings,
+                checkins = currentCheckins,
+                relapses = currentRelapses,
+                hasCompletedClosingRitual = userContext.hasCompletedClosingRitual
             )
-            showNotification("Evolución física registrada con éxito.")
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-        }
-    }
 
-    fun saveCoachCheckin(wentToGym: Boolean, studiedOrWorked: Boolean, mood: String, energy: Int, note: String) {
-        viewModelScope.launch {
-            val dateKey = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            repository.saveCoachCheckin(
-                CoachDailyCheckinEntity(
-                    dateKey = dateKey,
-                    wentToGym = wentToGym,
-                    studiedOrWorked = studiedOrWorked,
-                    mood = mood,
-                    energyLevel = energy,
-                    note = note
-                )
-            )
-            showNotification("Check-in diario guardado.")
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+            if (evaluation.shouldUpgradeToLifeCoach) {
+                repository.saveSettings(currentSettings.copy(journeyStage = "LIFE_COACH"))
+                playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
+                showNotification(evaluation.transitionMessage ?: "Has recorrido un largo camino. Ahora podemos trabajar en quién quieres ser.")
+            }
         }
     }
 

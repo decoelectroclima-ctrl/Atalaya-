@@ -288,59 +288,7 @@ interface RiskDateDao {
     suspend fun deleteRiskDate(id: Long)
 }
 
-@Dao
-interface CoachGoalDao {
-    @Query("SELECT * FROM coach_goals ORDER BY timestamp DESC")
-    fun getAllGoals(): Flow<List<CoachGoalEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertGoal(goal: CoachGoalEntity): Long
-
-    @Query("UPDATE coach_goals SET isCompleted = :completed WHERE id = :id")
-    suspend fun toggleGoal(id: Long, completed: Boolean)
-
-    @Query("DELETE FROM coach_goals WHERE id = :id")
-    suspend fun deleteGoal(id: Long)
-}
-
-@Dao
-interface BodyMetricDao {
-    @Query("SELECT * FROM body_metrics ORDER BY timestamp DESC")
-    fun getAllMetrics(): Flow<List<BodyMetricRecordEntity>>
-
-    @Query("SELECT * FROM body_metrics ORDER BY timestamp DESC LIMIT 1")
-    suspend fun getLatestMetric(): BodyMetricRecordEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMetric(metric: BodyMetricRecordEntity): Long
-
-    @Query("DELETE FROM body_metrics WHERE id = :id")
-    suspend fun deleteMetric(id: Long)
-}
-
-@Dao
-interface CoachDailyCheckinDao {
-    @Query("SELECT * FROM coach_daily_checkins ORDER BY timestamp DESC")
-    fun getAllCheckins(): Flow<List<CoachDailyCheckinEntity>>
-
-    @Query("SELECT * FROM coach_daily_checkins WHERE dateKey = :dateKey LIMIT 1")
-    fun getCheckinByDate(dateKey: String): Flow<CoachDailyCheckinEntity?>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCheckin(checkin: CoachDailyCheckinEntity): Long
-}
-
-@Dao
-interface CoachPlanDao {
-    @Query("SELECT * FROM coach_plans ORDER BY timestamp DESC")
-    fun getAllPlans(): Flow<List<CoachPlanEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPlan(plan: CoachPlanEntity): Long
-
-    @Query("DELETE FROM coach_plans WHERE id = :id")
-    suspend fun deletePlan(id: Long)
-}
 
 
 

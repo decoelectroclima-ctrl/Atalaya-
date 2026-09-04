@@ -28,13 +28,9 @@ import androidx.room.migration.Migration
         SoltarSettingsEntity::class,
         TimeCapsuleEntity::class,
         WisdomContributionEntity::class,
-        RiskDateEntity::class,
-        CoachGoalEntity::class,
-        BodyMetricRecordEntity::class,
-        CoachDailyCheckinEntity::class,
-        CoachPlanEntity::class
+        RiskDateEntity::class
     ],
-    version = 26,
+    version = 27,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -58,10 +54,6 @@ abstract class AdrianaDatabase : RoomDatabase() {
     abstract fun timeCapsuleDao(): TimeCapsuleDao
     abstract fun wisdomContributionDao(): WisdomContributionDao
     abstract fun riskDateDao(): RiskDateDao
-    abstract fun coachGoalDao(): CoachGoalDao
-    abstract fun bodyMetricDao(): BodyMetricDao
-    abstract fun coachDailyCheckinDao(): CoachDailyCheckinDao
-    abstract fun coachPlanDao(): CoachPlanDao
 
     companion object {
         @Volatile

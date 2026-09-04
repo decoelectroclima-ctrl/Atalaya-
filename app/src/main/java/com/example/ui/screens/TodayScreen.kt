@@ -73,6 +73,7 @@ fun TodayScreen(
     // Live clock ticker for No-Contact Counter
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
+        viewModel.evaluateJourneyStage()
         while (true) {
             delay(1000)
             currentTime = System.currentTimeMillis()
@@ -179,7 +180,7 @@ fun TodayScreen(
             }
         }
 
-        // Journey Stage Switcher Card (ADRIANA Recovery vs ADRIANA Life Coach)
+        // Journey Stage Indicator Card (Automatic Phase Detection)
         item {
             val currentStage = settings?.journeyStage ?: "RECOVERY"
             Card(
@@ -232,39 +233,11 @@ fun TodayScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { viewModel.setJourneyStage("RECOVERY") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = if (currentStage == "RECOVERY") SoltarSurfaceElevated else Color.Transparent
-                            ),
-                            border = BorderStroke(1.dp, if (currentStage == "RECOVERY") SoltarAmber else SoltarBorder)
-                        ) {
-                            Text("1. Recovery", style = MaterialTheme.typography.labelSmall, color = if (currentStage == "RECOVERY") SoltarAmber else TextSecondary)
-                        }
-
-                        Button(
-                            onClick = { viewModel.setJourneyStage("LIFE_COACH") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (currentStage == "LIFE_COACH") SoltarAmber else SoltarSurfaceElevated
-                            )
-                        ) {
-                            Text("2. Life Coach", style = MaterialTheme.typography.labelSmall, color = if (currentStage == "LIFE_COACH") SoltarBackground else TextSecondary, fontWeight = FontWeight.Bold)
-                        }
-                    }
                 }
             }
         }
 
-        // Ave Fénix Coach Life Dashboard (When journeyStage == "LIFE_COACH")
+        // Coach Life Dashboard (When journeyStage == "LIFE_COACH")
         val currentStage = settings?.journeyStage ?: "RECOVERY"
         if (currentStage == "LIFE_COACH") {
             item {
@@ -281,14 +254,14 @@ fun TodayScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Icon(imageVector = Icons.Default.EmojiEvents, contentDescription = null, tint = SoltarAmber)
                             Text(
-                                text = "Ave Fénix • Tu Nuevo Renacer",
+                                text = "ADRIANA Life Coach • Tu Nuevo Propósito",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = TextPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Text(
-                            text = "El duelo y el dolor han quedado atrás. Esta es tu nueva etapa de autoconocimiento, autoaceptación, autoestima y propósitos (fitness, nutrición, estudios, hábitos y crecimiento personal).",
+                            text = "El duelo y el dolor han quedado atrás de forma orgánica. Esta es tu nueva etapa de autoconocimiento, autoaceptación, autoestima y propósitos personales.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
                         )
@@ -306,13 +279,9 @@ fun TodayScreen(
                 }
             }
 
-            // Coach Goals & Purpose Section
+            // Metas de Autonomía y Propósito (Identity Goals)
             item {
-                var newGoalTitle by remember { mutableStateOf("") }
-                var newGoalCategory by remember { mutableStateOf("FITNESS") }
-                var newGoalTarget by remember { mutableStateOf("4 días/sem") }
-                val goals by viewModel.coachGoals.collectAsState()
-
+                val identityGoals by viewModel.identityGoals.collectAsState()
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -323,241 +292,63 @@ fun TodayScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("🎯 Mis Metas y Propósitos", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
-                        
-                        OutlinedTextField(
-                            value = newGoalTitle,
-                            onValueChange = { newGoalTitle = it },
-                            label = { Text("Nuevo propósito (ej: Gimnasio, Estudiar, Meditar)") },
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp),
-                            singleLine = true
-                        )
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = newGoalTarget,
-                                onValueChange = { newGoalTarget = it },
-                                label = { Text("Meta (ej: 4x sem)") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                singleLine = true
-                            )
-                            Button(
-                                onClick = {
-                                    if (newGoalTitle.isNotBlank()) {
-                                        viewModel.saveCoachGoal(newGoalTitle, newGoalCategory, newGoalTarget)
-                                        newGoalTitle = ""
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.align(Alignment.CenterVertically)
-                            ) {
-                                Text("Añadir", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🎯 Mis Metas de Autonomía y Crecimiento", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
+                            IconButton(onClick = {
+                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                viewModel.toggleIdentityGoalModal(true)
+                            }) {
+                                Icon(Icons.Default.Add, contentDescription = "Agregar meta", tint = SoltarAmber)
                             }
                         }
 
-                        if (goals.isEmpty()) {
-                            Text("No tienes metas registradas aún. ¡Añade tu primer propósito de renacer!", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        if (identityGoals.isEmpty()) {
+                            Text("No has registrado metas de autonomía todavía. Toca el botón '+' para agregar un nuevo propósito.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                         } else {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                goals.forEach { goal ->
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(SoltarSurfaceElevated, RoundedCornerShape(10.dp))
-                                            .padding(10.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
+                                identityGoals.forEach { goal ->
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = SoltarSurfaceElevated,
+                                        border = BorderStroke(1.dp, if (goal.isCompleted) SoltarSage.copy(alpha = 0.5f) else SoltarBorder)
                                     ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
                                             Checkbox(
                                                 checked = goal.isCompleted,
-                                                onCheckedChange = { viewModel.toggleCoachGoal(goal.id, it) }
+                                                onCheckedChange = {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    viewModel.toggleGoalCompleted(goal.id, goal.isCompleted)
+                                                }
                                             )
-                                            Column {
+                                            Column(modifier = Modifier.weight(1f)) {
                                                 Text(
-                                                    text = goal.title,
-                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    text = goal.goalTitle,
+                                                    style = MaterialTheme.typography.titleSmall,
                                                     color = if (goal.isCompleted) TextSecondary else TextPrimary,
                                                     fontWeight = FontWeight.SemiBold
                                                 )
-                                                if (goal.targetValue.isNotBlank()) {
-                                                    Text(text = "Meta: ${goal.targetValue}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                                                }
+                                                Text(
+                                                    text = "${goal.area} • ${goal.goalFrequency}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = SoltarAmber
+                                                )
                                             }
-                                        }
-                                        IconButton(onClick = { viewModel.deleteCoachGoal(goal.id) }) {
-                                            Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF4444))
+                                            IconButton(onClick = { viewModel.deleteIdentityGoal(goal.id) }) {
+                                                Icon(Icons.Default.DeleteOutline, contentDescription = "Eliminar", tint = TextMuted, modifier = Modifier.size(16.dp))
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
-                }
-            }
-
-            // Body & Evolution Metrics Tracker
-            item {
-                var weightInput by remember { mutableStateOf("") }
-                var heightInput by remember { mutableStateOf("") }
-                var waistInput by remember { mutableStateOf("") }
-                var armInput by remember { mutableStateOf("") }
-                var legInput by remember { mutableStateOf("") }
-                var notesInput by remember { mutableStateOf("") }
-                val metrics by viewModel.bodyMetrics.collectAsState()
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                    border = BorderStroke(1.dp, SoltarBorder)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text("⚖️ Evolución Física y Corporal", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
-                        Text("Registra tu peso, altura y medidas para seguir tu transformación física.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = weightInput,
-                                onValueChange = { weightInput = it },
-                                label = { Text("Peso (kg)") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = heightInput,
-                                onValueChange = { heightInput = it },
-                                label = { Text("Altura (cm)") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                singleLine = true
-                            )
-                        }
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedTextField(
-                                value = waistInput,
-                                onValueChange = { waistInput = it },
-                                label = { Text("Cintura (cm)") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = armInput,
-                                onValueChange = { armInput = it },
-                                label = { Text("Brazo (cm)") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                singleLine = true
-                            )
-                        }
-
-                        Button(
-                            onClick = {
-                                val w = weightInput.toFloatOrNull() ?: 0f
-                                val h = heightInput.toFloatOrNull() ?: 0f
-                                val wa = waistInput.toFloatOrNull() ?: 0f
-                                val ar = armInput.toFloatOrNull() ?: 0f
-                                val lg = legInput.toFloatOrNull() ?: 0f
-                                viewModel.saveBodyMetric(w, h, wa, ar, lg, notesInput)
-                                weightInput = ""
-                                waistInput = ""
-                                armInput = ""
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("Registrar Medidas de Hoy", color = SoltarBackground, fontWeight = FontWeight.Bold)
-                        }
-
-                        if (metrics.isNotEmpty()) {
-                            Text("Historial reciente:", style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontWeight = FontWeight.Bold)
-                            metrics.take(3).forEach { m ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().background(SoltarSurfaceElevated, RoundedCornerShape(8.dp)).padding(8.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(text = "Fecha: ${m.dateKey}", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
-                                    Text(text = "Peso: ${m.weightKg} kg | Cintura: ${m.waistCm} cm", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Daily Check-in ("Check-in de Crecimiento")
-            item {
-                var wentToGym by remember { mutableStateOf(false) }
-                var studiedOrWorked by remember { mutableStateOf(false) }
-                var energyLevel by remember { mutableStateOf(8f) }
-                var checkinNote by remember { mutableStateOf("") }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                    border = BorderStroke(1.dp, SoltarBorder)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text("☀️ Check-in Diario de Renacer", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("🏋️‍♂️ ¿Fuiste hoy al gimnasio o hiciste ejercicio?", style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
-                            Switch(checked = wentToGym, onCheckedChange = { wentToGym = it })
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("📚 ¿Estudiaste o avanzaste en tus metas?", style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
-                            Switch(checked = studiedOrWorked, onCheckedChange = { studiedOrWorked = it })
-                        }
-
-                        Text("⚡ Nivel de Energía (${energyLevel.toInt()}/10)", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
-                        Slider(
-                            value = energyLevel,
-                            onValueChange = { energyLevel = it },
-                            valueRange = 1f..10f,
-                            steps = 9
-                        )
-
-                        OutlinedTextField(
-                            value = checkinNote,
-                            onValueChange = { checkinNote = it },
-                            label = { Text("Nota o reflexión del día...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-
-                        Button(
-                            onClick = {
-                                viewModel.saveCoachCheckin(wentToGym, studiedOrWorked, "Enérgico", energyLevel.toInt(), checkinNote)
-                                checkinNote = ""
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("Guardar Check-in de Hoy", color = SoltarBackground, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
