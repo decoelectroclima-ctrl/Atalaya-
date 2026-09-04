@@ -17,6 +17,7 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 data class SoltarUserContext(
+    val userName: String = "Viajero",
     val streakDays: Int = 0,
     val totalCheckins: Int = 0,
     val lastCheckinMood: String = "",
@@ -46,6 +47,7 @@ data class SoltarUserContext(
 ) {
     fun toClinicalSummary(): String {
         val parts = mutableListOf<String>()
+        parts.add("• NOMBRE DEL USUARIO: $userName")
         if (journeyStage == "LIFE_COACH") {
             parts.add("• FASE ACTUAL: AVE FÉNIX / COACH LIFE (Enfoque 100% en autoaceptación, autoestima, fitness, nutrición, estudios y propósitos)")
             if (lifeCoachFocus.isNotBlank()) {
@@ -293,12 +295,12 @@ ${if (systemInstruction != null) "\n## INSTRUCCIÓN ADICIONAL PARA SIMULACRO:\n$
 • Pregunta socrática: ${capsule.socraticPrompt}
 • Micro-acción sugerida: ${capsule.concreteAction}
 
-## INSTRUCCIÓN DEL COACH:
-Responde como el coach Recuerda en español, con calidez, rigor, máxima empatía y profundidad terapéutica/filosófica.
-Escribe un mensaje de chat breve y conversacional (3 a 5 frases en total), como alguien que te conoce bien.
-Integra de forma fluida y natural (sin listas con viñetas ni etiquetas de bloques con emojis como "Principio Rector", "Pregunta" o "Acción Inmediata") la idea central del marco, una referencia sutil a la sabiduría de ${capsule.author} si aporta valor, una pregunta para que reflexiones por ti mismo, y una sugerencia práctica de acción como parte del propio consejo.
-
-Sé conciso y cercano (máximo 120-150 palabras).
+## INSTRUCCIÓN DEL COACH (FOCO):
+Responde como FOCO, el coach y mentor personal de ${userContext.userName}.
+REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siempre al usuario por su nombre (${userContext.userName}).
+Escribe un mensaje de chat breve, cálido y 100% conversacional (3 a 5 frases en total), como alguien que le conoce bien y lleva ${userContext.streakDays} días de proceso.
+PROHIBIDO USAR BLOQUES ESTRUCTURADOS, listas con viñetas, encabezados en negrita o emojis como "Principio Rector", "Pregunta de Autoindagación" o "Paso de Acción Inmediata".
+Integra de forma fluida y natural la reflexión central, una referencia sutil a la sabiduría de ${capsule.author} si aporta valor, una pregunta socrática y una micro-acción como parte del propio consejo conversacional.
                 """.trimIndent()
 
                 val jsonBody = JSONObject().apply {
@@ -369,25 +371,25 @@ Sé conciso y cercano (máximo 120-150 palabras).
             userContext = userContext
         )
 
-        val cleanGreeting = headerGreeting.replace("**", "").trim()
-        val cleanBody = coreText.trim()
-        val quoteRef = if (capsule.quoteOrSource.isNotBlank()) " Como recordaba ${capsule.author}: «${capsule.quoteOrSource}»." else ""
-        val questionPart = if (capsule.socraticPrompt.isNotBlank()) " ¿${capsule.socraticPrompt.removeSuffix("?")}?" else ""
-        val actionPart = if (capsule.concreteAction.isNotBlank()) " Hoy puedes dar este paso: ${capsule.concreteAction.replaceFirstChar { it.lowercase() }}." else ""
+        val name = if (userContext.userName.isNotBlank() && userContext.userName != "Viajero") userContext.userName else "amigo/a"
+        val cleanBody = coreText.replace("**", "").trim()
+        val quoteRef = if (capsule.quoteOrSource.isNotBlank()) " Como decía ${capsule.author}, «${capsule.quoteOrSource}»." else ""
+        val questionPart = if (capsule.socraticPrompt.isNotBlank()) " Pregúntate esto: ¿${capsule.socraticPrompt.removeSuffix("?")}?" else ""
+        val actionPart = if (capsule.concreteAction.isNotBlank()) " Para hoy, te sugiero ${capsule.concreteAction.replaceFirstChar { it.lowercase() }}." else ""
 
         val reply = buildString {
-            if (cleanGreeting.isNotBlank()) {
-                append(cleanGreeting).append(" ")
+            append("Hola, $name. ")
+            if (cleanBody.isNotBlank()) {
+                append(cleanBody).append(" ")
             }
-            append(cleanBody)
             if (quoteRef.isNotBlank()) {
-                append(quoteRef)
+                append(quoteRef.trim()).append(" ")
             }
             if (questionPart.isNotBlank()) {
-                append(questionPart)
+                append(questionPart.trim()).append(" ")
             }
             if (actionPart.isNotBlank()) {
-                append(actionPart)
+                append(actionPart.trim())
             }
         }.trim()
 

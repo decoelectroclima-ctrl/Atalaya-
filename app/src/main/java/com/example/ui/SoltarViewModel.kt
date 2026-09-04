@@ -1394,6 +1394,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }.joinToString("\n")
 
         return SoltarUserContext(
+            userName = currentSettings?.userName?.ifBlank { "Viajero" } ?: "Viajero",
             streakDays = diffDays,
             totalCheckins = allCheckinsList.size,
             lastCheckinMood = lastMood,

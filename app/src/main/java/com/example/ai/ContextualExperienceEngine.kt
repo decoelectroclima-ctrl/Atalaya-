@@ -169,6 +169,7 @@ object ContextualExperienceEngine {
     fun enrichUserContextForAi(settings: SoltarSettingsEntity?): SoltarUserContext {
         if (settings == null) return SoltarUserContext()
         return SoltarUserContext(
+            userName = settings.userName.ifBlank { "Viajero" },
             relDuration = settings.relDuration,
             hasChildren = settings.hasChildren,
             contactType = settings.contactType,
