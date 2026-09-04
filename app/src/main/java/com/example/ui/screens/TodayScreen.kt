@@ -1054,11 +1054,11 @@ fun TodayScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CounterUnit(value = "$days", label = "DÍAS", highlight = true)
-                        Text(":", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(":", color = SoltarAmber, fontWeight = FontWeight.Bold, fontSize = 28.sp)
                         CounterUnit(value = String.format("%02d", hours), label = "HORAS")
-                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 28.sp)
                         CounterUnit(value = String.format("%02d", minutes), label = "MIN")
-                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(":", color = SoltarBorder, fontWeight = FontWeight.Bold, fontSize = 28.sp)
                         CounterUnit(value = String.format("%02d", seconds), label = "SEG")
                     }
 
@@ -1669,21 +1669,21 @@ private fun CounterUnit(
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(12.dp),
             color = if (highlight) SoltarAmber.copy(alpha = 0.15f) else SoltarSurface,
-            border = BorderStroke(1.dp, if (highlight) SoltarAmber else SoltarBorderSubtle)
+            border = BorderStroke(1.5.dp, if (highlight) SoltarAmber else SoltarBorderSubtle)
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = if (highlight) SoltarAmber else TextPrimary,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                fontSize = 20.sp
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                fontSize = 32.sp
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = TextMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     }
 }
 
