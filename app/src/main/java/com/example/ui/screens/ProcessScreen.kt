@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +52,7 @@ fun ProcessScreen(
     val idealizations by viewModel.idealizations.collectAsState()
     val letters by viewModel.letters.collectAsState()
     val relapses by viewModel.relapses.collectAsState()
+    val triggerEvents by viewModel.triggerEvents.collectAsState()
     val journalEntries by viewModel.journalEntries.collectAsState()
 
     var selectedLetterForTimeCapsule by remember { mutableStateOf<UnsentLetterEntity?>(null) }
@@ -58,6 +61,7 @@ fun ProcessScreen(
     val filterOptions = listOf("Todos", "Diario", "Impulsos", "Pensamientos", "Auditorías", "Cartas", "Idealización", "Recaídas")
 
     var selectedMetricDays by remember { mutableStateOf(7) }
+    val realTimeline by viewModel.realEvolutionTimeline.collectAsState()
 
     val totalUrgesContained = urgeEpisodes.size
     val totalThoughtsRestructured = thoughts.size
@@ -322,14 +326,14 @@ fun ProcessScreen(
                     ) {
                         Column {
                             Text(
-                                text = "EVOLUCIÓN EMOCIONAL",
+                                text = "EVOLUCIÓN EMOCIONAL REAL",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = "Tendencia de regulación en el tiempo",
+                                text = "Métricas reales calculadas de tus días y registros",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary
                             )
@@ -337,7 +341,7 @@ fun ProcessScreen(
 
                         // Day range selector
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            listOf(7, 30).forEach { days ->
+                            listOf(7, 14, 30).forEach { days ->
                                 val isSelected = selectedMetricDays == days
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
@@ -346,6 +350,7 @@ fun ProcessScreen(
                                     modifier = Modifier.clickable {
                                         viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                                         selectedMetricDays = days
+                                        viewModel.setEvolutionRangeDays(days)
                                     }
                                 ) {
                                     Text(
@@ -362,12 +367,11 @@ fun ProcessScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Multi-line Canvas Chart
+                    // Multi-line Canvas Chart connected to real entries
                     EvolutionLineChart(
-                        checkins = checkins.takeLast(selectedMetricDays),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp)
+                        timeline = realTimeline,
+                        onOpenCheckin = { viewModel.openEmotionalCheckin() },
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -436,6 +440,9 @@ fun ProcessScreen(
                             recentCheckins = checkins
                         )
                     }
+                    val temporalPattern = remember(triggerEvents) {
+                        com.example.ai.OnDeviceLlmEngine.analyzeRelapsePatterns(triggerEvents)
+                    }
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -463,6 +470,32 @@ fun ProcessScreen(
                                 color = TextPrimary,
                                 lineHeight = 20.sp
                             )
+
+                            if (temporalPattern != null) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = SoltarAmber.copy(alpha = 0.1f),
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(
+                                            text = "PATRÓN RECURRENTE A LO LARGO DEL TIEMPO",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = SoltarAmber,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = temporalPattern,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextPrimary,
+                                            lineHeight = 18.sp
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1013,88 +1046,300 @@ private fun ChartLegendItem(label: String, color: Color) {
 
 @Composable
 private fun EvolutionLineChart(
-    checkins: List<CheckinEntity>,
+    timeline: com.example.ai.RealPersonalEvolutionTimeline,
+    onOpenCheckin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // If no checkins exist, supply a sample trend baseline
-    val dataPoints = remember(checkins) {
-        if (checkins.isNotEmpty()) checkins else listOf(
-            CheckinEntity(dateKey = "1", pain = 8f, anxiety = 7f, nostalgia = 8f, urgeToContact = 8f, autonomy = 3f),
-            CheckinEntity(dateKey = "2", pain = 7f, anxiety = 6f, nostalgia = 7f, urgeToContact = 6f, autonomy = 4f),
-            CheckinEntity(dateKey = "3", pain = 5f, anxiety = 5f, nostalgia = 6f, urgeToContact = 4f, autonomy = 5f),
-            CheckinEntity(dateKey = "4", pain = 6f, anxiety = 4f, nostalgia = 5f, urgeToContact = 3f, autonomy = 6f),
-            CheckinEntity(dateKey = "5", pain = 4f, anxiety = 3f, nostalgia = 5f, urgeToContact = 2f, autonomy = 7f),
-            CheckinEntity(dateKey = "6", pain = 3f, anxiety = 3f, nostalgia = 4f, urgeToContact = 2f, autonomy = 8f),
-            CheckinEntity(dateKey = "7", pain = 2f, anxiety = 2f, nostalgia = 3f, urgeToContact = 1f, autonomy = 8.5f)
-        )
-    }
+    val dataPoints = timeline.points
+    if (dataPoints.isEmpty()) return
 
+    var selectedPointIndex by remember(timeline) {
+        mutableIntStateOf(dataPoints.lastIndex.coerceAtLeast(0))
+    }
+    val safeIndex = selectedPointIndex.coerceIn(0, dataPoints.lastIndex)
+    val selectedPoint = dataPoints[safeIndex]
+
+    val amberColor = SoltarAmber
     val gridColor = SoltarBorderSubtle
     val painColor = UrgeAlertRed
     val anxietyColor = SoltarTerracotta
-    val nostalgiaColor = SoltarAmber
+    val nostalgiaColor = amberColor
     val urgeColor = UrgeAlertRed.copy(alpha = 0.6f)
     val autonomyColor = SoltarSage
 
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        val paddingLeft = 16f
-        val paddingRight = 16f
-        val paddingTop = 12f
-        val paddingBottom = 16f
+    Column(modifier = modifier) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .pointerInput(dataPoints) {
+                    detectTapGestures { offset ->
+                        val paddingLeft = 24f
+                        val paddingRight = 24f
+                        val usableWidth = size.width - paddingLeft - paddingRight
+                        val stepX = usableWidth / (dataPoints.size - 1).coerceAtLeast(1)
+                        val relativeX = offset.x - paddingLeft
+                        val tappedIdx = ((relativeX + stepX / 2f) / stepX).toInt().coerceIn(0, dataPoints.lastIndex)
+                        selectedPointIndex = tappedIdx
+                    }
+                }
+        ) {
+            val width = size.width
+            val height = size.height
+            val paddingLeft = 24f
+            val paddingRight = 24f
+            val paddingTop = 12f
+            val paddingBottom = 20f
 
-        val usableWidth = width - paddingLeft - paddingRight
-        val usableHeight = height - paddingTop - paddingBottom
+            val usableWidth = width - paddingLeft - paddingRight
+            val usableHeight = height - paddingTop - paddingBottom
 
-        // Draw horizontal grid lines (0, 5, 10)
-        for (i in 0..2) {
-            val y = paddingTop + (usableHeight / 2) * i
+            // Draw horizontal grid lines (0, 5, 10)
+            for (i in 0..2) {
+                val y = paddingTop + (usableHeight / 2) * i
+                drawLine(
+                    color = gridColor,
+                    start = Offset(paddingLeft, y),
+                    end = Offset(width - paddingRight, y),
+                    strokeWidth = 1f
+                )
+            }
+
+            if (dataPoints.size < 2) return@Canvas
+
+            val stepX = usableWidth / (dataPoints.size - 1).coerceAtLeast(1)
+
+            // Draw vertical indicator for selected day
+            val selectedX = paddingLeft + safeIndex * stepX
             drawLine(
-                color = gridColor,
-                start = Offset(paddingLeft, y),
-                end = Offset(width - paddingRight, y),
-                strokeWidth = 1f
+                color = amberColor.copy(alpha = 0.4f),
+                start = Offset(selectedX, paddingTop),
+                end = Offset(selectedX, height - paddingBottom),
+                strokeWidth = 1.5f
             )
+
+            fun drawMetricPath(values: List<Float>, color: Color, strokeWidth: Float = 2.5f) {
+                val path = Path()
+                values.forEachIndexed { index, value ->
+                    val x = paddingLeft + index * stepX
+                    val normalizedY = (10f - value.coerceIn(0f, 10f)) / 10f
+                    val y = paddingTop + normalizedY * usableHeight
+                    if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                }
+                drawPath(
+                    path = path,
+                    color = color,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+
+                // Draw small endpoint circles
+                values.forEachIndexed { index, value ->
+                    val x = paddingLeft + index * stepX
+                    val normalizedY = (10f - value.coerceIn(0f, 10f)) / 10f
+                    val y = paddingTop + normalizedY * usableHeight
+                    drawCircle(
+                        color = color,
+                        radius = if (index == safeIndex) 4.5f else 2.5f,
+                        center = Offset(x, y)
+                    )
+                }
+            }
+
+            // Draw the 5 emotional dimensions
+            drawMetricPath(dataPoints.map { it.pain }, painColor)
+            drawMetricPath(dataPoints.map { it.anxiety }, anxietyColor)
+            drawMetricPath(dataPoints.map { it.nostalgia }, nostalgiaColor)
+            drawMetricPath(dataPoints.map { it.urgeToContact }, urgeColor)
+            drawMetricPath(dataPoints.map { it.autonomy }, autonomyColor, strokeWidth = 3f)
+
+            // Draw bottom indicator for points with real data (dot below axis)
+            dataPoints.forEachIndexed { index, point ->
+                val x = paddingLeft + index * stepX
+                if (point.isRealEntry) {
+                    drawCircle(
+                        color = amberColor,
+                        radius = 3f,
+                        center = Offset(x, height - 8f)
+                    )
+                }
+            }
         }
 
-        if (dataPoints.size < 2) return@Canvas
-
-        val stepX = usableWidth / (dataPoints.size - 1).coerceAtLeast(1)
-
-        fun drawMetricPath(values: List<Float>, color: Color, strokeWidth: Float = 2.5f) {
-            val path = Path()
-            values.forEachIndexed { index, value ->
-                val x = paddingLeft + index * stepX
-                val normalizedY = (10f - value.coerceIn(0f, 10f)) / 10f
-                val y = paddingTop + normalizedY * usableHeight
-                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        // X-Axis day labels row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            val step = when {
+                dataPoints.size <= 7 -> 1
+                dataPoints.size <= 14 -> 2
+                else -> 5
             }
-            drawPath(
-                path = path,
-                color = color,
-                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
-            )
+            dataPoints.forEachIndexed { idx, pt ->
+                if (idx % step == 0 || idx == dataPoints.lastIndex) {
+                    Text(
+                        text = pt.displayLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (idx == safeIndex) SoltarAmber else TextSecondary,
+                        fontWeight = if (idx == safeIndex) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 9.sp
+                    )
+                }
+            }
+        }
 
-            // Draw small endpoint circles
-            values.forEachIndexed { index, value ->
-                val x = paddingLeft + index * stepX
-                val normalizedY = (10f - value.coerceIn(0f, 10f)) / 10f
-                val y = paddingTop + normalizedY * usableHeight
-                drawCircle(
-                    color = color,
-                    radius = 3.5f,
-                    center = Offset(x, y)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Selected Day Inspector Card
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = SoltarSurfaceElevated,
+            border = BorderStroke(1.dp, SoltarBorderSubtle),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "📅 ${selectedPoint.displayLabel}",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "(${selectedPoint.fullDate})",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = if (selectedPoint.isRealEntry) SoltarAmber.copy(alpha = 0.15f) else SoltarSurface,
+                        border = BorderStroke(0.5.dp, if (selectedPoint.isRealEntry) SoltarAmber.copy(alpha = 0.5f) else SoltarBorderSubtle)
+                    ) {
+                        Text(
+                            text = if (selectedPoint.isRealEntry) "Registro Activo" else "Estimado neurobiológico",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 9.sp,
+                            color = if (selectedPoint.isRealEntry) SoltarAmber else TextSecondary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Origen: ${selectedPoint.sourceDescription}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    fontSize = 10.sp
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Five values breakdown chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    MetricMiniBadge(label = "Dolor", value = selectedPoint.pain, color = painColor)
+                    MetricMiniBadge(label = "Ansiedad", value = selectedPoint.anxiety, color = anxietyColor)
+                    MetricMiniBadge(label = "Nostalgia", value = selectedPoint.nostalgia, color = nostalgiaColor)
+                    MetricMiniBadge(label = "Impulso", value = selectedPoint.urgeToContact, color = urgeColor)
+                    MetricMiniBadge(label = "Autonomía", value = selectedPoint.autonomy, color = autonomyColor)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Clinical summary insight and timeline stats
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = SoltarSurface.copy(alpha = 0.5f),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(8.dp)) {
+                Text(
+                    text = "💡 ${timeline.summaryInsight}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextPrimary,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "• ${timeline.totalLoggedDays} de ${timeline.rangeDays} días con registros directos",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        fontSize = 10.sp
+                    )
+                    Text(
+                        text = if (timeline.autonomyChange >= 0f) "Autonomía: +${String.format(java.util.Locale.US, "%.1f", timeline.autonomyChange)}" else "Autonomía: ${String.format(java.util.Locale.US, "%.1f", timeline.autonomyChange)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = SoltarSage,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
+
+        // If today has no direct check-in, prompt the user
+        val lastPoint = dataPoints.lastOrNull()
+        if (lastPoint != null && !lastPoint.hasDirectCheckin) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onOpenCheckin,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.6f)),
+                contentPadding = PaddingValues(vertical = 6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AddCircleOutline,
+                    contentDescription = null,
+                    tint = SoltarAmber,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Registrar Check-in de Hoy para marcar este día",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = SoltarAmber,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
+    }
+}
 
-        // Draw the 5 emotional dimensions
-        drawMetricPath(dataPoints.map { it.pain }, painColor)
-        drawMetricPath(dataPoints.map { it.anxiety }, anxietyColor)
-        drawMetricPath(dataPoints.map { it.nostalgia }, nostalgiaColor)
-        drawMetricPath(dataPoints.map { it.urgeToContact }, urgeColor)
-        drawMetricPath(dataPoints.map { it.autonomy }, autonomyColor, strokeWidth = 3f)
+@Composable
+private fun MetricMiniBadge(label: String, value: Float, color: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = label, fontSize = 9.sp, color = TextSecondary)
+        Text(
+            text = String.format(java.util.Locale.US, "%.1f", value),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
     }
 }
 

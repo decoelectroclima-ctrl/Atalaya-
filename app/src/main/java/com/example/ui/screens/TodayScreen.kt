@@ -120,77 +120,342 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
     ) {
-        // Adaptive Vulnerability Mode Banner
+        // Adaptive Vulnerability Mode Banner (100% Real, Multi-Variable Assessment)
         item {
-            val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
-            val vulnerabilityMode = when {
-                vulnerabilityScore >= 70 -> "REFUGIO"
-                vulnerabilityScore >= 35 -> "PRESENTE"
-                else -> "EXPLORACION"
-            }
+            val realAssessment by viewModel.realVulnerabilityAssessment.collectAsState()
+            var isFactorsExpanded by remember { mutableStateOf(false) }
+
+            val mode = realAssessment.mode
+            val score = realAssessment.score
+            val themeRed = Color(0xFFEF4444)
+            val themeRedBg = Color(0xFFFEF2F2)
+            val themeGreen = Color(0xFF10B981)
+            val themeGreenBg = Color(0xFFECFDF5)
+
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("vulnerability_assessment_card"),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = when(vulnerabilityMode) {
-                        "REFUGIO" -> Color(0xFFFEF2F2)
+                    containerColor = when(mode) {
+                        "REFUGIO" -> themeRedBg
                         "PRESENTE" -> SoltarSurfaceElevated
-                        else -> SoltarSurface
+                        else -> themeGreenBg
                     }
                 ),
-                border = BorderStroke(1.dp, when(vulnerabilityMode) {
-                    "REFUGIO" -> Color(0xFFEF4444)
-                    "PRESENTE" -> SoltarAmber
-                    else -> SoltarBorder
+                border = BorderStroke(1.dp, when(mode) {
+                    "REFUGIO" -> themeRed.copy(alpha = 0.8f)
+                    "PRESENTE" -> SoltarAmber.copy(alpha = 0.8f)
+                    else -> themeGreen.copy(alpha = 0.7f)
                 })
             ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .animateContentSize()
                 ) {
+                    // Header row: Mode title, icon, and score badge
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = when(vulnerabilityMode) {
-                                "REFUGIO" -> Icons.Default.Shield
-                                "PRESENTE" -> Icons.Default.SelfImprovement
-                                else -> Icons.Default.Explore
-                            },
-                            contentDescription = null,
-                            tint = when(vulnerabilityMode) {
-                                "REFUGIO" -> Color(0xFFEF4444)
-                                else -> SoltarAmber
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        when(mode) {
+                                            "REFUGIO" -> themeRed.copy(alpha = 0.15f)
+                                            "PRESENTE" -> SoltarAmber.copy(alpha = 0.15f)
+                                            else -> themeGreen.copy(alpha = 0.15f)
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = when(mode) {
+                                        "REFUGIO" -> Icons.Default.Shield
+                                        "PRESENTE" -> Icons.Default.SelfImprovement
+                                        else -> Icons.Default.Explore
+                                    },
+                                    contentDescription = null,
+                                    tint = when(mode) {
+                                        "REFUGIO" -> themeRed
+                                        "PRESENTE" -> SoltarAmber
+                                        else -> themeGreen
+                                    },
+                                    modifier = Modifier.size(22.dp)
+                                )
                             }
-                        )
-                        Column {
+                            Column {
+                                Text(
+                                    text = when(mode) {
+                                        "REFUGIO" -> "MODO REFUGIO"
+                                        "PRESENTE" -> "MODO PRESENTE"
+                                        else -> "MODO EXPLORACIÓN"
+                                    },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when(mode) {
+                                        "REFUGIO" -> Color(0xFF991B1B)
+                                        "PRESENTE" -> SoltarAmber
+                                        else -> Color(0xFF065F46)
+                                    }
+                                )
+                                Text(
+                                    text = realAssessment.subtitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        // Score Pill
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = when(mode) {
+                                "REFUGIO" -> themeRed
+                                "PRESENTE" -> SoltarAmber
+                                else -> themeGreen
+                            }
+                        ) {
                             Text(
-                                text = when(vulnerabilityMode) {
-                                    "REFUGIO" -> "🛡️ MODO REFUGIO (Vulnerabilidad Alta)"
-                                    "PRESENTE" -> "🌿 MODO PRESENTE (Vulnerabilidad Moderada)"
-                                    else -> "✨ MODO EXPLORACIÓN (Vulnerabilidad Baja)"
-                                },
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = if (vulnerabilityMode == "REFUGIO") Color(0xFF991B1B) else TextPrimary
+                                text = "$score%",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
                             )
-                            val vulnerabilityExplanation by viewModel.vulnerabilityExplanation.collectAsState()
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Real Vulnerability Progress Bar
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
                             Text(
-                                text = "Puntuación: $vulnerabilityScore/100",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = "Nivel de Vulnerabilidad Neural y Emocional",
+                                style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
-                                fontWeight = FontWeight.SemiBold
+                                fontSize = 10.sp
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "💡 $vulnerabilityExplanation",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (vulnerabilityMode == "REFUGIO") Color(0xFFEF4444) else SoltarAmber,
-                                lineHeight = 16.sp
+                                text = "$score de 100",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
                             )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        LinearProgressIndicator(
+                            progress = { score / 100f },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = when(mode) {
+                                "REFUGIO" -> themeRed
+                                "PRESENTE" -> SoltarAmber
+                                else -> themeGreen
+                            },
+                            trackColor = SoltarSurface
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Primary Explanation grounded in user data
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = SoltarSurface.copy(alpha = 0.7f),
+                        border = BorderStroke(1.dp, SoltarBorderSubtle),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(text = "💡", fontSize = 14.sp)
+                            Column {
+                                Text(
+                                    text = realAssessment.primaryExplanation,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextPrimary,
+                                    lineHeight = 16.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Recomendación: ${realAssessment.clinicalRecommendation}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = when(mode) {
+                                        "REFUGIO" -> themeRed
+                                        "PRESENTE" -> SoltarAmber
+                                        else -> themeGreen
+                                    },
+                                    lineHeight = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+
+                    // Check-in Call-to-Action if not logged today
+                    if (!realAssessment.hasLoggedToday) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(
+                            onClick = {
+                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                viewModel.openEmotionalCheckin()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = when(mode) {
+                                    "REFUGIO" -> themeRed
+                                    else -> SoltarAmber
+                                }
+                            ),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("vulnerability_checkin_button"),
+                            contentPadding = PaddingValues(vertical = 10.dp, horizontal = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.EditNote,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Registrar Check-in de Hoy para Calibrar",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Expandable Factor Breakdown Toggle
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                isFactorsExpanded = !isFactorsExpanded
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isFactorsExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (isFactorsExpanded) "Ocultar desglose de cálculo" else "Ver factores activos (${realAssessment.factors.size})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Text(
+                            text = "${realAssessment.protectiveCount} protectores • ${realAssessment.riskCount} de riesgo",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontSize = 10.sp
+                        )
+                    }
+
+                    // Expanded Factors List
+                    AnimatedVisibility(visible = isFactorsExpanded) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            realAssessment.factors.forEach { factor ->
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = if (factor.isRisk) themeRedBg.copy(alpha = 0.7f) else themeGreenBg.copy(alpha = 0.7f),
+                                    border = BorderStroke(
+                                        0.5.dp,
+                                        if (factor.isRisk) themeRed.copy(alpha = 0.4f) else themeGreen.copy(alpha = 0.4f)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (factor.isRisk) Icons.Default.Warning else Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = if (factor.isRisk) themeRed else themeGreen,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Column {
+                                                Text(
+                                                    text = factor.title,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (factor.isRisk) Color(0xFF991B1B) else Color(0xFF065F46)
+                                                )
+                                                Text(
+                                                    text = factor.description,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = TextSecondary,
+                                                    fontSize = 10.sp,
+                                                    lineHeight = 13.sp
+                                                )
+                                            }
+                                        }
+
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = if (factor.isRisk) themeRed.copy(alpha = 0.15f) else themeGreen.copy(alpha = 0.15f)
+                                        ) {
+                                            Text(
+                                                text = factor.impactText,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = if (factor.isRisk) themeRed else themeGreen,
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

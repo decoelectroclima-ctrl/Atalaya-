@@ -571,7 +571,12 @@ object SoltarNotificationHelper {
             try {
                 val db = AdrianaDatabase.getDatabase(context)
                 val recentCheckins = db.checkinDao().getRecentCheckins(5)
-                if (recentCheckins.isNotEmpty()) {
+                if (recentCheckins.size >= 2) {
+                    adaptiveQuote = com.example.ai.OnDeviceLlmEngine.generateTrendBasedNotification(
+                        recentCheckins = recentCheckins,
+                        framework = framework
+                    )
+                } else if (recentCheckins.isNotEmpty()) {
                     val aiNotification = com.example.ai.OnDeviceLlmEngine.generateDailyNotification(
                         checkins = recentCheckins,
                         framework = framework,

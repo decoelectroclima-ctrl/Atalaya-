@@ -448,6 +448,72 @@ object OnDeviceLlmEngine {
         }
     }
 
+    /**
+     * Genera el guion de meditación guiada adaptando tono, ritmo y pausas según
+     * el nivel de vulnerabilidad del usuario y coherente con su marco filosófico.
+     * Fallback determinista si el modelo no está listo.
+     */
+    fun generateGuidedMeditationScript(
+        vulnerabilityScore: Int,
+        framework: SoltarFramework
+    ): String {
+        if (!isModelReady) {
+            return when (framework) {
+                SoltarFramework.ESTOICO ->
+                    "Adopta una postura digna y serena. Apoya los pies firmemente en el suelo y siente el peso de tu cuerpo en reposo. Cierra los ojos con suavidad. Inhala hondo... retén el aire dos segundos... y suelta despacio por la boca. Recuerda las palabras de Epicteto: no son las cosas externas las que perturban tu mente, sino el juicio apresurado que haces de ellas. La persona que extrañas o la urgencia de escribir son sucesos fuera de tu soberanía; tu tranquilidad interior, tu dignidad y tu respuesta en este instante están bajo tu entero control. Respira una vez más. Deja que la ola de incomodidad rompa contra la roca de tu temple. Estás a salvo, en calma, y eres el único dueño de tu ciudadela interior."
+
+                SoltarFramework.CATOLICO ->
+                    "Pon tus manos abiertas sobre tus rodillas, en señal de acogida y entrega. Cierra los ojos y respira con lentitud. Inhala paz... exhala todo el peso, la culpa y la soledad que llevas cargando. Recuerda que no caminas en soledad: 'Venid a mí todos los que estáis cansados y agobiados, y yo os aliviaré'. Entrega este impulso, este dolor y esta herida en las manos del Padre. Pide la gracia de la paciencia y la custodia de tu corazón. El vacío que sientes hoy será llenado de gracia y consuelo si resistes la tentación de buscar falsos remedios. Respira la quietud de Su presencia. Confía, suelta el control y descansa en la certeza de que tu historia está siendo cuidada."
+
+                SoltarFramework.PSICOLOGIA_MODERNA ->
+                    "Toma asiento cómodamente y apoya las manos sobre tus muslos o una mano en tu pecho. Siente el latido de tu corazón y el vaivén natural de tu respiración. No intentes cambiar nada; solo observa el aire entrar fresco y salir tibio. La urgencia que experimentas en este instante es un fenómeno biológico temporal: tu sistema nervioso está buscando la recompensa dopaminérgica a la que estaba habituado. Imagina este impulso como una ola en el mar. Las olas suben, tienen un punto máximo de intensidad, pero invariablemente pierden fuerza y se disuelven en la arena. Tú no eres la ola; tú eres la orilla firme que la observa pasar. Respira profundo, afloja los hombros y dale a tu cuerpo cinco minutos de tregua compasiva. Eres más grande que este impulso transitorio."
+            }
+        }
+
+        // Guion generado por IA adaptando ritmo, tono y silencios al estado neuroemocional
+        return when {
+            vulnerabilityScore >= 70 -> {
+                // Alta vulnerabilidad: Máxima contención, pausas prolongadas, anclaje somático profundo
+                when (framework) {
+                    SoltarFramework.ESTOICO ->
+                        "Detente por completo. Cierra los ojos. No intentes librar ninguna batalla en este momento. [Pausa de silencio]. Lleva tu atención exclusivamente al aire que entra por tu nariz y al peso de tus pies en el suelo. Respira despacio... inhala en cuatro tiempos... uno... dos... tres... cuatro... Sostén el aire... y exhala liberando el pecho. La tormenta que sientes no está dentro de ti; está afuera, golpeando las murallas de tu ciudadela. Nada de lo que pienses o sientas en este minuto de dolor te obliga a romper tus límites. Tu honor y tu paz residen en no reaccionar. Respira... quédate aquí conmigo. Esta ola también pasará."
+
+                    SoltarFramework.CATOLICO ->
+                        "Detente un instante. Deja caer los hombros y coloca una mano suavemente sobre tu corazón. [Pausa de silencio]. No te reproches por llorar o sentirte vulnerable; Dios está más cerca de ti en tu quebranto que en tu fortaleza aparente. Inhala Su consuelo... y exhala toda la angustia que oprime tu garganta. Entrega en este mismo segundo el deseo de saber o de intervenir: 'Señor, en Tus manos encomiendo mi descanso y mi dolor'. No tienes que forzar soluciones hoy. Permanece cobijado en Su paz, sabiendo que estás protegido y que no estás solo."
+
+                    SoltarFramework.PSICOLOGIA_MODERNA ->
+                        "Haz una pausa absoluta. Siéntate y nota el contacto de tu espalda con el respaldo. [Pausa de respiración profunda]. Tu sistema nervioso se encuentra en alerta de apego: la amígdala ha detectado amenaza y busca desesperadamente el estímulo conocido. No luches contra esta sensación; solo obsérvala como un testigo curioso. Siente la opresión en el pecho o el nudo en el estómago sin ponerle etiquetas catastróficas. Inhala en cuatro segundos... retén cuatro... y suelta el aire en seis segundos vaciando los pulmones por completo. Con cada exhalación, envía a tu cuerpo la señal biológica de seguridad: 'Estoy a salvo, esto es solo neuroquímica en retirada, el impulso decae'."
+                }
+            }
+            vulnerabilityScore >= 35 -> {
+                // Vulnerabilidad moderada: Defusión cognitiva, recentramiento, equilibrio y firmeza
+                when (framework) {
+                    SoltarFramework.ESTOICO ->
+                        "Siéntate erguido, con la serenidad de quien recuerda quién es. [Pausa de respiración]. Observa tus pensamientos como si contemplaras el curso de un río desde la orilla alta. Pasan recuerdos, surgen dudas, aparecen impulsos. Ninguno de ellos tiene el poder de mover tus manos si tú no se lo concedes. Séneca decía: 'A menudo sufrimos más por la imaginación que por la realidad'. Inhala claridad... exhala toda queja innecesaria. Tu presente te pertenece. Sigue caminando con templanza."
+
+                    SoltarFramework.CATOLICO ->
+                        "Respira sereno y abre tu corazón a la templanza. [Pausa]. El camino del desapego y la madurez espiritual se construye en estos momentos cotidianos, donde eliges la fidelidad a tu dignidad en lugar de la gratificación inmediata. Da gracias por la fuerza que se te concede hoy. Pide luz para distinguir el amor verdadero del apego posesivo. Inhala paciencia, exhala rencor. Camina con paso humilde y firme, custodiando la paz que Dios te ha devuelto."
+
+                    SoltarFramework.PSICOLOGIA_MODERNA ->
+                        "Respira hondo y conecta con el momento presente. [Pausa]. Nota cómo tu mente intenta construir historias sobre el pasado o hipótesis sobre el futuro. Reconoce esas historias amablemente: 'Mi mente está recordando', 'mi mente está anticipando'. Pero tú estás aquí, en este cuarto, en este cuerpo que respira. Cada vez que decides no actuar desde la rumiación, estás fortaleciendo tu corteza prefrontal y debilitando los antiguos circuitos del hábito. Inhala autonomía... exhala serenidad. Estás haciendo un trabajo extraordinario."
+                }
+            }
+            else -> {
+                // Vulnerabilidad baja: Activación, soberanía, empoderamiento y propósito hacia adelante
+                when (framework) {
+                    SoltarFramework.ESTOICO ->
+                        "Ponte de pie con dignidad, expande el pecho y respira con plenitud. [Pausa]. Siente la fuerza tranquila del autodominio. Has atravesado la niebla del dolor y hoy tu mente rectora gobierna tus acciones. La virtud no es la ausencia de recuerdos, sino la decisión inquebrantable de no ser gobernado por ellos. Inhala vigor... exhala cualquier atadura restante. Tienes una vida que construir y talentos que multiplicar. Marcha adelante con orgullo estoico."
+
+                    SoltarFramework.CATOLICO ->
+                        "Eleva tu mirada y respira con profunda gratitud. [Pausa]. El dolor ha madurado en fortaleza y la incertidumbre en esperanza viva. Agradece cada paso recorrido, cada momento en que te mantuviste en pie sostenido por la gracia. Hoy estás listo para dar frutos de paz, de alegría y de generosidad hacia los demás. Inhala bendición, exhala libertad. Camina con alegría sabiendo que tu vida tiene un propósito hermoso y renovado."
+
+                    SoltarFramework.PSICOLOGIA_MODERNA ->
+                        "Respira profundo y siente la energía vital recorriendo tu cuerpo. [Pausa]. Observa el contraste: lo que hace semanas parecía un abismo infranqueable hoy es solo un capítulo superado de tu historia. Tu cerebro ha reorganizado sus prioridades, tu identidad ya no depende de la validación ajena y tus metas vuelven a ser el centro de tu vida. Inhala autoconfianza y plenitud... exhala orgullo genuino por tu resiliencia. El futuro está completamente abierto ante ti."
+                }
+            }
+        }
+    }
+
     // =========================================================================
     // 1.6 NOTIFICACIONES — Contenido generado según tendencia de check-ins
     // =========================================================================
@@ -523,6 +589,74 @@ object OnDeviceLlmEngine {
                         "Cada día que eliges cuidarte, tu cerebro desactiva circuitos de dependencia. Tómate un minuto para tu balance."
                     )
                 }
+            }
+        }
+    }
+
+    /**
+     * Genera el texto de la notificación diaria considerando la tendencia real
+     * de los últimos check-ins (mejora, empeoramiento, estancamiento) y el marco filosófico.
+     * Fallback a plantilla fija si el modelo no está listo o hay datos insuficientes.
+     */
+    fun generateTrendBasedNotification(
+        recentCheckins: List<CheckinEntity>,
+        framework: SoltarFramework
+    ): String {
+        val fallbackQuote = when (framework) {
+            SoltarFramework.ESTOICO ->
+                "«Tienes poder sobre tu mente, no sobre los acontecimientos externos. Comprende esto y hallarás tu fuerza.» Tómate un minuto para tu balance diario."
+            SoltarFramework.CATOLICO ->
+                "«Por encima de todo lo que guardes, guarda tu corazón, porque de él brota la vida.» Tómate un momento de recogimiento para tu balance de hoy."
+            SoltarFramework.PSICOLOGIA_MODERNA ->
+                "«Cada día que eliges no ceder al impulso, tu cerebro desactiva un circuito de dependencia.» Registra tu evolución en 1 minuto."
+        }
+
+        if (!isModelReady || recentCheckins.size < 2) {
+            return fallbackQuote
+        }
+
+        val sorted = recentCheckins.sortedByDescending { it.timestamp }
+        val latest = sorted.first()
+        val previous = sorted.drop(1).take(3)
+        val avgPrevPain = previous.map { it.pain }.average().toFloat()
+        val avgPrevUrge = previous.map { it.urgeToContact }.average().toFloat()
+        val avgPrevAutonomy = previous.map { it.autonomy }.average().toFloat()
+
+        val isImproving = (latest.pain < avgPrevPain - 0.5f) ||
+                (latest.urgeToContact < avgPrevUrge - 0.5f) ||
+                (latest.autonomy > avgPrevAutonomy + 0.5f) ||
+                (latest.pain <= 3.5f && latest.autonomy >= 6.5f)
+
+        val isWorsening = (latest.pain > avgPrevPain + 0.8f) ||
+                (latest.urgeToContact > avgPrevUrge + 0.8f) ||
+                (latest.urgeToContact >= 6.5f) ||
+                (latest.pain >= 7.0f)
+
+        return when {
+            isImproving -> when (framework) {
+                SoltarFramework.ESTOICO ->
+                    "Tu serenidad avanza con paso firme: tus últimos registros muestran que estás recuperando el dominio sobre tu mente rectora. Sigue custodiando tu templo interior con templanza."
+                SoltarFramework.CATOLICO ->
+                    "Se percibe la gracia obrando en tu caminar: la paz va ganando terreno a la pesadumbre en tus últimos registros. Da gracias por este alivio y persevera con fe."
+                SoltarFramework.PSICOLOGIA_MODERNA ->
+                    "Tendencia favorable detectada: tus indicadores de dolor y urgencia muestran una desensibilización progresiva y mayor autonomía. Celebra este paso hacia tu bienestar."
+            }
+            isWorsening -> when (framework) {
+                SoltarFramework.ESTOICO ->
+                    "Percibimos un repunte en la marea emocional. Recuerda a Séneca: pide al impulso que espere. No conviertas una molestia pasajera en una derrota de tu juicio. Respira y mantén tu centro."
+                SoltarFramework.CATOLICO ->
+                    "En tus últimos registros asoma el cansancio o la angustia. No temas: 'Cerca está el Señor de los quebrantados de corazón'. Haz una pausa, entrega la carga y cuida tu paz."
+                SoltarFramework.PSICOLOGIA_MODERNA ->
+                    "Tus últimos registros reflejan un aumento en la reactividad o el impulso. Es un pico esperable en la abstinencia afectiva: no te juzgues, respira hondo y activa tu protocolo de contención."
+            }
+            else -> when (framework) {
+                // Estancamiento / Meseta
+                SoltarFramework.ESTOICO ->
+                    "Tus días atraviesan una meseta silenciosa. La paciencia estoica no es resignación pasiva, sino la constancia serena que no exige resultados inmediatos a la naturaleza. Sostén tus hábitos hoy."
+                SoltarFramework.CATOLICO ->
+                    "El corazón se encuentra en tiempo de espera y purificación silenciosa. Recuerda que la semilla germina bajo tierra en quietud. Mantén la confianza y el recogimiento en tu día."
+                SoltarFramework.PSICOLOGIA_MODERNA ->
+                    "Tus registros muestran estabilidad en meseta. El proceso de reorganización cerebral requiere tiempo en calma sin novedades bruscas. Confía en el proceso y haz tu pausa consciente."
             }
         }
     }
@@ -808,6 +942,133 @@ object OnDeviceLlmEngine {
         return "«Tus momentos de mayor vulnerabilidad ocurren $temporalWindow, generalmente precedidos de $primaryFactor $painContext. Estos impulsos no reflejan debilidad ni falta de voluntad, sino una búsqueda condicionada de dopamina ante el vacío. Te sugerimos activar el protocolo Modo Impulso (20 min) inmediatamente al percibir la primera señal corporal y establecer un corte estricto de pantallas antes de ir a la cama.»"
     }
 
+    /**
+     * Analiza el historial de TriggerEventEntity a lo largo del tiempo.
+     * Solo se activa si hay al menos 3-4 eventos registrados.
+     * Identifica patrones recurrentes (día de la semana, hora, disparador) y devuelve
+     * null si no hay un patrón claro para no forzar conclusiones inventadas.
+     */
+    fun analyzeRelapsePatterns(triggerEvents: List<TriggerEventEntity>): String? {
+        // Solo se activa si hay al menos 3-4 TriggerEventEntity registrados
+        if (triggerEvents.size < 3) return null
+
+        val total = triggerEvents.size
+        val calendar = Calendar.getInstance()
+
+        // 1. Análisis temporal por franjas horarias
+        var nightEpisodes = 0     // 21:00 a 04:59
+        var eveningEpisodes = 0   // 18:00 a 20:59
+        var morningEpisodes = 0   // 06:00 a 11:59
+        var afternoonEpisodes = 0 // 12:00 a 17:59
+
+        // 2. Análisis por días de la semana
+        var weekendEpisodes = 0 // Viernes, Sábado, Domingo
+        var sundayEpisodes = 0
+
+        for (event in triggerEvents) {
+            calendar.timeInMillis = event.timestamp
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val day = calendar.get(Calendar.DAY_OF_WEEK)
+
+            when {
+                hour >= 21 || hour < 5 -> nightEpisodes++
+                hour in 18..20 -> eveningEpisodes++
+                hour in 6..11 -> morningEpisodes++
+                else -> afternoonEpisodes++
+            }
+
+            if (day == Calendar.FRIDAY || day == Calendar.SATURDAY || day == Calendar.SUNDAY) {
+                weekendEpisodes++
+            }
+            if (day == Calendar.SUNDAY) {
+                sundayEpisodes++
+            }
+        }
+
+        // 3. Análisis semántico de detonantes y notas
+        val combinedTexts = triggerEvents.map {
+            "${it.trigger} ${it.context} ${it.emotion} ${it.note}".lowercase(Locale.getDefault())
+        }
+
+        val digitalCount = combinedTexts.count {
+            it.contains("red") || it.contains("foto") || it.contains("whatsapp") ||
+                    it.contains("instagram") || it.contains("facebook") || it.contains("perfil") ||
+                    it.contains("mensaje") || it.contains("chat") || it.contains("en línea") || it.contains("historia")
+        }
+        val memoryCount = combinedTexts.count {
+            it.contains("recuerdo") || it.contains("musica") || it.contains("música") ||
+                    it.contains("cancion") || it.contains("canción") || it.contains("lugar") ||
+                    it.contains("carta") || it.contains("regalo") || it.contains("aniversario")
+        }
+        val solitudeCount = combinedTexts.count {
+            it.contains("solo") || it.contains("sola") || it.contains("soledad") ||
+                    it.contains("cama") || it.contains("casa") || it.contains("vacio") ||
+                    it.contains("vacío") || it.contains("aburrimiento") || it.contains("silencio")
+        }
+        val stressCount = combinedTexts.count {
+            it.contains("trabajo") || it.contains("estres") || it.contains("estrés") ||
+                    it.contains("agobio") || it.contains("ansiedad") || it.contains("cansancio")
+        }
+        val alcoholCount = combinedTexts.count {
+            it.contains("alcohol") || it.contains("copa") || it.contains("cerveza") ||
+                    it.contains("fiesta") || it.contains("bar") || it.contains("salir")
+        }
+
+        // Evaluación de umbrales clínicos de recurrencia
+        val hasNightPattern = nightEpisodes >= (total * 0.5)
+        val hasEveningPattern = eveningEpisodes >= (total * 0.45)
+        val hasMorningPattern = morningEpisodes >= (total * 0.45)
+        val hasWeekendPattern = weekendEpisodes >= (total * 0.6)
+        val hasSundayPattern = sundayEpisodes >= (total * 0.45)
+
+        val hasDigitalPattern = digitalCount >= (total * 0.45)
+        val hasMemoryPattern = memoryCount >= (total * 0.45)
+        val hasSolitudePattern = solitudeCount >= (total * 0.45)
+        val hasStressPattern = stressCount >= (total * 0.45)
+        val hasAlcoholPattern = alcoholCount >= (total * 0.45)
+
+        val hasTimePattern = hasNightPattern || hasEveningPattern || hasMorningPattern || hasWeekendPattern || hasSundayPattern
+        val hasTriggerPattern = hasDigitalPattern || hasMemoryPattern || hasSolitudePattern || hasStressPattern || hasAlcoholPattern
+
+        // Si no hay un patrón claro, no inventamos un hallazgo
+        if (!hasTimePattern && !hasTriggerPattern) {
+            return null
+        }
+
+        val timeDesc = when {
+            hasNightPattern && hasWeekendPattern -> "durante las noches de fin de semana (después de las 21:00)"
+            hasNightPattern -> "en horarios nocturnos (a partir de las 21:00 o en la madrugada)"
+            hasEveningPattern -> "en la transición del atardecer (entre las 18:00 y las 21:00)"
+            hasMorningPattern -> "a primera hora de la mañana, al despertar y afrontar el día"
+            hasSundayPattern -> "principalmente los domingos por la tarde y noche"
+            hasWeekendPattern -> "durante los fines de semana, coincidiendo con momentos de menor actividad"
+            else -> null
+        }
+
+        val triggerDesc = when {
+            hasDigitalPattern -> "la exposición a redes sociales, estados o aplicaciones de mensajería"
+            hasMemoryPattern -> "la evocación sensorial de recuerdos compartidos, canciones o lugares del pasado"
+            hasSolitudePattern -> "momentos de soledad e inactividad no planificada en el hogar"
+            hasStressPattern -> "situaciones de sobrecarga laboral o fatiga decisional acumulada"
+            hasAlcoholPattern -> "encuentros sociales o momentos con consumo de alcohol donde disminuye la inhibición"
+            else -> null
+        }
+
+        val sb = StringBuilder()
+        sb.append("Tus registros revelan un patrón recurrente claro: los momentos de mayor vulnerabilidad tienden a concentrarse ")
+        if (timeDesc != null && triggerDesc != null) {
+            sb.append("$timeDesc, activados predominantemente por $triggerDesc.")
+        } else if (timeDesc != null) {
+            sb.append("$timeDesc, cuando la fatiga acumulada reduce la energía de contención frontal.")
+        } else if (triggerDesc != null) {
+            sb.append("en situaciones vinculadas a $triggerDesc.")
+        }
+
+        sb.append(" Conocer esta ventana te permite anticiparte: no es falta de voluntad, sino un hábito reactivo predecible que puedes desactivar programando con antelación un protocolo de protección o desconexión.")
+
+        return sb.toString()
+    }
+
     // =========================================================================
     // 2.5 RECOMENDACIONES DE CONTEXTO ENRIQUECIDAS
     // =========================================================================
@@ -940,10 +1201,21 @@ object OnDeviceLlmEngine {
             "WORK" -> "«$userName, en el entorno profesional compartido $duration: mantén un trato impecable, aséptico y circunscrito únicamente al trabajo.»"
             "COHABITATION" -> "«$userName, compartiendo espacio temporal $duration: protege tus límites físicos y emocionales. Cada día es un paso hacia tu independencia.»"
             "PRACTICAL" -> "«$userName, resolviendo compromisos prácticos $duration: liquida gestiones objetivas sin reabrir conversaciones sobre la historia compartida.»"
-            else -> if (base.profileTypeDescription.contains("Infidelidad", true)) {
-                "«$userName, procesando la ruptura por traición $duration: tu dignidad personal es innegociable. Cero justificaciones o auto-culpas.»"
-            } else {
-                "«$userName, $duration: antes de transformar cualquier impulso en acción, respira y elige tu soberanía personal.»"
+            else -> when {
+                base.profileTypeDescription.contains("Infidelidad", true) ->
+                    "«$userName, procesando la ruptura por traición $duration: tu dignidad personal es innegociable. Cero justificaciones o auto-culpas.»"
+                base.profileTypeDescription.contains("Decisión Mutua", true) ->
+                    "«$userName, en una ruptura acordada $duration: la decisión mutua evita culpables pero genera alta ambivalencia. Sostén el acuerdo sin reabrir dudas.»"
+                base.profileTypeDescription.contains("Duelo Anticipado", true) ->
+                    "«$userName, procesando el duelo anticipado $duration: reconoce el desgaste previo acumulado y valida tu necesidad de paz.»"
+                base.profileTypeDescription.contains("Tomaste la Decisión", true) ->
+                    "«$userName, habiendo tomado la decisión de partir $duration: sostén tu coherencia con compasión y sin caer en culpa punitiva.»"
+                base.profileTypeDescription.contains("Ciclo", true) ->
+                    "«$userName, interrumpiendo el ciclo intermitente $duration: recuerda los hechos objetivos frente a las promesas repetidas.»"
+                base.profileTypeDescription.contains("Larga Duración", true) ->
+                    "«$userName, reconfigurando tu vida $duration: reconstruir tu identidad y rutinas independientes requiere paciencia y compasión.»"
+                else ->
+                    "«$userName, $duration: antes de transformar cualquier impulso en acción, respira y elige tu soberanía personal.»"
             }
         }
         val customStrategy = "${base.strategySummary} (Adaptado para $userName $duration)."

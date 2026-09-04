@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.BuildConfig
+import com.example.ai.OnDeviceLlmEngine
 import com.example.audio.SoltarSoundManager
 import com.example.data.SoltarFramework
 import com.example.data.SubscriptionPlan
@@ -53,6 +54,12 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val identityGoals by viewModel.identityGoals.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val triggerEvents by viewModel.triggerEvents.collectAsState()
+    val relapses by viewModel.relapses.collectAsState()
+
+    val relapsePatternAnalysis = remember(triggerEvents) {
+        OnDeviceLlmEngine.analyzeRelapsePatterns(triggerEvents)
+    }
 
     val entitlements = remember(settings) { UserEntitlements.fromSettings(settings) }
     var showResetConfirmDialog by remember { mutableStateOf(false) }
@@ -855,6 +862,91 @@ fun ProfileScreen(
         // Anticipated Risk Dates Calendar
         item {
             AnticipatedRiskDatesSection(viewModel = viewModel)
+        }
+
+        // Historial de Tropiezos / Recaídas y Análisis de Patrones
+        if (relapsePatternAnalysis != null || relapses.isNotEmpty() || triggerEvents.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("profile_relapse_history_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, SoltarBorder)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.History,
+                                contentDescription = null,
+                                tint = SoltarSage,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Historial de Tropiezos y Recaídas",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Hallazgo adicional de patrones si el modelo On-Device detecta recurrencia
+                        if (relapsePatternAnalysis != null) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("profile_relapse_pattern_insight"),
+                                shape = RoundedCornerShape(12.dp),
+                                color = SoltarAmber.copy(alpha = 0.1f),
+                                border = BorderStroke(1.2.dp, SoltarAmber.copy(alpha = 0.6f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Icon(
+                                        Icons.Default.Insights,
+                                        contentDescription = null,
+                                        tint = SoltarAmber,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Patrón Identificado a lo Largo del Tiempo (IA On-Device)",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = SoltarAmber,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = relapsePatternAnalysis,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextPrimary,
+                                            lineHeight = 18.sp
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
+                        Text(
+                            text = "Episodios registrados con enfoque compasivo: ${relapses.size} recaídas, ${triggerEvents.size} detonantes superados. Cada tropiezo es información valiosa para fortalecer tus límites conscientes, nunca un motivo de culpa.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
+            }
         }
 
         // Subscription & Monetization Card

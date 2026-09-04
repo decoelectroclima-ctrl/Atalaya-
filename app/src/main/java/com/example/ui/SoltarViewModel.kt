@@ -293,78 +293,134 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val timeCapsules: StateFlow<List<TimeCapsuleEntity>> = repository.allTimeCapsules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val vulnerabilityScore: StateFlow<Int> = combine(
-        checkins,
-        riskDates,
-        relapses
-    ) { checkinList, riskList, relapseList ->
-        val latest = checkinList.firstOrNull()
-        var score = 40
-        if (latest != null) {
-            val painF = (latest.pain / 10f) * 20f
-            val anxF = (latest.anxiety / 10f) * 20f
-            val rumF = (latest.rumination / 10f) * 15f
-            val urgeF = (latest.urgeToContact / 10f) * 15f
-            val autF = ((10f - latest.autonomy) / 10f) * 15f
-            score = (painF + anxF + rumF + urgeF + autF).toInt()
-        }
-
-        val now = System.currentTimeMillis()
-        val nowCal = java.util.Calendar.getInstance()
-        val currentYr = nowCal.get(java.util.Calendar.YEAR)
-        val hasRisk = riskList.any { rd ->
-            val target = java.util.Calendar.getInstance().apply {
-                set(java.util.Calendar.YEAR, currentYr)
-                set(java.util.Calendar.MONTH, rd.month - 1)
-                set(java.util.Calendar.DAY_OF_MONTH, rd.day)
-            }
-            if (target.timeInMillis < nowCal.timeInMillis) {
-                target.add(java.util.Calendar.YEAR, 1)
-            }
-            val diffDays = ((target.timeInMillis - now) / (1000L * 3600 * 24)).toInt()
-            diffDays in 0..7
-        }
-        if (hasRisk) score += 20
-
-        val hasRelapse48h = relapseList.any { r -> (now - r.timestamp) < (48L * 3600 * 1000) }
-        if (hasRelapse48h) score += 25
-
-        score.coerceIn(0, 100)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 40)
-
-    val vulnerabilityExplanation: StateFlow<String> = combine(
-        vulnerabilityScore,
-        checkins,
-        riskDates,
-        relapses
-    ) { score, checkinList, riskList, relapseList ->
-        val latest = checkinList.firstOrNull()
-        val now = System.currentTimeMillis()
-        val nowCal = java.util.Calendar.getInstance()
-        val currentYr = nowCal.get(java.util.Calendar.YEAR)
-        val upcoming = riskList.mapNotNull { rd ->
-            val target = java.util.Calendar.getInstance().apply {
-                set(java.util.Calendar.YEAR, currentYr)
-                set(java.util.Calendar.MONTH, rd.month - 1)
-                set(java.util.Calendar.DAY_OF_MONTH, rd.day)
-            }
-            if (target.timeInMillis < nowCal.timeInMillis) {
-                target.add(java.util.Calendar.YEAR, 1)
-            }
-            val diffDays = ((target.timeInMillis - now) / (1000L * 3600 * 24)).toInt()
-            if (diffDays in 0..7) Pair(rd.title, diffDays) else null
-        }.minByOrNull { it.second }
-
-        val hasRelapse48h = relapseList.any { r -> (now - r.timestamp) < (48L * 3600 * 1000) }
-
-        com.example.ai.OnDeviceLlmEngine.explainVulnerabilityScore(
-            score = score,
-            latestCheckin = latest,
-            upcomingRiskTitle = upcoming?.first,
-            daysToRisk = upcoming?.second,
-            hasRelapse48h = hasRelapse48h
+    // 100% Real, multi-variable vulnerability assessment engine
+    val realVulnerabilityAssessment: StateFlow<com.example.ai.RealVulnerabilityAssessment> = combine(
+        listOf(
+            settings,
+            checkins,
+            journalEntries,
+            urgeEpisodes,
+            thoughts,
+            relapses,
+            riskDates,
+            audits,
+            idealizations
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Evaluando estado y balance emocional...")
+    ) { array ->
+        @Suppress("UNCHECKED_CAST")
+        val currentSettings = array[0] as? SoltarSettingsEntity
+        @Suppress("UNCHECKED_CAST")
+        val checkinList = array[1] as List<CheckinEntity>
+        @Suppress("UNCHECKED_CAST")
+        val journalList = array[2] as List<JournalEntryEntity>
+        @Suppress("UNCHECKED_CAST")
+        val urgeList = array[3] as List<UrgeEpisodeEntity>
+        @Suppress("UNCHECKED_CAST")
+        val thoughtList = array[4] as List<ThoughtEntity>
+        @Suppress("UNCHECKED_CAST")
+        val relapseList = array[5] as List<RelapseEntity>
+        @Suppress("UNCHECKED_CAST")
+        val riskList = array[6] as List<RiskDateEntity>
+        @Suppress("UNCHECKED_CAST")
+        val auditList = array[7] as List<RelationshipAuditEntity>
+        @Suppress("UNCHECKED_CAST")
+        val idealizationList = array[8] as List<IdealizationEntity>
+
+        val now = System.currentTimeMillis()
+        val breakupTs = currentSettings?.breakupDateTimestamp ?: (now - (14L * 24 * 3600 * 1000))
+
+        com.example.ai.VulnerabilityAndEvolutionEngine.calculateRealVulnerability(
+            currentTime = now,
+            breakupDateTimestamp = breakupTs,
+            checkins = checkinList,
+            journalEntries = journalList,
+            urgeEpisodes = urgeList,
+            thoughts = thoughtList,
+            relapses = relapseList,
+            riskDates = riskList,
+            audits = auditList,
+            idealizations = idealizationList
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        com.example.ai.VulnerabilityAndEvolutionEngine.calculateRealVulnerability(
+            currentTime = System.currentTimeMillis(),
+            breakupDateTimestamp = System.currentTimeMillis() - (14L * 24 * 3600 * 1000),
+            checkins = emptyList(),
+            journalEntries = emptyList(),
+            urgeEpisodes = emptyList(),
+            thoughts = emptyList(),
+            relapses = emptyList(),
+            riskDates = emptyList(),
+            audits = emptyList(),
+            idealizations = emptyList()
+        )
+    )
+
+    val vulnerabilityScore: StateFlow<Int> = realVulnerabilityAssessment
+        .map { it.score }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 40)
+
+    val vulnerabilityExplanation: StateFlow<String> = realVulnerabilityAssessment
+        .map { it.primaryExplanation }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "Evaluando estado y balance emocional...")
+
+    // Real Personal Evolution Timeline (Connected to all user entries & days)
+    private val _evolutionRangeDays = MutableStateFlow(7)
+    val evolutionRangeDays: StateFlow<Int> = _evolutionRangeDays.asStateFlow()
+
+    fun setEvolutionRangeDays(days: Int) {
+        _evolutionRangeDays.value = days
+    }
+
+    val realEvolutionTimeline: StateFlow<com.example.ai.RealPersonalEvolutionTimeline> = combine(
+        listOf(
+            _evolutionRangeDays,
+            settings,
+            checkins,
+            journalEntries,
+            urgeEpisodes,
+            relapses
+        )
+    ) { array ->
+        val range = array[0] as Int
+        @Suppress("UNCHECKED_CAST")
+        val currentSettings = array[1] as? SoltarSettingsEntity
+        @Suppress("UNCHECKED_CAST")
+        val checkinList = array[2] as List<CheckinEntity>
+        @Suppress("UNCHECKED_CAST")
+        val journalList = array[3] as List<JournalEntryEntity>
+        @Suppress("UNCHECKED_CAST")
+        val urgeList = array[4] as List<UrgeEpisodeEntity>
+        @Suppress("UNCHECKED_CAST")
+        val relapseList = array[5] as List<RelapseEntity>
+
+        val now = System.currentTimeMillis()
+        val breakupTs = currentSettings?.breakupDateTimestamp ?: (now - (14L * 24 * 3600 * 1000))
+
+        com.example.ai.VulnerabilityAndEvolutionEngine.buildRealEvolutionTimeline(
+            rangeDays = range,
+            currentTime = now,
+            breakupDateTimestamp = breakupTs,
+            checkins = checkinList,
+            journalEntries = journalList,
+            urgeEpisodes = urgeList,
+            relapses = relapseList
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        com.example.ai.VulnerabilityAndEvolutionEngine.buildRealEvolutionTimeline(
+            rangeDays = 7,
+            currentTime = System.currentTimeMillis(),
+            breakupDateTimestamp = System.currentTimeMillis() - (14L * 24 * 3600 * 1000),
+            checkins = emptyList(),
+            journalEntries = emptyList(),
+            urgeEpisodes = emptyList(),
+            relapses = emptyList()
+        )
+    )
 
     private var urgeTimerJob: Job? = null
 

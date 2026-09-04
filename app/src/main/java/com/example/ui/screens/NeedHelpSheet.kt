@@ -26,7 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ai.OnDeviceLlmEngine
 import com.example.audio.SoltarSoundManager
+import com.example.audio.SoltarTtsManager
+import com.example.data.SoltarFramework
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 
@@ -37,7 +40,24 @@ fun NeedHelpSheet(
     onDismiss: () -> Unit
 ) {
     val settings by viewModel.settings.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
     val context = LocalContext.current
+
+    var isTtsSpeaking by remember { mutableStateOf(SoltarTtsManager.isSpeaking()) }
+
+    LaunchedEffect(Unit) {
+        SoltarTtsManager.initialize(context)
+        SoltarTtsManager.onSpeakingStateChanged = { speaking ->
+            isTtsSpeaking = speaking
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            SoltarTtsManager.stop()
+        }
+    }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -358,6 +378,106 @@ fun NeedHelpSheet(
                         Icon(Icons.Default.PlayArrow, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Iniciar Modo Impulso (20 min)", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // =========================================================
+            // OPCIÓN 3: MEDITACIÓN GUIADA POR VOZ (5 MIN) — IA ADAPTATIVA
+            // =========================================================
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("help_option_guided_meditation"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                border = BorderStroke(1.2.dp, SoltarAmber.copy(alpha = 0.5f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = SoltarAmber.copy(alpha = 0.15f),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.RecordVoiceOver,
+                                    contentDescription = null,
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Meditación guiada (5 min)",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Regulación por voz según tu vulnerabilidad y marco",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Guion de contención somática generado por IA que ajusta tono, ritmo y pausas a tu nivel actual de vulnerabilidad (${vulnerabilityScore.toInt()}/100) y tu marco filosófico.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 17.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Button(
+                        onClick = {
+                            if (isTtsSpeaking) {
+                                SoltarTtsManager.stop()
+                            } else {
+                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                val framework = uiState.preferredFramework
+                                val script = OnDeviceLlmEngine.generateGuidedMeditationScript(
+                                    vulnerabilityScore = vulnerabilityScore.toInt(),
+                                    framework = framework
+                                )
+                                SoltarTtsManager.speakMeditation(
+                                    text = script,
+                                    vulnerabilityScore = vulnerabilityScore.toInt()
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isTtsSpeaking) Color(0xFFEF4444) else SoltarAmber,
+                            contentColor = if (isTtsSpeaking) Color.White else SoltarBackground
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isTtsSpeaking) Icons.Default.Stop else Icons.Default.VolumeUp,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isTtsSpeaking) "Detener meditación" else "Escuchar meditación guiada (5 min)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
