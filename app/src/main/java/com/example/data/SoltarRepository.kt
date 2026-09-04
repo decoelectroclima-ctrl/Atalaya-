@@ -272,6 +272,28 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         return database.riskDateDao().getAllRiskDatesOnce()
     }
 
+    // Coach Life Goals
+    val allCoachGoals: Flow<List<CoachGoalEntity>> = database.coachGoalDao().getAllGoals()
+    suspend fun saveCoachGoal(goal: CoachGoalEntity) = database.coachGoalDao().insertGoal(goal)
+    suspend fun toggleCoachGoal(id: Long, completed: Boolean) = database.coachGoalDao().toggleGoal(id, completed)
+    suspend fun deleteCoachGoal(id: Long) = database.coachGoalDao().deleteGoal(id)
+
+    // Body Metrics
+    val allBodyMetrics: Flow<List<BodyMetricRecordEntity>> = database.bodyMetricDao().getAllMetrics()
+    suspend fun getLatestBodyMetric() = database.bodyMetricDao().getLatestMetric()
+    suspend fun saveBodyMetric(metric: BodyMetricRecordEntity) = database.bodyMetricDao().insertMetric(metric)
+    suspend fun deleteBodyMetric(id: Long) = database.bodyMetricDao().deleteMetric(id)
+
+    // Coach Daily Checkins
+    val allCoachCheckins: Flow<List<CoachDailyCheckinEntity>> = database.coachDailyCheckinDao().getAllCheckins()
+    fun getCoachCheckinByDate(dateKey: String) = database.coachDailyCheckinDao().getCheckinByDate(dateKey)
+    suspend fun saveCoachCheckin(checkin: CoachDailyCheckinEntity) = database.coachDailyCheckinDao().insertCheckin(checkin)
+
+    // Coach Plans
+    val allCoachPlans: Flow<List<CoachPlanEntity>> = database.coachPlanDao().getAllPlans()
+    suspend fun saveCoachPlan(plan: CoachPlanEntity) = database.coachPlanDao().insertPlan(plan)
+    suspend fun deleteCoachPlan(id: Long) = database.coachPlanDao().deletePlan(id)
+
     suspend fun getUnifiedUserContext(): UnifiedUserContext {
         val settings = getSettingsOnce()
         val frameworkKey = settings?.preferredFramework ?: "PSICOLOGIA_MODERNA"
@@ -324,6 +346,8 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         )
 
         val progressStageName = "Fase ${com.example.ui.managers.ProgressManager.calculateProgressStage(totalDays)}"
+        val journeyStage = settings?.journeyStage ?: "RECOVERY"
+        val lifeCoachFocus = settings?.lifeCoachFocus ?: ""
 
         return UnifiedUserContext(
             currentStreak = currentStreak,
@@ -337,7 +361,9 @@ class SoltarRepository(private val database: AdrianaDatabase) {
             daysUntilRisk = upcomingRisk?.second,
             hasCompletedClosingRitual = hasCompletedClosingRitual,
             checkinTrendSummary = trendSummary,
-            framework = framework
+            framework = framework,
+            journeyStage = journeyStage,
+            lifeCoachFocus = lifeCoachFocus
         )
     }
 }

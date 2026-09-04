@@ -373,6 +373,58 @@ data class UnifiedUserContext(
     val daysUntilRisk: Int? = null,
     val hasCompletedClosingRitual: Boolean = false,
     val checkinTrendSummary: String = "Estable",
-    val framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA
+    val framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
+    val journeyStage: String = "RECOVERY",
+    val lifeCoachFocus: String = ""
+)
+
+@Serializable
+@Entity(tableName = "coach_goals")
+data class CoachGoalEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String, // e.g. "Ir al gimnasio 4 veces", "Estudiar inglés", "Correr 5km"
+    val category: String = "FITNESS", // "FITNESS", "ESTUDIO", "AUTOESTIMA", "HABITOS", "OTRO"
+    val targetValue: String = "",
+    val currentProgress: String = "",
+    val isCompleted: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@Serializable
+@Entity(tableName = "body_metrics")
+data class BodyMetricRecordEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestamp: Long = System.currentTimeMillis(),
+    val dateKey: String, // e.g. "2026-09-04"
+    val weightKg: Float = 0f,
+    val heightCm: Float = 0f,
+    val waistCm: Float = 0f,
+    val armCm: Float = 0f,
+    val legCm: Float = 0f,
+    val notes: String = ""
+)
+
+@Serializable
+@Entity(tableName = "coach_daily_checkins")
+data class CoachDailyCheckinEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestamp: Long = System.currentTimeMillis(),
+    val dateKey: String,
+    val wentToGym: Boolean = false,
+    val studiedOrWorked: Boolean = false,
+    val mood: String = "Motivado",
+    val energyLevel: Int = 8,
+    val note: String = ""
+)
+
+@Serializable
+@Entity(tableName = "coach_plans")
+data class CoachPlanEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val goalId: Long = 0,
+    val type: String = "WORKOUT", // "WORKOUT" | "DIET" | "STUDY"
+    val title: String,
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis()
 )
 

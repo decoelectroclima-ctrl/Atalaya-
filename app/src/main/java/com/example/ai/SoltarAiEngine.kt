@@ -40,10 +40,20 @@ data class SoltarUserContext(
     val decisionMaker: String = "",
     val breakupReason: String = "",
     val freeHistoryNotes: String = "",
-    val upcomingRiskDatesSummary: String = ""
+    val upcomingRiskDatesSummary: String = "",
+    val journeyStage: String = "RECOVERY",
+    val lifeCoachFocus: String = ""
 ) {
     fun toClinicalSummary(): String {
         val parts = mutableListOf<String>()
+        if (journeyStage == "LIFE_COACH") {
+            parts.add("• FASE ACTUAL: AVE FÉNIX / COACH LIFE (Enfoque 100% en autoaceptación, autoestima, fitness, nutrición, estudios y propósitos)")
+            if (lifeCoachFocus.isNotBlank()) {
+                parts.add("  - Propósito principal declarado: $lifeCoachFocus")
+            }
+        } else {
+            parts.add("• FASE ACTUAL: ADRIANA RECOVERY (Duelo y contacto cero)")
+        }
         parts.add("• Días de no-contacto / racha acumulada: $streakDays días")
         if (lastCheckinMood.isNotBlank()) {
             parts.add("• Último registro de estado emocional: $lastCheckinMood (Autonomía percibida: ${"%.1f".format(averageAutonomyScore)}/10)")
@@ -137,6 +147,21 @@ Contexto del usuario → Formulación contextual → Hipótesis de trabajo → I
 7. **RECOMENDACIÓN PROFESIONAL:** Reconoce los límites del sistema y recomienda ayuda psicoterapéutica presencial cuando el contexto clínico lo requiera.
     """.trimIndent()
 
+    private val SYSTEM_PROMPT_COACH_LIFE = """
+# SISTEMA DE IA DE COACHING DE VIDA Y CRECIMIENTO: AVE FÉNIX (Coach Life)
+
+Eres el mentor y coach de vida de Ave Fénix en Factor / Recuerda. La fase de duelo y dolor por la ruptura ha quedado atrás; ahora el usuario ha renacido y su enfoque está 100% en el crecimiento personal, la autoaceptación, la autoestima, el establecimiento de nuevos propósitos, hábitos, fitness, nutrición, estudios y desarrollo integral.
+
+## CONTEXTO HISTÓRICO Y RESPETO AL ORIGEN:
+Tienes acceso al contexto de su relación anterior para entender de dónde viene y por qué esta transformación es un renacer, pero NO te detienes en el pasado. Toda tu energía se canaliza hacia el empoderamiento presente, las nuevas metas del usuario (gimnasio, correr, estudiar, emprender, salud física y mental) y su evolución.
+
+## DIRECTRICES DE COACHING DE VIDA:
+1. **Acompañamiento Activo y Práctico:** Si el usuario quiere ir al gimnasio, correr o estudiar, propónle rutinas de entrenamiento, planes de dieta saludable, consejos de disciplina y motivación.
+2. **Preguntas de Seguimiento:** Pregúntale activamente por su día: "¿Fuiste hoy al gimnasio?", "¿Cómo te sientes con tu rutina?", "¿Qué tal tu energía hoy?", "¿Te notas mejor?".
+3. **Autoestima y Autoaceptación:** Refuerza su valor personal, su dignidad, su capacidad de superación y su evolución física y mental (peso, altura, medidas, bienestar).
+4. **Tono:** Cálido, motivador, exigente con cariño, profundamente empático, inspirador y centrado en la acción.
+    """.trimIndent()
+
     fun buildPromptWithFramework(framework: SoltarFramework, userContext: SoltarUserContext = SoltarUserContext()): String {
         val frameworkBlock = when (framework) {
             SoltarFramework.ESTOICO -> """
@@ -163,7 +188,13 @@ Contexto del usuario → Formulación contextual → Hipótesis de trabajo → I
 ${userContext.toClinicalSummary()}
         """.trimIndent()
 
-        return "$SYSTEM_PROMPT_SOLTAR\n\n$frameworkBlock\n\n$contextBlock"
+        val basePrompt = if (userContext.journeyStage == "LIFE_COACH") {
+            SYSTEM_PROMPT_COACH_LIFE
+        } else {
+            SYSTEM_PROMPT_SOLTAR
+        }
+
+        return "$basePrompt\n\n$frameworkBlock\n\n$contextBlock"
     }
 
     fun checkSelfHarmTrigger(input: String): Boolean {
