@@ -310,7 +310,10 @@ data class SoltarSettingsEntity(
     val emotionalSituation: String = "ansiedad, echo de menos",
     val decisionMaker: String = "OTRA_PERSONA",
     val breakupReason: String = "desgaste",
-    val freeHistoryNotes: String = ""
+    val freeHistoryNotes: String = "",
+    // Journey Stage: "RECOVERY" (Ruptura, Duelo, Contacto Cero) or "LIFE_COACH" (Crecimiento, Autoestima, Hábitos, Propósito)
+    val journeyStage: String = "RECOVERY",
+    val lifeCoachFocus: String = "autoestima, confianza personal, hábitos"
 ) {
     fun toClinicalContextSummary(): String {
         return """

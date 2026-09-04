@@ -25,10 +25,10 @@ enum class SubscriptionPlan(
     ),
     MONTHLY(
         tierKey = "atalaya_pro_monthly",
-        title = "Plan Mensual",
-        priceDisplay = "10,99 €",
+        title = "Plan Mensual (ADRIANA Life Coach)",
+        priceDisplay = "9,99 €",
         periodLabel = "por mes",
-        billingDetail = "Acceso completo ilimitado, renovable mensualmente. Cancela en Google Play.",
+        billingDetail = "Suscripción mensual recurrente sin anuncios. Acceso completo a Recuperación y Life Coach.",
         trialDays = 7
     ),
     ANNUAL(

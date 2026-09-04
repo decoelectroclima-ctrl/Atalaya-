@@ -146,11 +146,30 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                 }
 
                 val quoteIndex = (days % quoteList.size).coerceIn(0, quoteList.size - 1)
-                val quote = quoteList[quoteIndex]
+                val quote = when (config.quoteSource) {
+                    SoltarWidgetConfig.SOURCE_CUSTOM -> config.customMantra.ifBlank { "«Sé dueño de tus decisiones y custodio de tu paz hoy.»" }
+                    SoltarWidgetConfig.SOURCE_STOIC -> stoicQuotes[days % stoicQuotes.size]
+                    SoltarWidgetConfig.SOURCE_CATHOLIC -> catholicQuotes[days % catholicQuotes.size]
+                    SoltarWidgetConfig.SOURCE_PSYCHOLOGY -> psychologyQuotes[days % psychologyQuotes.size]
+                    else -> quoteList[quoteIndex]
+                }
 
                 val views = RemoteViews(context.packageName, R.layout.widget_soltar_layout).apply {
                     setInt(R.id.widget_root, "setBackgroundResource", bgRes)
                     setFloat(R.id.widget_root, "setAlpha", alphaVal)
+
+                    // Apply Visibility settings from config
+                    setViewVisibility(R.id.widget_days_count, if (config.showDaysCounter) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_days_label, if (config.showDaysCounter) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_framework_badge, if (config.showFrameworkBadge) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_phase_badge, if (config.showPhaseBadge) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_days_subtext, if (config.showSubtext) android.view.View.VISIBLE else android.view.View.GONE)
+
+                    val showActions = config.showActionButtons
+                    setViewVisibility(R.id.widget_btn_sos, if (showActions && config.showSosButton) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_btn_coach, if (showActions && config.showCoachButton) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_btn_journal, if (showActions && config.showJournalButton) android.view.View.VISIBLE else android.view.View.GONE)
+                    setViewVisibility(R.id.widget_btn_checkin, if (showActions && config.showCheckinButton) android.view.View.VISIBLE else android.view.View.GONE)
 
                     val daysCountColor = if (isDark) android.graphics.Color.parseColor("#F8FAFC") else android.graphics.Color.parseColor("#0F172A")
                     val primaryTextColor = if (isDark) android.graphics.Color.parseColor("#F8FAFC") else android.graphics.Color.parseColor("#0F172A")

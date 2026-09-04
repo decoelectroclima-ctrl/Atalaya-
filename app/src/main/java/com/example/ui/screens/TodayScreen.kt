@@ -179,6 +179,91 @@ fun TodayScreen(
             }
         }
 
+        // Journey Stage Switcher Card (ADRIANA Recovery vs ADRIANA Life Coach)
+        item {
+            val currentStage = settings?.journeyStage ?: "RECOVERY"
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, if (currentStage == "LIFE_COACH") SoltarAmber.copy(alpha = 0.6f) else SoltarBorder)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = if (currentStage == "LIFE_COACH") Icons.Default.EmojiEvents else Icons.Default.Favorite,
+                                contentDescription = null,
+                                tint = SoltarAmber
+                            )
+                            Text(
+                                text = if (currentStage == "LIFE_COACH") "ADRIANA Life Coach" else "ADRIANA Recovery",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Surface(
+                            color = if (currentStage == "LIFE_COACH") SoltarAmber.copy(alpha = 0.2f) else SoltarSage.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = if (currentStage == "LIFE_COACH") "Crecimiento" else "Sanación",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (currentStage == "LIFE_COACH") SoltarAmber else SoltarSage,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = if (currentStage == "LIFE_COACH") 
+                            "Has recorrido un largo camino. Ahora trabajamos en quién quieres ser: hábitos, autoestima, propósito y disciplina diaria."
+                        else 
+                            "Acompañamiento en duelo, contacto cero, regulación emocional y reconstrucción de rutinas.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { viewModel.setJourneyStage("RECOVERY") },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (currentStage == "RECOVERY") SoltarSurfaceElevated else Color.Transparent
+                            ),
+                            border = BorderStroke(1.dp, if (currentStage == "RECOVERY") SoltarAmber else SoltarBorder)
+                        ) {
+                            Text("1. Recovery", style = MaterialTheme.typography.labelSmall, color = if (currentStage == "RECOVERY") SoltarAmber else TextSecondary)
+                        }
+
+                        Button(
+                            onClick = { viewModel.setJourneyStage("LIFE_COACH") },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (currentStage == "LIFE_COACH") SoltarAmber else SoltarSurfaceElevated
+                            )
+                        ) {
+                            Text("2. Life Coach", style = MaterialTheme.typography.labelSmall, color = if (currentStage == "LIFE_COACH") SoltarBackground else TextSecondary, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // Adaptive Vulnerability Mode Banner (100% Real, Multi-Variable Assessment)
         item {
             val realAssessment by viewModel.realVulnerabilityAssessment.collectAsState()
