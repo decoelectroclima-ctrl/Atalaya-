@@ -104,7 +104,7 @@ fun PaywallDialog(
 
                 // Hero Title
                 Text(
-                    text = "Acompañamiento sin límites para recuperar tu centro",
+                    text = "Tu coach de IA es gratis para siempre",
                     style = MaterialTheme.typography.headlineSmall,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold,
@@ -114,7 +114,7 @@ fun PaywallDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Una herramienta ética y rigurosa diseñada para devolverte la estabilidad, la dignidad y la autonomía.",
+                    text = "Pagas por las herramientas avanzadas de reconstrucción, no por hablar con tu coach. El acceso al acompañamiento conversacional es totalmente libre y sin límites.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
@@ -151,36 +151,46 @@ fun PaywallDialog(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "¿Qué incluye Recuerda Premium?",
+                            text = "¿Qué desbloquea Recuerda Premium?",
                             style = MaterialTheme.typography.titleMedium,
                             color = SoltarAmber,
                             fontWeight = FontWeight.Bold
                         )
 
                         FeatureRow(
-                            icon = Icons.Default.ChatBubbleOutline,
-                            title = "Coach Recuerda Ilimitado",
-                            subtitle = "Sin topes diarios de conversación para contener momentos de rumiación o angustia."
+                            icon = Icons.Default.Analytics,
+                            title = "Analizador de Conversaciones",
+                            subtitle = "Evaluación profunda de chats y patrones vinculares con IA avanzada."
                         )
                         FeatureRow(
-                            icon = Icons.Default.Science,
-                            title = "Laboratorio Cognitivo y Auditorías",
-                            subtitle = "Registro ilimitado de pensamientos, patrones vinculares y antídotos de idealización."
+                            icon = Icons.Default.Lock,
+                            title = "Exportación Cifrada de Reportes",
+                            subtitle = "Genera resúmenes clínicos listos para tu terapeuta o psiquiatra."
                         )
                         FeatureRow(
-                            icon = Icons.Default.MailOutline,
-                            title = "Cartas No Enviadas y Ceremonias",
-                            subtitle = "Desahogo seguro con ritos simbólicos de cierre y archivo protegido."
+                            icon = Icons.Default.MenuBook,
+                            title = "Biblioteca de Sabiduría",
+                            subtitle = "Acceso completo a reflexiones compartidas y banco de antídotos filosóficos."
                         )
                         FeatureRow(
-                            icon = Icons.Default.Shield,
-                            title = "Modo Impulso y Red de Apoyo 24/7",
-                            subtitle = "Temporizador regulatorio de 20 min y llamada directa a tus contactos de confianza."
+                            icon = Icons.Default.HourglassEmpty,
+                            title = "Cápsula del Tiempo",
+                            subtitle = "Mensajes sellados hacia tu futuro con desbloqueo evolutivo."
                         )
                         FeatureRow(
-                            icon = Icons.Default.GraphicEq,
-                            title = "Campanas Somáticas y Paisajes de Calma",
-                            subtitle = "Sonidos basados en frecuencias de biorregulación para desacelerar la taquicardia."
+                            icon = Icons.Default.PersonSearch,
+                            title = "Simulacro de Encuentro con Ex",
+                            subtitle = "Entrenamiento de límites y respuestas asertivas ante situaciones reales."
+                        )
+                        FeatureRow(
+                            icon = Icons.Default.FavoriteBorder,
+                            title = "Ritual de Cierre y Cartas Protegidas",
+                            subtitle = "Ceremonias simbólicas guiadas para soltar el vínculo definitivamente."
+                        )
+                        FeatureRow(
+                            icon = Icons.Default.TrendingUp,
+                            title = "Gráficos de Evolución Avanzados",
+                            subtitle = "Trazabilidad completa de dolor, autonomía y vulnerabilidad."
                         )
                     }
                 }

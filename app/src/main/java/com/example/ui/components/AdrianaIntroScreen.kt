@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -95,11 +96,30 @@ fun AdrianaIntroScreen(
         label = "halo_alpha"
     )
 
+    val context = LocalContext.current
     LaunchedEffect(hasInteracted) {
         if (!hasInteracted) {
-            // Play heartbeat thuds in sync with the visual loading animation cycles
+            val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                val vm = context.getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE) as? android.os.VibratorManager
+                vm?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
+            }
+
+            // Play heartbeat thuds and vibrate in sync with the visual loading animation cycles
             while (true) {
                 SoltarSoundManager.playSound(SoltarSoundManager.SoundType.HEARTBEAT)
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        val timings = longArrayOf(0, 120, 80, 150)
+                        val amplitudes = intArrayOf(0, 255, 0, 255)
+                        vibrator?.vibrate(android.os.VibrationEffect.createWaveform(timings, amplitudes, -1))
+                    } else {
+                        @Suppress("DEPRECATION")
+                        vibrator?.vibrate(longArrayOf(0, 120, 80, 150), -1)
+                    }
+                } catch (_: Exception) {}
                 delay(1450)
             }
         }

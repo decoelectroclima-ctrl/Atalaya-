@@ -357,3 +357,19 @@ data class RiskDateEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
+data class UnifiedUserContext(
+    val currentStreak: Int = 0,
+    val totalDays: Int = 0,
+    val progressStage: String = "Reconstrucción",
+    val vulnerabilityScore: Int = 50,
+    val lastRelapseDate: Long? = null,
+    val lastRelapseTrigger: String? = null,
+    val lastRelapseInterpretation: String? = null,
+    val upcomingRiskTitle: String? = null,
+    val daysUntilRisk: Int? = null,
+    val hasCompletedClosingRitual: Boolean = false,
+    val checkinTrendSummary: String = "Estable",
+    val framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA
+)
+

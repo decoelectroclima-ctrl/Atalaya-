@@ -156,6 +156,8 @@ data class SoltarUiState(
     val isOnboardingVisible: Boolean = false,
     val isSoundEnabled: Boolean = true,
     val themeMode: String = "LIGHT", // "LIGHT" | "DARK" | "SYSTEM"
+    val isPrivacyPolicyVisible: Boolean = false,
+    val isTermsConditionsVisible: Boolean = false,
 
     // Reference Framework & Wisdom Cards
     val preferredFramework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
@@ -2345,6 +2347,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
             showNotification("✨ Plantillas de recordatorios programables cargadas")
         }
+    }
+
+    fun togglePrivacyPolicy(visible: Boolean) {
+        _uiState.update { it.copy(isPrivacyPolicyVisible = visible) }
+    }
+
+    fun toggleTermsConditions(visible: Boolean) {
+        _uiState.update { it.copy(isTermsConditionsVisible = visible) }
     }
 
     companion object {

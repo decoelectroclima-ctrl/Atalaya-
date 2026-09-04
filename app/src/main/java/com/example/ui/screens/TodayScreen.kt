@@ -120,6 +120,65 @@ fun TodayScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
     ) {
+        // Subtle config status indicator
+        item {
+            val modelState by com.example.ai.OnDeviceModelManager.modelState.collectAsState()
+            when (val state = modelState) {
+                is com.example.ai.OnDeviceModelManager.ModelState.Downloading -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = SoltarSurfaceElevated,
+                        border = BorderStroke(1.dp, SoltarBorder)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Configurando experiencia...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary
+                            )
+                            Text(
+                                text = "${(state.progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                is com.example.ai.OnDeviceModelManager.ModelState.Ready -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF10B981))
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "IA Activa",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+                else -> {}
+            }
+        }
+
         // Adaptive Vulnerability Mode Banner (100% Real, Multi-Variable Assessment)
         item {
             val realAssessment by viewModel.realVulnerabilityAssessment.collectAsState()

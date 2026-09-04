@@ -150,6 +150,51 @@ fun OnboardingScreen(
                 }
             }
 
+            val modelState by com.example.ai.OnDeviceModelManager.modelState.collectAsState()
+            if (modelState is com.example.ai.OnDeviceModelManager.ModelState.Downloading) {
+                val progress = (modelState as com.example.ai.OnDeviceModelManager.ModelState.Downloading).progress
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isIntroPage) Color(0xFFF3EFEA) else SoltarSurfaceElevated,
+                    border = BorderStroke(1.dp, if (isIntroPage) Color(0xFFE5DDD0) else SoltarBorder)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Configurando tu experiencia...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isIntroPage) Color(0xFF5A4A42) else SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "${(progress * 100).toInt()}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isIntroPage) Color(0xFF5A4A42) else SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp)),
+                            color = if (isIntroPage) Color(0xFF8F1825) else SoltarAmber,
+                            trackColor = if (isIntroPage) Color(0xFFE2DCD3) else SoltarBackground
+                        )
+                    }
+                }
+            }
+
             // Main Animated Content
             Box(
                 modifier = Modifier

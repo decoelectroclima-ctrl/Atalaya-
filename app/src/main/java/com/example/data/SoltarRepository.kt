@@ -271,4 +271,73 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     suspend fun getAllRiskDatesOnce(): List<RiskDateEntity> {
         return database.riskDateDao().getAllRiskDatesOnce()
     }
+
+    suspend fun getUnifiedUserContext(): UnifiedUserContext {
+        val settings = getSettingsOnce()
+        val frameworkKey = settings?.preferredFramework ?: "PSICOLOGIA_MODERNA"
+        val framework = SoltarFramework.fromKey(frameworkKey)
+        val breakupTs = settings?.breakupDateTimestamp ?: (System.currentTimeMillis() - (14L * 24 * 3600 * 1000))
+        val totalDays = ((System.currentTimeMillis() - breakupTs) / (24L * 3600 * 1000)).coerceAtLeast(0L).toInt()
+        val currentStreak = totalDays
+
+        val checkins = database.checkinDao().getRecentCheckins(5)
+        val trendSummary = if (checkins.isEmpty()) {
+            "Sin registros recientes de check-in."
+        } else {
+            val avgPain = checkins.map { it.pain }.average()
+            val avgUrge = checkins.map { it.urgeToContact }.average()
+            "Dolor promedio reciente: ${String.format(java.util.Locale.US, "%.1f", avgPain)}/10, Urgencia de contacto promedio: ${String.format(java.util.Locale.US, "%.1f", avgUrge)}/10."
+        }
+
+        val relapses = database.relapseDao().getAllRelapsesOnce()
+        val lastRelapse = relapses.firstOrNull()
+
+        val riskDates = database.riskDateDao().getAllRiskDatesOnce()
+        val now = System.currentTimeMillis()
+        val upcomingRisk = riskDates.mapNotNull { rd ->
+            val cal = java.util.Calendar.getInstance()
+            cal.set(java.util.Calendar.MONTH, rd.month - 1)
+            cal.set(java.util.Calendar.DAY_OF_MONTH, rd.day)
+            var riskTs = cal.timeInMillis
+            if (riskTs < now - (24 * 3600 * 1000L)) {
+                cal.add(java.util.Calendar.YEAR, 1)
+                riskTs = cal.timeInMillis
+            }
+            val days = ((riskTs - now) / (24L * 3600 * 1000L)).toInt()
+            if (days in 0..7) rd to days else null
+        }.minByOrNull { it.second }
+
+        val letters = database.unsentLetterDao().getAllLettersOnce()
+        val hasCompletedClosingRitual = letters.any { it.isClosed }
+
+        val vulnerabilityAssessment = com.example.ai.VulnerabilityAndEvolutionEngine.calculateRealVulnerability(
+            currentTime = now,
+            breakupDateTimestamp = breakupTs,
+            checkins = checkins,
+            journalEntries = emptyList(),
+            urgeEpisodes = emptyList(),
+            thoughts = emptyList(),
+            relapses = relapses,
+            riskDates = riskDates,
+            audits = emptyList(),
+            idealizations = emptyList()
+        )
+
+        val progressStageName = "Fase ${com.example.ui.managers.ProgressManager.calculateProgressStage(totalDays)}"
+
+        return UnifiedUserContext(
+            currentStreak = currentStreak,
+            totalDays = totalDays,
+            progressStage = progressStageName,
+            vulnerabilityScore = vulnerabilityAssessment.score,
+            lastRelapseDate = lastRelapse?.timestamp,
+            lastRelapseTrigger = lastRelapse?.trigger,
+            lastRelapseInterpretation = lastRelapse?.interpretation,
+            upcomingRiskTitle = upcomingRisk?.first?.title,
+            daysUntilRisk = upcomingRisk?.second,
+            hasCompletedClosingRitual = hasCompletedClosingRitual,
+            checkinTrendSummary = trendSummary,
+            framework = framework
+        )
+    }
 }

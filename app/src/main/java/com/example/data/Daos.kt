@@ -82,6 +82,9 @@ interface UnsentLetterDao {
     @Query("SELECT * FROM unsent_letters ORDER BY timestamp DESC")
     fun getAllLetters(): Flow<List<UnsentLetterEntity>>
 
+    @Query("SELECT * FROM unsent_letters ORDER BY timestamp DESC")
+    suspend fun getAllLettersOnce(): List<UnsentLetterEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLetter(letter: UnsentLetterEntity): Long
 
@@ -138,6 +141,9 @@ interface IdentityGoalDao {
 interface RelapseDao {
     @Query("SELECT * FROM relapse_logs ORDER BY timestamp DESC")
     fun getAllRelapses(): Flow<List<RelapseEntity>>
+
+    @Query("SELECT * FROM relapse_logs ORDER BY timestamp DESC")
+    suspend fun getAllRelapsesOnce(): List<RelapseEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRelapse(relapse: RelapseEntity): Long

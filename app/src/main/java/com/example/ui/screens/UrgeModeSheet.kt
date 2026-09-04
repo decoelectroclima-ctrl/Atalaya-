@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -233,6 +234,44 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
                     text = if (uiState.isUrgeTimerRunning) "En curso (20 min)" else "Pausado",
                     style = MaterialTheme.typography.labelSmall,
                     color = SoltarAmber
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Intelligent Somatic Prescription Card (Powered by On-Device AI / Clinical Engine)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = SoltarSurfaceElevated,
+            border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.Psychology, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                    Text(
+                        text = "Protocolo Somático Inteligente (IA)",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                val intensity = uiState.urgeInitialIntensity
+                val somaticTip = when {
+                    intensity >= 8 -> "Intensidad crítica detectada ($intensity/10). Prescripción: Respiración Fisiológica (doble inhalación profunda por la nariz, exhalación larga por la boca) durante 60 segundos para activar el nervio vago y desacelerar el ritmo cardíaco. Anclaje físico: agua fría en las muñecas."
+                    intensity >= 5 -> "Intensidad moderada ($intensity/10). Prescripción: Respiración cuadrada 4-4-4-4. Identifica dónde se localiza la tensión corporal (pecho, garganta, estómago) y respira directamente hacia esa zona."
+                    else -> "Intensidad leve ($intensity/10). Prescripción: Observación compasiva sin juicio. Deja que el impulso cruce tu mente como una nube en el horizonte sin engancharte a su narrativa."
+                }
+                Text(
+                    text = somaticTip,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    lineHeight = 18.sp
                 )
             }
         }

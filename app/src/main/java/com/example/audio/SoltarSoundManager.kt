@@ -213,11 +213,11 @@ object SoltarSoundManager {
             if (i < thud1End) {
                 val t1 = i.toDouble() / sampleRate
                 val decay = exp(-35.0 * t1)
-                sample += (sin(2.0 * PI * 68.0 * t1) * 0.8 + sin(2.0 * PI * 136.0 * t1) * 0.3) * decay * 18000.0
+                sample += (sin(2.0 * PI * 68.0 * t1) * 0.8 + sin(2.0 * PI * 136.0 * t1) * 0.3) * decay * 31000.0
             } else if (i >= gapEnd && i < thud2End) {
                 val t2 = (i - gapEnd).toDouble() / sampleRate
                 val decay = exp(-45.0 * t2)
-                sample += (sin(2.0 * PI * 85.0 * t2) * 0.7 + sin(2.0 * PI * 170.0 * t2) * 0.25) * decay * 15000.0
+                sample += (sin(2.0 * PI * 85.0 * t2) * 0.7 + sin(2.0 * PI * 170.0 * t2) * 0.25) * decay * 28000.0
             }
 
             buffer[i] = sample.coerceIn(-32767.0, 32767.0).toInt().toShort()

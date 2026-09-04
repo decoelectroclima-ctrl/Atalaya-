@@ -134,8 +134,13 @@ object OnDeviceModelManager {
 
                             _modelState.value = ModelState.Ready(modelFile)
                             OnDeviceLlmEngine.setModelReady(true)
+                            try {
+                                com.example.notifications.SoltarNotificationHelper.showAppReadyNotification(context)
+                            } catch (_: Exception) {}
                         } else {
-                            _modelState.value = ModelState.Error("No se pudo renombrar el archivo del modelo.")
+                            val modelFileFallback = File(context.filesDir, MODEL_FILE_NAME)
+                            _modelState.value = ModelState.Disconnected(modelFileFallback)
+                            OnDeviceLlmEngine.setModelReady(false)
                         }
                     } finally {
                         input?.close()
@@ -143,10 +148,14 @@ object OnDeviceModelManager {
                         connection.disconnect()
                     }
                 } else {
-                    _modelState.value = ModelState.Error("HTTP Error: ${connection.responseCode}")
+                    val modelFileFallback = File(context.filesDir, MODEL_FILE_NAME)
+                    _modelState.value = ModelState.Disconnected(modelFileFallback)
+                    OnDeviceLlmEngine.setModelReady(false)
                 }
-            } catch (e: Exception) {
-                _modelState.value = ModelState.Error(e.localizedMessage ?: "Error de descarga del modelo")
+            } catch (_: Exception) {
+                val modelFileFallback = File(context.filesDir, MODEL_FILE_NAME)
+                _modelState.value = ModelState.Disconnected(modelFileFallback)
+                OnDeviceLlmEngine.setModelReady(false)
             } finally {
                 isDownloading = false
             }

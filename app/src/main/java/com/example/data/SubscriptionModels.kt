@@ -86,7 +86,7 @@ data class UserEntitlements(
                 isPremium = isPrem,
                 tier = plan,
                 isTrial = isTrial,
-                maxDailyCoachMessages = if (isPrem) Int.MAX_VALUE else 5,
+                maxDailyCoachMessages = Int.MAX_VALUE, // AI coach is free and unlimited for all users
                 canAccessAllLabs = isPrem,
                 canAccessDeepMemory = isPrem,
                 canExportDataReport = isPrem,

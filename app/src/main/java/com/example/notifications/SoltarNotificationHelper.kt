@@ -883,4 +883,33 @@ object SoltarNotificationHelper {
             NotificationManagerCompat.from(context).notify(1005, notification)
         } catch (_: SecurityException) {}
     }
+
+    fun showAppReadyNotification(context: Context) {
+        if (!hasNotificationPermission(context)) return
+        createNotificationChannels(context)
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            3001,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_MILESTONES)
+            .setSmallIcon(R.drawable.ic_stat_soltar)
+            .setContentTitle("ADRIANA")
+            .setContentText("ADRIANA está lista para acompañarte.")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("ADRIANA está lista para acompañarte."))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(context).notify(3001, notification)
+        } catch (_: SecurityException) {}
+    }
 }

@@ -323,6 +323,18 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    if (uiState.isPrivacyPolicyVisible) {
+                        PrivacyPolicyScreen(
+                            onBack = { viewModel.togglePrivacyPolicy(false) }
+                        )
+                    }
+
+                    if (uiState.isTermsConditionsVisible) {
+                        TermsAndConditionsScreen(
+                            onBack = { viewModel.toggleTermsConditions(false) }
+                        )
+                    }
+
                     // Global Contextual Sheets & Dialogs
                     if (uiState.isNeedHelpSheetVisible) {
                         NeedHelpSheet(
