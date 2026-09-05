@@ -18,8 +18,8 @@ android {
     applicationId = "com.aistudio.atalaya.kxmpzq"
     minSdk = 24
     targetSdk = 36
-    versionCode = 130
-    versionName = "130.0"
+    versionCode = 133
+    versionName = "133.0"
 
     val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: ""
     buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
