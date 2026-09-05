@@ -31,6 +31,44 @@ object OnDeviceLlmEngine {
         isModelReady = ready
     }
 
+    fun isReady(): Boolean = isModelReady
+
+    fun generate(
+        prompt: String,
+        framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
+        userContext: SoltarUserContext = SoltarUserContext(),
+        capsule: KnowledgeCapsule? = null,
+        history: List<Pair<String, String>> = emptyList()
+    ): String {
+        val name = if (userContext.userName.isNotBlank() && userContext.userName != "Viajero") userContext.userName else "amigo/a"
+        val lowerPrompt = prompt.lowercase(Locale.getDefault())
+
+        val variantText = when (framework) {
+            SoltarFramework.ESTOICO -> "Recuerda que la verdadera fortaleza radica en tu capacidad de distinguir lo que depende de ti y lo que no. Mantén tu mente rectora firme."
+            SoltarFramework.CATOLICO -> "Entrega tu carga con confianza y permite que la fe sea tu refugio en este momento de prueba. No estás solo."
+            SoltarFramework.PSICOLOGIA_MODERNA -> "Valida lo que sientes sin permitir que la urgencia domine tus decisiones. Cada paso en este proceso afianza tu autonomía."
+        }
+
+        val quote = capsule?.quoteOrSource?.let { " Como reflexionaba ${capsule.author}, «$it»." } ?: ""
+        val socratic = capsule?.socraticPrompt?.let { " Pregúntate con honestidad: ¿${it.removeSuffix("?")}?" } ?: ""
+        val action = capsule?.concreteAction?.let { " Para hoy, te invito a ${it.lowercase(Locale.getDefault())}." } ?: ""
+
+        return buildString {
+            append("Hola, $name. ")
+            if (lowerPrompt.contains("triste") || lowerPrompt.contains("llorar") || lowerPrompt.contains("dolor")) {
+                append("Es completamente natural que hoy notes la herida más sensible. ")
+            } else if (lowerPrompt.contains("ansiedad") || lowerPrompt.contains("nervios")) {
+                append("Detente un segundo, respira hondo y suelta la tensión de los hombros. ")
+            } else {
+                append("Te escucho con atención y respeto por tu proceso. ")
+            }
+            append(variantText)
+            append(quote)
+            append(socratic)
+            append(action)
+        }.trim()
+    }
+
     data class ClosingRitualStepAi(
         val stepNumber: Int,
         val phaseName: String,

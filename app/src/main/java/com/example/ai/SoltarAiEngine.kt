@@ -266,7 +266,43 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
 
         val isRumination = detectRuminationPattern(cleanInput, conversationHistory.size)
 
-        // 2. Intentar llamar a Gemini con el súper contexto si hay API Key disponible
+        // 2. Comprobar OnDeviceLlmEngine (Motor On-Device de Alta Prioridad)
+        if (OnDeviceLlmEngine.isReady()) {
+            try {
+                val capsule = ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
+                val prompt = buildString {
+                    append("Mensaje del usuario: $cleanInput\n")
+                    append("Historial reciente:\n")
+                    conversationHistory.takeLast(5).forEach { (sender, msg) ->
+                        append("- $sender: $msg\n")
+                    }
+                    append("Marco: ${framework.name} (${framework.title})\n")
+                    append("Contexto de usuario:\n${userContext.toClinicalSummary()}\n")
+                    append("Cápsula clínica de referencia:\n")
+                    append("- Título: ${capsule.title}\n")
+                    append("- Autor: ${capsule.author}\n")
+                    append("- Principio: ${capsule.quoteOrSource}\n")
+                    append("- Diagnóstico: ${capsule.diagnosisPrinciple}\n")
+                    append("- Guía: ${capsule.clinicalGuidance}\n")
+                    append("- Pregunta socrática: ${capsule.socraticPrompt}\n")
+                    append("- Micro-acción: ${capsule.concreteAction}\n")
+                }
+
+                val replyText = OnDeviceLlmEngine.generate(prompt, framework, userContext, capsule, conversationHistory)
+                if (replyText.isNotBlank()) {
+                    return@withContext SoltarAiResponse(
+                        replyText = replyText.trim(),
+                        isRuminationDetected = isRumination,
+                        stateDetected = if (isRumination) "DEJAR_DE_PERSEGUIR" else "COMPRENDER",
+                        suggestedAction = capsule.concreteAction
+                    )
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "OnDeviceLlmEngine generation failed, falling back to online/local engine", e)
+            }
+        }
+
+        // 3. Intentar llamar a Gemini con el súper contexto si hay API Key disponible
         val apiKey = try {
             BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
         } catch (_: Exception) {
