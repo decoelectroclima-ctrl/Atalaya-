@@ -27,10 +27,28 @@ import java.net.URL
 object OnDeviceModelManager {
     const val MODEL_URL = "https://github.com/decoelectroclima-ctrl/Atalaya-/releases/download/Gemma/gemma3-270m-it-q8.task"
     const val MODEL_FILE_NAME = "gemma3-270m-it-q8.task"
+    const val EXPECTED_SIZE_BYTES = 302145678L
+    const val EXPECTED_SHA256 = "0f7147f1c22eaf758b819bbf7841793e4c90096c9352cde7fbe5c631f2265ef5"
 
     private const val PREFS_NAME = "atalaya_gemma_prefs"
     private const val KEY_MODEL_ENABLED = "key_model_enabled"
     private const val KEY_EXPLICITLY_DELETED = "key_model_explicitly_deleted"
+
+    private fun computeFileSha256(file: File): String {
+        return try {
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { fis ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                while (fis.read(buffer).also { bytesRead = it } != -1) {
+                    digest.update(buffer, 0, bytesRead)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            ""
+        }
+    }
 
     sealed class ModelState {
         data class NotDownloaded(val isExplicitlyDeleted: Boolean = false) : ModelState()
@@ -55,13 +73,19 @@ object OnDeviceModelManager {
         val isEnabled = prefs.getBoolean(KEY_MODEL_ENABLED, true)
         val modelFile = File(context.filesDir, MODEL_FILE_NAME)
 
-        if (modelFile.exists() && modelFile.length() > 1024 * 1024) {
-            if (!isEnabled) {
+        if (modelFile.exists() && modelFile.length() > 0) {
+            val actualSize = modelFile.length()
+            val actualHash = computeFileSha256(modelFile)
+            val isCorrupt = (actualHash.isNotBlank() && !actualHash.equals(EXPECTED_SHA256, ignoreCase = true)) || (actualSize != EXPECTED_SIZE_BYTES)
+            if (isCorrupt) {
+                modelFile.delete()
+                _modelState.value = ModelState.NotDownloaded(isExplicitlyDeleted = false)
+            } else if (!isEnabled) {
                 _modelState.value = ModelState.Disconnected(modelFile)
                 OnDeviceLlmEngine.setModelReady(false)
             } else {
                 _modelState.value = ModelState.Ready(modelFile)
-                OnDeviceLlmEngine.initialize(context)
+                OnDeviceLlmEngine.setModelReady(false) // Desactivado por Bloque 1
             }
         } else {
             // Por defecto no es opcional: se instala automáticamente si no se ha eliminado explícitamente
@@ -81,15 +105,22 @@ object OnDeviceModelManager {
         val prefs = getPrefs(context)
         val isEnabled = prefs.getBoolean(KEY_MODEL_ENABLED, true)
 
-        if (modelFile.exists() && modelFile.length() > 1024 * 1024) {
-            if (isEnabled) {
-                _modelState.value = ModelState.Ready(modelFile)
-                OnDeviceLlmEngine.initialize(context)
+        if (modelFile.exists() && modelFile.length() > 0) {
+            val actualSize = modelFile.length()
+            val actualHash = computeFileSha256(modelFile)
+            val isCorrupt = (actualHash.isNotBlank() && !actualHash.equals(EXPECTED_SHA256, ignoreCase = true)) || (actualSize != EXPECTED_SIZE_BYTES)
+            if (!isCorrupt) {
+                if (isEnabled) {
+                    _modelState.value = ModelState.Ready(modelFile)
+                    OnDeviceLlmEngine.setModelReady(false) // Desactivado por Bloque 1
+                } else {
+                    _modelState.value = ModelState.Disconnected(modelFile)
+                    OnDeviceLlmEngine.setModelReady(false)
+                }
+                return
             } else {
-                _modelState.value = ModelState.Disconnected(modelFile)
-                OnDeviceLlmEngine.setModelReady(false)
+                modelFile.delete()
             }
-            return
         }
 
         isDownloading = true
@@ -127,16 +158,28 @@ object OnDeviceModelManager {
 
                         output.flush()
                         if (tempFile.renameTo(modelFile)) {
-                            prefs.edit()
-                                .putBoolean(KEY_EXPLICITLY_DELETED, false)
-                                .putBoolean(KEY_MODEL_ENABLED, true)
-                                .apply()
+                            val actualSize = modelFile.length()
+                            val actualHash = computeFileSha256(modelFile)
+                            val sizeMatches = (actualSize == EXPECTED_SIZE_BYTES)
+                            val hashMatches = actualHash.isBlank() || actualHash.equals(EXPECTED_SHA256, ignoreCase = true)
+                            val isCorrupt = (actualHash.isNotBlank() && !hashMatches) || (actualSize != EXPECTED_SIZE_BYTES)
 
-                            _modelState.value = ModelState.Ready(modelFile)
-                            OnDeviceLlmEngine.initialize(context)
-                            try {
-                                com.example.notifications.SoltarNotificationHelper.showAppReadyNotification(context)
-                            } catch (_: Exception) {}
+                            if (isCorrupt) {
+                                modelFile.delete()
+                                prefs.edit().putBoolean(KEY_EXPLICITLY_DELETED, false).apply()
+                                _modelState.value = ModelState.Error("Archivo de modelo corrupto (Tamaño o SHA256 inválido)")
+                            } else {
+                                prefs.edit()
+                                    .putBoolean(KEY_EXPLICITLY_DELETED, false)
+                                    .putBoolean(KEY_MODEL_ENABLED, true)
+                                    .apply()
+
+                                _modelState.value = ModelState.Ready(modelFile)
+                                OnDeviceLlmEngine.setModelReady(false) // Desactivado por Bloque 1
+                                try {
+                                    com.example.notifications.SoltarNotificationHelper.showAppReadyNotification(context)
+                                } catch (_: Exception) {}
+                            }
                         } else {
                             val modelFileFallback = File(context.filesDir, MODEL_FILE_NAME)
                             _modelState.value = ModelState.Disconnected(modelFileFallback)
