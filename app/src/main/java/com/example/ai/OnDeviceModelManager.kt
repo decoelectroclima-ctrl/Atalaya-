@@ -61,7 +61,7 @@ object OnDeviceModelManager {
                 OnDeviceLlmEngine.setModelReady(false)
             } else {
                 _modelState.value = ModelState.Ready(modelFile)
-                OnDeviceLlmEngine.setModelReady(true)
+                OnDeviceLlmEngine.initialize(context)
             }
         } else {
             // Por defecto no es opcional: se instala automáticamente si no se ha eliminado explícitamente
@@ -84,7 +84,7 @@ object OnDeviceModelManager {
         if (modelFile.exists() && modelFile.length() > 1024 * 1024) {
             if (isEnabled) {
                 _modelState.value = ModelState.Ready(modelFile)
-                OnDeviceLlmEngine.setModelReady(true)
+                OnDeviceLlmEngine.initialize(context)
             } else {
                 _modelState.value = ModelState.Disconnected(modelFile)
                 OnDeviceLlmEngine.setModelReady(false)
@@ -133,7 +133,7 @@ object OnDeviceModelManager {
                                 .apply()
 
                             _modelState.value = ModelState.Ready(modelFile)
-                            OnDeviceLlmEngine.setModelReady(true)
+                            OnDeviceLlmEngine.initialize(context)
                             try {
                                 com.example.notifications.SoltarNotificationHelper.showAppReadyNotification(context)
                             } catch (_: Exception) {}
@@ -194,7 +194,7 @@ object OnDeviceModelManager {
         val modelFile = File(context.filesDir, MODEL_FILE_NAME)
         if (modelFile.exists() && modelFile.length() > 1024 * 1024) {
             _modelState.value = ModelState.Ready(modelFile)
-            OnDeviceLlmEngine.setModelReady(true)
+            OnDeviceLlmEngine.initialize(context)
         } else {
             startDownloadInBackground(context)
         }
@@ -241,4 +241,6 @@ object OnDeviceModelManager {
     fun isModelConnected(context: Context): Boolean {
         return getPrefs(context).getBoolean(KEY_MODEL_ENABLED, true)
     }
+
+    fun getModelFile(context: Context): File = File(context.filesDir, MODEL_FILE_NAME)
 }

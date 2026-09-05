@@ -18,8 +18,8 @@ android {
     applicationId = "com.aistudio.atalaya.kxmpzq"
     minSdk = 24
     targetSdk = 36
-    versionCode = 127
-    versionName = "127.0"
+    versionCode = 129
+    versionName = "129.0"
 
     val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: ""
     buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
@@ -102,6 +102,7 @@ dependencies {
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
+  implementation("com.google.mediapipe:tasks-genai:0.10.27")
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
 

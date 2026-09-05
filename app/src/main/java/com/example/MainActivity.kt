@@ -55,6 +55,7 @@ class MainActivity : ComponentActivity() {
         com.example.notifications.SoltarNotificationHelper.rescheduleFromSettings(this)
         com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(this)
         com.example.ai.OnDeviceModelManager.init(this)
+        com.example.ai.OnDeviceLlmEngine.initialize(applicationContext)
 
         handleIntent(intent)
 
