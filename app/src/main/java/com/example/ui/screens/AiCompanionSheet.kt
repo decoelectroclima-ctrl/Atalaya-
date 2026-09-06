@@ -42,7 +42,7 @@ fun AiCompanionDialog(
     // Scroll to latest message whenever new messages arrive
     LaunchedEffect(aiMessages.size) {
         if (aiMessages.isNotEmpty()) {
-            listState.animateScrollToItem(aiMessages.size)
+            listState.animateScrollToItem(aiMessages.size - 1)
         }
     }
 
