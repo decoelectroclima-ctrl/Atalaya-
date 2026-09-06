@@ -147,6 +147,7 @@ Contexto del usuario → Formulación contextual → Hipótesis de trabajo → I
 5. **PROHIBIDO ESPIONAJE DIGITAL:** Jamás valides revisar perfiles, redes, estados o conexiones. Higiene digital absoluta.
 6. **NO ALIMENTAR FALSAS ESPERANZAS:** El contacto cero busca la paz y dignidad del usuario, no manipular al otro para que regrese.
 7. **RECOMENDACIÓN PROFESIONAL:** Reconoce los límites del sistema y recomienda ayuda psicoterapéutica presencial cuando el contexto clínico lo requiera.
+8. **RESTRICCIÓN DE APLICACIÓN CLÍNICA:** No apliques el flujo clínico completo (Contexto → Formulación → Hipótesis → Intervención → Herramienta → Seguimiento) a mensajes casuales, saludos o preguntas directas sobre el propio sistema. Reserva ese marco para contenido genuinamente relacionado con el proceso emocional del usuario.
     """.trimIndent()
 
     private val SYSTEM_PROMPT_COACH_LIFE = """
@@ -232,6 +233,41 @@ ${userContext.toClinicalSummary()}
         return matchesKeyword || (messageCount >= 3 && (lower.contains("ex") || lower.contains("él") || lower.contains("ella")))
     }
 
+    enum class MessageIntent {
+        SALUDO_O_CASUAL,
+        PREGUNTA_META,
+        CONTENIDO_EMOCIONAL
+    }
+
+    fun classifyMessageIntent(input: String): MessageIntent {
+        val lower = input.lowercase().trim()
+        
+        val greetings = listOf(
+            "hola", "buenas", "buenos días", "buenos dias", "buenas tardes", "buenas noches",
+            "qué tal", "que tal", "cómo estás", "como estas", "hey", "saludos",
+            "gracias", "muchas gracias", "adiós", "adios", "hasta luego", "nos vemos",
+            "ok", "vale", "entendido", "perfecto", "gracias por todo"
+        )
+        if (greetings.any { lower == it || lower.startsWith("$it ") || lower.endsWith(" $it") || (lower.length <= 20 && greetings.contains(lower)) }) {
+            return MessageIntent.SALUDO_O_CASUAL
+        }
+        
+        val metaKeywords = listOf(
+            "qué ia", "que ia", "quién eres", "quien eres", "cómo funcionas", "como funcionas",
+            "qué modelo", "que modelo", "quién te programó", "quien te programo", "eres real",
+            "eres un robot", "eres inteligencia artificial", "qué eres", "que eres",
+            "cómo te llamas", "como te llamas", "quién te creó", "quien te creo",
+            "dónde corres", "donde corres", "tu base de datos", "código", "privacidad",
+            "quién es adriana", "quien es adriana", "qué es atalaya", "que es atalaya",
+            "quién es foco", "quien es foco", "qué usas", "que usas"
+        )
+        if (metaKeywords.any { lower.contains(it) }) {
+            return MessageIntent.PREGUNTA_META
+        }
+        
+        return MessageIntent.CONTENIDO_EMOCIONAL
+    }
+
     suspend fun generateResponse(
         userMessage: String,
         conversationHistory: List<Pair<String, String>> = emptyList(),
@@ -264,12 +300,16 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
             )
         }
 
+        val intent = classifyMessageIntent(cleanInput)
         val isRumination = detectRuminationPattern(cleanInput, conversationHistory.size)
 
         // 2. Comprobar OnDeviceLlmEngine (Motor On-Device de Alta Prioridad)
         if (OnDeviceLlmEngine.isReady()) {
             try {
-                val capsule = ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
+                val capsule = if (intent == MessageIntent.CONTENIDO_EMOCIONAL) {
+                    ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
+                } else null
+
                 val prompt = buildString {
                     append("Mensaje del usuario: $cleanInput\n")
                     append("Historial reciente:\n")
@@ -278,14 +318,20 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
                     }
                     append("Marco: ${framework.name} (${framework.title})\n")
                     append("Contexto de usuario:\n${userContext.toClinicalSummary()}\n")
-                    append("Cápsula clínica de referencia:\n")
-                    append("- Título: ${capsule.title}\n")
-                    append("- Autor: ${capsule.author}\n")
-                    append("- Principio: ${capsule.quoteOrSource}\n")
-                    append("- Diagnóstico: ${capsule.diagnosisPrinciple}\n")
-                    append("- Guía: ${capsule.clinicalGuidance}\n")
-                    append("- Pregunta socrática: ${capsule.socraticPrompt}\n")
-                    append("- Micro-acción: ${capsule.concreteAction}\n")
+                    if (intent == MessageIntent.SALUDO_O_CASUAL) {
+                        append("Instrucción: El usuario ha enviado un saludo o comentario casual. Responde de forma breve, cálida y natural (1 a 3 frases). No apliques ningún marco terapéutico, no hagas preguntas de indagación, no ofrezcas acciones concretas — es solo una conversación casual.\n")
+                    } else if (intent == MessageIntent.PREGUNTA_META) {
+                        append("Instrucción: El usuario pregunta sobre ti o la aplicación en sí. Responde con transparencia y brevedad sobre quién eres y cómo funcionas, sin desviar la respuesta hacia un tema emocional que el usuario no ha planteado.\n")
+                    } else if (capsule != null) {
+                        append("Cápsula clínica de referencia:\n")
+                        append("- Título: ${capsule.title}\n")
+                        append("- Autor: ${capsule.author}\n")
+                        append("- Principio: ${capsule.quoteOrSource}\n")
+                        append("- Diagnóstico: ${capsule.diagnosisPrinciple}\n")
+                        append("- Guía: ${capsule.clinicalGuidance}\n")
+                        append("- Pregunta socrática: ${capsule.socraticPrompt}\n")
+                        append("- Micro-acción: ${capsule.concreteAction}\n")
+                    }
                 }
 
                 val replyText = OnDeviceLlmEngine.generate(prompt, framework, userContext, capsule, conversationHistory)
@@ -293,8 +339,8 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
                     return@withContext SoltarAiResponse(
                         replyText = replyText.trim(),
                         isRuminationDetected = isRumination,
-                        stateDetected = if (isRumination) "DEJAR_DE_PERSEGUIR" else "COMPRENDER",
-                        suggestedAction = capsule.concreteAction
+                        stateDetected = if (intent == MessageIntent.CONTENIDO_EMOCIONAL && isRumination) "DEJAR_DE_PERSEGUIR" else "COMPRENDER",
+                        suggestedAction = capsule?.concreteAction ?: ""
                     )
                 }
             } catch (e: Exception) {
@@ -317,11 +363,33 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
 
         if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
             try {
-                val capsule = ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
-                val systemPrompt = """
-${buildPromptWithFramework(framework, userContext)}
-${if (systemInstruction != null) "\n## INSTRUCCIÓN ADICIONAL PARA SIMULACRO:\n$systemInstruction\n" else ""}
+                val capsule = if (intent == MessageIntent.CONTENIDO_EMOCIONAL) {
+                    ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
+                } else null
 
+                val systemPrompt = buildString {
+                    append("${buildPromptWithFramework(framework, userContext)}\n")
+                    if (systemInstruction != null) {
+                        append("\n## INSTRUCCIÓN ADICIONAL PARA SIMULACRO:\n$systemInstruction\n")
+                    }
+
+                    if (intent == MessageIntent.SALUDO_O_CASUAL) {
+                        append("""
+## INSTRUCCIÓN PARA MENSAJE CASUAL / SALUDO:
+El usuario ha enviado un saludo o comentario casual ("$cleanInput").
+Responde de forma breve, cálida y natural (1 a 3 frases máximo), como en una conversación real con ${userContext.userName}.
+REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siempre al usuario por su nombre (${userContext.userName}).
+NO apliques ningún marco terapéutico, NO inyectes cápsulas clínicas, NO hagas preguntas de indagación profunda y NO ofrezcas acciones concretas. Es solo una conversación casual y ligera.
+                        """.trimIndent())
+                    } else if (intent == MessageIntent.PREGUNTA_META) {
+                        append("""
+## INSTRUCCIÓN PARA PREGUNTA META / SOBRE EL SISTEMA:
+El usuario está preguntando sobre el sistema, la IA o la aplicación en sí ("$cleanInput").
+Eres FOCO, el coach personal de ${userContext.userName} en Factor / Recuerda, un asistente de IA inteligente diseñado para acompañar en este proceso. Responde con transparencia, claridad y brevedad sobre quién eres y cómo funcionas (corres de forma segura, estás integrado en la app, etc.), sin inventar especificaciones técnicas falsas y sin desviar la respuesta hacia un duelo emocional que el usuario no ha planteado.
+REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siempre al usuario por su nombre (${userContext.userName}).
+                        """.trimIndent())
+                    } else if (capsule != null) {
+                        append("""
 ## CÁPSULA DE CONOCIMIENTO RELEVANTE PARA ESTA INTERVENCIÓN:
 • Título: ${capsule.title}
 • Autor/Referente: ${capsule.author}
@@ -337,7 +405,9 @@ REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siem
 Escribe un mensaje de chat breve, cálido y 100% conversacional (3 a 5 frases en total), como alguien que le conoce bien y lleva ${userContext.streakDays} días de proceso.
 PROHIBIDO USAR BLOQUES ESTRUCTURADOS, listas con viñetas, encabezados en negrita o emojis como "Principio Rector", "Pregunta de Autoindagación" o "Paso de Acción Inmediata".
 Integra de forma fluida y natural la reflexión central, una referencia sutil a la sabiduría de ${capsule.author} si aporta valor, una pregunta socrática y una micro-acción como parte del propio consejo conversacional.
-                """.trimIndent()
+                        """.trimIndent())
+                    }
+                }
 
                 val jsonBody = JSONObject().apply {
                     val contents = JSONArray().apply {
@@ -375,7 +445,7 @@ Integra de forma fluida y natural la reflexión central, una referencia sutil a 
                                 replyText = text.trim(),
                                 isRuminationDetected = isRumination,
                                 stateDetected = if (isRumination) "DEJAR_DE_PERSEGUIR" else "COMPRENDER",
-                                suggestedAction = capsule.concreteAction
+                                suggestedAction = capsule?.concreteAction ?: ""
                             )
                         }
                     }
