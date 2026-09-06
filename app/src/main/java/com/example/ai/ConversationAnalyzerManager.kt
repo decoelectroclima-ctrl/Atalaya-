@@ -10,33 +10,9 @@ class ConversationAnalyzerManager(
     // Analiza un texto de conversación buscando patrones de manipulación, gaslighting, etc.
     // Utiliza el engine existente para la razonamiento clínico local.
     suspend fun analyzeConversation(text: String): AnalysisResult {
-        val prompt = """
-            Analiza el siguiente texto de conversación buscando patrones como:
-            - Manipulación
-            - Gaslighting
-            - Comportamiento hot-and-cold
-            - Luz intermitente
-            - Control coercitivo
-            - Contradicciones
-            - Invalidación
-            
-            Diferencia claramente entre HECHOS OBSERVABLES e INTERPRETACIONES POSIBLES.
-            No diagnostiques a la persona ausente. Usa un lenguaje cauteloso.
-            
-            Texto:
-            $text
-        """.trimIndent()
-
-        // Usamos valores por defecto seguros ya que este análisis es independiente
-        val response = aiEngine.executeAdvancedLocalClinicalReasoning(
-            input = text,
-            isRumination = false,
-            framework = com.example.data.SoltarFramework.PSICOLOGIA_MODERNA,
-            userContext = com.example.ai.SoltarUserContext()
-        )
-        
+        val analysis = aiEngine.analyzeConversationText(text)
         return AnalysisResult(
-            rawAnalysis = response.replyText,
+            rawAnalysis = analysis,
             timestamp = System.currentTimeMillis()
         )
     }
