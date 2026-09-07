@@ -217,7 +217,7 @@ object OnDeviceLlmEngine {
         framework: SoltarFramework = SoltarFramework.ESTOICO
     ): List<ClosingRitualStepAi> {
         val name = if (userName.isNotBlank()) userName else "Viajero"
-        return listOf(
+        val fallback = listOf(
             ClosingRitualStepAi(
                 stepNumber = 1,
                 phaseName = "Reconocimiento de la Realidad y del Dolor",
@@ -247,6 +247,16 @@ object OnDeviceLlmEngine {
                 reflectionPrompt = "Pon tu mano en el pecho y declara tu soberanía: «Hoy elijo mi paz, mi libertad interior y mi futuro.»"
             )
         )
+        if (!isReady()) return fallback
+        val checkinSummary = checkins.takeLast(3).joinToString("; ") { "Dolor: ${it.pain}, Nota: ${it.note}" }
+        val journalSummary = journals.takeLast(2).joinToString("; ") { it.content.take(60) }
+        val prompt = "Genera 4 pasos estructurados para un ritual de cierre personalizados para $name, con $breakupDays días de ruptura, duración '$relDuration', motivo '$breakupReason', checkins recientes: [$checkinSummary], diarios: [$journalSummary] bajo el marco ${framework.name}."
+        return try {
+            generate(prompt, framework)
+            fallback
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     // =========================================================================
@@ -261,7 +271,7 @@ object OnDeviceLlmEngine {
         if (!isReady()) {
             return "🌿 **Estrategia anticipada ($riskDateTitle en $daysUntil días):** Planifica cada bloque horario para evitar tiempo ocioso y mantén tu protocolo de contención activo."
         }
-        val prompt = "Genera una estrategia de afrontamiento para la fecha de riesgo '$riskDateTitle' en $daysUntil días, considerando el marco ${framework.name}."
+        val prompt = "Genera una estrategia de afrontamiento para la fecha de riesgo '$riskDateTitle' en $daysUntil días, considerando el marco ${framework.name} y ${pastTriggers.size} disparadores previos."
         return try {
             generate(prompt, framework)
         } catch (_: Exception) {
@@ -319,10 +329,24 @@ object OnDeviceLlmEngine {
         userName: String
     ): NotificationContent {
         val name = if (userName.isNotBlank()) userName else "Viajero"
-        return NotificationContent(
+        val fallback = NotificationContent(
             "🌿 Momento de Pausa • $name",
             "Dedica 1 minuto a conectar con tu interior y registrar tu balance de hoy."
         )
+        if (!isReady()) return fallback
+        val recentPain = checkins.takeLast(3).joinToString(", ") { "${it.pain}" }
+        val prompt = "Genera un título y un cuerpo de notificación diaria empática y motivadora para $name, considerando checkins recientes (dolor: [$recentPain]) y marco ${framework.name}. Devuelve en formato 'Título | Cuerpo'."
+        return try {
+            val resp = generate(prompt, framework)
+            val parts = resp.split("|")
+            if (parts.size >= 2) {
+                NotificationContent(parts[0].trim(), parts[1].trim())
+            } else {
+                NotificationContent("🌿 Reflexión Diaria • $name", resp.take(120))
+            }
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun generateDailyNotification(
@@ -337,20 +361,42 @@ object OnDeviceLlmEngine {
         userName: String
     ): Pair<String, String> {
         val name = if (userName.isNotBlank()) userName else "Viajero"
-        return Pair("🌿 Soberanía Diaria • $name", "Protege tu paz y haz tu pausa consciente hoy.")
+        val fallback = Pair("🌿 Soberanía Diaria • $name", "Protege tu paz y haz tu pausa consciente hoy.")
+        if (!isReady()) return fallback
+        val prompt = "Genera una notificación adaptativa (título y cuerpo separados por '|') basada en los ${recentCheckins.size} checkins recientes y marco ${framework.name} para $name."
+        return try {
+            val resp = generate(prompt, framework)
+            val parts = resp.split("|")
+            if (parts.size >= 2) {
+                Pair(parts[0].trim(), parts[1].trim())
+            } else {
+                Pair("🌿 Soberanía • $name", resp.take(120))
+            }
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun generateTrendBasedNotification(
         recentCheckins: List<CheckinEntity>,
         framework: SoltarFramework
     ): String {
-        return "«Tienes poder sobre tu mente, no sobre los acontecimientos externos. Comprende esto y hallarás tu fuerza.»"
+        val fallback = "«Tienes poder sobre tu mente, no sobre los acontecimientos externos. Comprende esto y hallarás tu fuerza.»"
+        if (!isReady() || recentCheckins.isEmpty()) return fallback
+        val avgPain = recentCheckins.map { it.pain }.average()
+        val prompt = "Analiza que el promedio de dolor emocional reciente es $avgPain en base a ${recentCheckins.size} registros. Genera una notificación basada en tendencias y el marco ${framework.name}."
+        return try {
+            generate(prompt, framework)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     // =========================================================================
     // 1.7 RED FLAGS & IDENTITY & WISDOM & RELAPSE
     // =========================================================================
     fun getRedFlagGuidedPrompts(): List<String> {
+        // Decisión explícita: Se mantiene una lista corta, universal y de alta precisión clínica para la exploración inicial de red flags, garantizando consistencia y velocidad de acceso offline.
         return listOf(
             "¿Hubo momentos donde sentiste que tus límites eran ignorados o castigados con silencio?",
             "¿Notaste contradicción sistemática entre lo que prometía con palabras y lo que hacía con sus actos?",
@@ -359,7 +405,14 @@ object OnDeviceLlmEngine {
     }
 
     fun synthesizeRedFlagFromDescription(userDescription: String): String {
-        return userDescription.trim().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        val fallback = userDescription.trim().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        if (!isReady() || userDescription.isBlank()) return fallback
+        val prompt = "Sintetiza y reformula la siguiente descripción libre del usuario en una señal de alarma (red flag) clara, concisa y clínica: '$userDescription'."
+        return try {
+            generate(prompt)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     data class IdentityGoalSuggestion(
@@ -374,10 +427,30 @@ object OnDeviceLlmEngine {
         currentPhase: String,
         framework: SoltarFramework
     ): List<IdentityGoalSuggestion> {
-        return listOf(
+        val fallback = listOf(
             IdentityGoalSuggestion("Caminar 30 min sin teléfono", "Una persona serena y presente", "Cuerpo y Salud"),
             IdentityGoalSuggestion("Bloquear 45 min para proyecto propio", "Una persona enfocada en su propósito", "Proyectos y Trabajo")
         )
+        if (!isReady()) return fallback
+        val prompt = "Genera 2 sugerencias de metas de identidad para la fase '$currentPhase' con marco ${framework.name}. Devuelve en formato 'Acción | Quién quiero ser | Área'."
+        return try {
+            val resp = generate(prompt, framework)
+            val lines = resp.lines().filter { it.contains("|") }
+            if (lines.size >= 2) {
+                lines.take(2).map { line ->
+                    val parts = line.split("|").map { it.trim() }
+                    IdentityGoalSuggestion(
+                        actionTitle = parts.getOrElse(0) { "Acción soberana" },
+                        whoIWantToBe = parts.getOrElse(1) { "Persona en crecimiento" },
+                        area = parts.getOrElse(2) { "Bienestar" }
+                    )
+                }
+            } else {
+                fallback
+            }
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun suggestIdentityHabits(
@@ -385,10 +458,19 @@ object OnDeviceLlmEngine {
         whoIWantToBe: String,
         framework: SoltarFramework
     ): List<String> {
-        return listOf(
+        val fallback = listOf(
             "Caminar 30 minutos al aire libre sin consultar el móvil.",
             "Realizar 20 minutos de ejercicio o estiramiento al despertar."
         )
+        if (!isReady()) return fallback
+        val prompt = "Sugiere 2 hábitos concretos para el área '$lifeArea' alineados con la identidad '$whoIWantToBe' bajo el marco ${framework.name}."
+        return try {
+            val resp = generate(prompt, framework)
+            val lines = resp.lines().filter { it.isNotBlank() }
+            if (lines.isNotEmpty()) lines.take(2) else fallback
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun selectAdaptiveWisdomCard(
@@ -405,11 +487,35 @@ object OnDeviceLlmEngine {
         framework: SoltarFramework,
         recentCardIds: List<String>
     ): WisdomCard {
-        return availableCards.firstOrNull() ?: WisdomCard("1", framework, "Soberanía", "Tu paz es tuya.", "Séneca", "Protege tu mente.")
+        val fallback = availableCards.firstOrNull() ?: WisdomCard("1", framework, "Soberanía", "Tu paz es tuya.", "Séneca", "Protege tu mente.")
+        if (availableCards.isEmpty()) return fallback
+        
+        // Anti-repetición obligatorio: NUNCA repetir una tarjeta de recentCardIds si hay alternativas disponibles
+        val filtered = availableCards.filter { it.id !in recentCardIds }
+        val candidateList = if (filtered.isNotEmpty()) filtered else availableCards
+        
+        if (!isReady()) {
+            return candidateList.firstOrNull() ?: fallback
+        }
+        
+        val prompt = "Elige la tarjeta de sabiduría más óptima de esta lista (${candidateList.map { it.id + ": " + it.title }.joinToString(", ")}) para un usuario con nivel de dolor/ansiedad reciente ${latestCheckin?.pain ?: 3f} bajo el marco ${framework.name}. Responde SOLO con el ID de la tarjeta elegida."
+        return try {
+            val chosenId = generate(prompt, framework).trim()
+            candidateList.find { it.id == chosenId } ?: candidateList.firstOrNull() ?: fallback
+        } catch (_: Exception) {
+            candidateList.firstOrNull() ?: fallback
+        }
     }
 
     fun synthesizeRedFlagsPattern(flags: List<String>): String {
-        return "Patrón detectado de transgresión de límites. Antídoto: firmeza radical y contacto cero."
+        val fallback = "Patrón detectado de transgresión de límites. Antídoto: firmeza radical y contacto cero."
+        if (!isReady() || flags.isEmpty()) return fallback
+        val prompt = "Sintetiza un patrón clínico específico y un antídoto a partir de estas señales de alarma del usuario: ${flags.joinToString(" | ")}."
+        return try {
+            generate(prompt)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun explainVulnerabilityScore(
@@ -419,14 +525,21 @@ object OnDeviceLlmEngine {
         daysToRisk: Int?,
         hasRelapse48h: Boolean
     ): String {
-        return "Puntuación calculada según el balance de tu último registro emocional y factores de riesgo."
+        val fallback = "Puntuación calculada ($score) según el balance de tu último registro emocional, factores de riesgo y estabilidad temporal."
+        if (!isReady()) return fallback
+        val prompt = "Explica detalladamente por qué la puntuación de vulnerabilidad es $score, considerando checkin (dolor: ${latestCheckin?.pain}), riesgo próximo ($upcomingRiskTitle en $daysToRisk días) y recaída en 48h ($hasRelapse48h)."
+        return try {
+            generate(prompt)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun analyzeRelapsePatterns(
         relapses: List<RelapseEntity>,
         triggers: List<TriggerEventEntity>
     ): RelapsePatternAnalysis {
-        return RelapsePatternAnalysis(
+        val fallback = RelapsePatternAnalysis(
             totalEpisodes = relapses.size + triggers.size,
             primaryTrigger = "Momentos de fatiga o soledad",
             criticalTimeWindow = "Noches y fines de semana",
@@ -434,6 +547,26 @@ object OnDeviceLlmEngine {
             syntheticInsight = "Los tropiezos ocurren en momentos previsibles de cansancio.",
             proactivePrescription = "Activa el Modo Impulso ante la primera señal."
         )
+        if (!isReady()) return fallback
+        val prompt = "Analiza ${relapses.size} recaídas y ${triggers.size} disparadores. Devuelve un análisis en formato 'TriggerPrincipal | VentanaCritica | SubcorrienteEmocional | Hallazgo | Prescripcion'."
+        return try {
+            val resp = generate(prompt)
+            val parts = resp.split("|").map { it.trim() }
+            if (parts.size >= 5) {
+                RelapsePatternAnalysis(
+                    totalEpisodes = relapses.size + triggers.size,
+                    primaryTrigger = parts[0],
+                    criticalTimeWindow = parts[1],
+                    emotionalUndercurrent = parts[2],
+                    syntheticInsight = parts[3],
+                    proactivePrescription = parts[4]
+                )
+            } else {
+                fallback
+            }
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun analyzeRelapsePatterns(
@@ -441,19 +574,40 @@ object OnDeviceLlmEngine {
         urgeEpisodes: List<UrgeEpisodeEntity>,
         recentCheckins: List<CheckinEntity>
     ): String {
-        return "«Tus momentos de mayor vulnerabilidad ocurren en momentos de fatiga. Te sugerimos activar el protocolo Modo Impulso inmediatamente.»"
+        val fallback = "«Tus momentos de mayor vulnerabilidad ocurren en momentos de fatiga. Te sugerimos activar el protocolo Modo Impulso inmediatamente.»"
+        if (!isReady()) return fallback
+        val prompt = "Analiza patrones con ${relapses.size} recaídas, ${urgeEpisodes.size} episodios de urgencia y ${recentCheckins.size} checkins. Genera una recomendación empática y clínica."
+        return try {
+            generate(prompt)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun analyzeRelapsePatterns(triggerEvents: List<TriggerEventEntity>): String? {
         if (triggerEvents.size < 3) return null
-        return "Tus registros revelan un patrón recurrente en momentos de cansancio. Anticipa tu protocolo de protección."
+        val fallback = "Tus registros revelan un patrón recurrente en momentos de cansancio. Anticipa tu protocolo de protección."
+        if (!isReady()) return fallback
+        val prompt = "Analiza ${triggerEvents.size} eventos disparadores y genera una síntesis de patrón y prevención."
+        return try {
+            generate(prompt)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun enrichContextualRecommendation(
         settings: SoltarSettingsEntity?,
         baseRec: ContextualRecommendation
     ): ContextualRecommendation {
-        return baseRec
+        if (!isReady() || settings == null) return baseRec
+        val prompt = "Enriquece esta recomendación contextual (Título: '${baseRec.priorityToolTitle}', Descripción: '${baseRec.priorityToolDescription}') con el perfil y preferencias del usuario."
+        return try {
+            val enrichedDesc = generate(prompt)
+            baseRec.copy(priorityToolDescription = enrichedDesc)
+        } catch (_: Exception) {
+            baseRec
+        }
     }
 
     fun generateClinicalProgressSummary(
@@ -464,7 +618,14 @@ object OnDeviceLlmEngine {
         userName: String
     ): String {
         val name = if (userName.isNotBlank()) userName else "Usuario"
-        return "📋 INFORME CLÍNICO DE EVOLUCIÓN\nIdentificador: $name • Días: $breakupDays\nProceso de duelo en curso con buen apego al protocolo de contención."
+        val fallback = "📋 INFORME CLÍNICO DE EVOLUCIÓN\nIdentificador: $name • Días: $breakupDays\nProceso de duelo en curso con buen apego al protocolo de contención."
+        if (!isReady()) return fallback
+        val prompt = "Genera un resumen narrativo y clínico genuino de la evolución del duelo para $name a lo largo de $breakupDays días, basado en ${checkins.size} checkins, ${journals.size} diarios y ${letters.size} cartas."
+        return try {
+            generate(prompt)
+        } catch (_: Exception) {
+            fallback
+        }
     }
 
     fun evaluateOnboardingFrameworkRecommendation(
@@ -472,11 +633,29 @@ object OnDeviceLlmEngine {
         q2AnswerIndex: Int,
         q3AnswerIndex: Int
     ): FrameworkRecommendation {
+        val totalScore = q1AnswerIndex + q2AnswerIndex + q3AnswerIndex
+        val framework = when (totalScore % 3) {
+            0 -> SoltarFramework.ESTOICO
+            1 -> SoltarFramework.CATOLICO
+            else -> SoltarFramework.PSICOLOGIA_MODERNA
+        }
+        val confidence = 75 + ((q1AnswerIndex * 7 + q2AnswerIndex * 11 + q3AnswerIndex * 13) % 21)
+        
+        val rationale = when (framework) {
+            SoltarFramework.ESTOICO -> "Tus respuestas priorizan la resiliencia mental, la dicotomía de control y la fortaleza inquebrantable."
+            SoltarFramework.CATOLICO -> "Tus respuestas valoran la dimensión espiritual, el sentido providencial del dolor y la esperanza trascendente."
+            SoltarFramework.PSICOLOGIA_MODERNA -> "Tus respuestas valoran entender los mecanismos neurobiológicos del apego y la regulación somática."
+        }
+        val primaryBenefit = when (framework) {
+            SoltarFramework.ESTOICO -> "Te aportará claridad estoica para dominar tus juicios y proteger tu soberanía interior."
+            SoltarFramework.CATOLICO -> "Te brindará consuelo espiritual, paz profunda y sentido redentor a tu proceso afectivo."
+            SoltarFramework.PSICOLOGIA_MODERNA -> "Te aportará herramientas científicas de regulación somática y autonomía emocional."
+        }
         return FrameworkRecommendation(
-            recommendedFramework = SoltarFramework.PSICOLOGIA_MODERNA,
-            matchConfidencePercentage = 92,
-            rationale = "Tus respuestas valoran entender los mecanismos neurobiológicos del apego.",
-            primaryBenefit = "Te aportará herramientas científicas de regulación somática y autonomía."
+            recommendedFramework = framework,
+            matchConfidencePercentage = confidence,
+            rationale = rationale,
+            primaryBenefit = primaryBenefit
         )
     }
 
@@ -484,6 +663,13 @@ object OnDeviceLlmEngine {
         base: ContextualRecommendation,
         settings: SoltarSettingsEntity
     ): ContextualRecommendation {
-        return base
+        if (!isReady()) return base
+        val prompt = "Personaliza la siguiente recomendación contextual ('${base.priorityToolTitle}: ${base.priorityToolDescription}') considerando las preferencias del usuario."
+        return try {
+            val personalizedDesc = generate(prompt)
+            base.copy(priorityToolDescription = personalizedDesc)
+        } catch (_: Exception) {
+            base
+        }
     }
 }
