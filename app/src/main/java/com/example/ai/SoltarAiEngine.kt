@@ -855,12 +855,6 @@ Responde ÚNICAMENTE con el objeto JSON válido.
         }
 
         // 3. Robust Structured Fallback Analysis
-        return@withContext buildString {
-            append("📋 **ANÁLISIS DE CONVERSACIÓN**\n\n")
-            append("• **Hechos observables:** El texto analizado muestra expresiones que pueden contener asimetrías comunicativas, inflexibilidad o desvalidación.\n")
-            append("• **Patrones detectados:** Se aprecian indicios de tensión relacional o dinámicas defensivas.\n")
-            append("• **Interpretaciones posibles:** Las respuestas pueden reflejar dificultad para la validación mutua o desconexión emocional temporal.\n")
-            append("• **Recomendación:** Prioriza la comunicación asertiva, protege tus límites personales y evalúa si esta interacción te aporta estabilidad o desgaste.")
-        }
+        return@withContext "El análisis detallado de esta conversación requiere el asistente de IA, que aún no está listo en tu dispositivo. Vuelve a intentarlo en unos minutos, o revisa en Ajustes el estado de la descarga."
     }
 }
