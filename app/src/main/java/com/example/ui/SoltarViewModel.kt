@@ -691,9 +691,31 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    private fun getOrCreateSalt(): ByteArray {
+        val prefs = getApplication<Application>().getSharedPreferences("atalaya_security_prefs", android.content.Context.MODE_PRIVATE)
+        val storedSaltHex = prefs.getString("pin_salt_hex", null)
+        if (!storedSaltHex.isNullOrBlank()) {
+            return storedSaltHex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        }
+        val secureRandom = java.security.SecureRandom()
+        val newSalt = ByteArray(16)
+        secureRandom.nextBytes(newSalt)
+        val hex = newSalt.joinToString("") { "%02x".format(it) }
+        prefs.edit().putString("pin_salt_hex", hex).apply()
+        return newSalt
+    }
+
+    private fun hashPinWithSalt(pin: String, salt: ByteArray): String {
+        val spec = javax.crypto.spec.PBEKeySpec(pin.toCharArray(), salt, 50000, 256)
+        val factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val hash = factory.generateSecret(spec).encoded
+        return hash.joinToString("") { "%02x".format(it) }
+    }
+
     fun completeOnboardingFlow(
         userName: String,
         userEmail: String,
+        pinInput: String,
         relDuration: String,
         timeSinceBreakup: String,
         hasChildren: Boolean,
@@ -721,11 +743,20 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             )
             val updatedRecent = (recentList + newCard.id).takeLast(5).joinToString(",")
 
+            val pinHash = if (pinInput.length == 4 && pinInput.all { it.isDigit() }) {
+                val salt = getOrCreateSalt()
+                hashPinWithSalt(pinInput, salt)
+            } else {
+                current.pinHash
+            }
+
             repository.saveSettings(
                 current.copy(
                     userName = if (userName.isNotBlank()) userName else "Viajero",
                     userEmail = userEmail,
-                    isLoggedIn = userEmail.isNotBlank(),
+                    isLoggedIn = userEmail.isNotBlank() || pinHash.isNotBlank(),
+                    pinHash = pinHash,
+                    biometricLockEnabled = pinHash.isNotBlank(),
                     relDuration = relDuration,
                     timeSinceBreakup = timeSinceBreakup,
                     hasChildren = hasChildren,

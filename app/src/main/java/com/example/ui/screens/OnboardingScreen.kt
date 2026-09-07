@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import com.example.audio.SoltarSoundManager
 import com.example.data.SoltarFramework
 import com.example.ui.SoltarViewModel
@@ -59,6 +61,9 @@ fun OnboardingScreen(
     // Form states for 10 progressive steps
     var userNameInput by remember { mutableStateOf("Viajero") }
     var userEmailInput by remember { mutableStateOf("") }
+    var userPinInput by remember { mutableStateOf("") }
+    var userConfirmPinInput by remember { mutableStateOf("") }
+    var registrationError by remember { mutableStateOf<String?>(null) }
     var selectedBreakupSituation by remember { mutableStateOf("RUPTURA_RECIENTE") }
     var selectedRelDuration by remember { mutableStateOf("6_12_MESES") }
     var selectedTimeSinceBreakup by remember { mutableStateOf("1_3_meses") }
@@ -304,6 +309,50 @@ fun OnboardingScreen(
                                         ),
                                         singleLine = true
                                     )
+
+                                    Spacer(modifier = Modifier.height(14.dp))
+
+                                    OutlinedTextField(
+                                        value = userPinInput,
+                                        onValueChange = { if (it.length <= 4 && it.all { ch -> ch.isDigit() }) userPinInput = it },
+                                        label = { Text("PIN de seguridad (4 dígitos)") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                        modifier = Modifier.fillMaxWidth().testTag("onboarding_pin_input"),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = SoltarAmber,
+                                            unfocusedBorderColor = SoltarBorder,
+                                            focusedLabelColor = SoltarAmber
+                                        ),
+                                        singleLine = true
+                                    )
+
+                                    Spacer(modifier = Modifier.height(14.dp))
+
+                                    OutlinedTextField(
+                                        value = userConfirmPinInput,
+                                        onValueChange = { if (it.length <= 4 && it.all { ch -> ch.isDigit() }) userConfirmPinInput = it },
+                                        label = { Text("Confirmar PIN (4 dígitos)") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                        modifier = Modifier.fillMaxWidth().testTag("onboarding_confirmpin_input"),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = SoltarAmber,
+                                            unfocusedBorderColor = SoltarBorder,
+                                            focusedLabelColor = SoltarAmber
+                                        ),
+                                        singleLine = true
+                                    )
+
+                                    if (registrationError != null) {
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        Text(
+                                            text = registrationError!!,
+                                            color = MaterialTheme.colorScheme.error,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 }
                             }
 
@@ -975,6 +1024,18 @@ fun OnboardingScreen(
                 // CTA Button
                 Button(
                     onClick = {
+                        if (currentStepIndex == 1) {
+                            if (userPinInput.length != 4 || !userPinInput.all { it.isDigit() }) {
+                                registrationError = "El PIN debe tener exactamente 4 dígitos numéricos."
+                                return@Button
+                            }
+                            if (userPinInput != userConfirmPinInput) {
+                                registrationError = "Los PINs no coinciden."
+                                return@Button
+                            }
+                            registrationError = null
+                        }
+
                         if (currentStepIndex < totalSteps - 1) {
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                             currentStepIndex++
@@ -983,6 +1044,7 @@ fun OnboardingScreen(
                             viewModel.completeOnboardingFlow(
                                 userName = userNameInput,
                                 userEmail = userEmailInput,
+                                pinInput = userPinInput,
                                 relDuration = selectedRelDuration,
                                 timeSinceBreakup = selectedTimeSinceBreakup,
                                 hasChildren = selectedHasChildren,

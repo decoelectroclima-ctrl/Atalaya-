@@ -91,7 +91,7 @@ data class UserEntitlements(
                 canAccessDeepMemory = isPrem,
                 canExportDataReport = isPrem,
                 canAccessEmergencySpeedDial = true, // Emergency safety is always open for human dignity
-                canUseCustomSoundscapes = isPrem
+                canUseCustomSoundscapes = true
             )
         }
     }
