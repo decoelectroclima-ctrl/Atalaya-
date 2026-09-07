@@ -250,10 +250,24 @@ object OnDeviceLlmEngine {
         if (!isReady()) return fallback
         val checkinSummary = checkins.takeLast(3).joinToString("; ") { "Dolor: ${it.pain}, Nota: ${it.note}" }
         val journalSummary = journals.takeLast(2).joinToString("; ") { it.content.take(60) }
-        val prompt = "Genera 4 pasos estructurados para un ritual de cierre personalizados para $name, con $breakupDays días de ruptura, duración '$relDuration', motivo '$breakupReason', checkins recientes: [$checkinSummary], diarios: [$journalSummary] bajo el marco ${framework.name}."
+        val prompt = "Genera 4 pasos estructurados para un ritual de cierre personalizados para $name, con $breakupDays días de ruptura, duración '$relDuration', motivo '$breakupReason', checkins recientes: [$checkinSummary], diarios: [$journalSummary] bajo el marco ${framework.name}. Devuelve cada paso en una línea con el formato 'FaseNombre | Titulo | Guia | PreguntaReflexion', un paso por línea, 4 líneas en total."
         return try {
-            generate(prompt, framework)
-            fallback
+            val resp = generate(prompt, framework)
+            val lines = resp.lines().filter { it.contains("|") }
+            if (lines.size >= 4) {
+                lines.take(4).mapIndexed { index, line ->
+                    val parts = line.split("|").map { it.trim() }
+                    ClosingRitualStepAi(
+                        stepNumber = index + 1,
+                        phaseName = parts.getOrElse(0) { fallback[index].phaseName },
+                        title = parts.getOrElse(1) { fallback[index].title },
+                        guidance = parts.getOrElse(2) { fallback[index].guidance },
+                        reflectionPrompt = parts.getOrElse(3) { fallback[index].reflectionPrompt }
+                    )
+                }
+            } else {
+                fallback
+            }
         } catch (_: Exception) {
             fallback
         }
