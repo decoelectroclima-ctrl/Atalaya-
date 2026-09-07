@@ -168,9 +168,9 @@ object OnDeviceLlmEngine {
         if (!isReady()) {
             return generateEncounterExResponseFallback(userMessage, tone)
         }
-        val prompt = "Simula la respuesta de tu expareja ($exName) con tono ${tone.label} (${tone.description}) al siguiente mensaje del usuario: '$userMessage'. Mantén la réplica realista y coherente con el tono."
+        val prompt = "Simula la respuesta de tu expareja ($exName) con tono ${tone.label} (${tone.description}) al siguiente mensaje del usuario: '$userMessage'. Mantén la réplica realista, coherente con el tono, y coherente con lo ya dicho antes en esta conversación."
         return try {
-            generate(prompt)
+            generate(prompt, history = interactionHistory)
         } catch (_: Exception) {
             generateEncounterExResponseFallback(userMessage, tone)
         }
