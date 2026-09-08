@@ -74,8 +74,9 @@ object SoltarTtsManager {
         // Attempt to select a high quality or network voice if available
         try {
             val spanishVoices = tts?.voices?.filter { it.locale.language.startsWith("es") }
-            val preferredVoice = spanishVoices?.sortedByDescending { 
-                (if (it.isNetworkConnectionRequired) 0 else 2) + (if (it.name.contains("neural", true) || it.name.contains("premium", true)) 5 else 0)
+            val preferredVoice = spanishVoices?.sortedByDescending {
+                (if (it.name.contains("neural", true) || it.name.contains("premium", true) || it.name.contains("network", true)) 10 else 0) +
+                (if (it.isNetworkConnectionRequired) 3 else 0)
             }?.firstOrNull()
             if (preferredVoice != null) {
                 tts?.voice = preferredVoice
@@ -84,9 +85,9 @@ object SoltarTtsManager {
 
         // Slower, deeper, more soothing cadence for natural meditation flow
         val (rate, pitch) = when {
-            vulnerabilityScore >= 70 -> Pair(0.72f, 0.86f) // ultra slow, deep, calming
-            vulnerabilityScore >= 35 -> Pair(0.80f, 0.90f) // relaxed and steady
-            else -> Pair(0.88f, 0.94f)                     // gentle and smooth
+            vulnerabilityScore >= 70 -> Pair(0.85f, 0.95f)
+            vulnerabilityScore >= 35 -> Pair(0.90f, 0.97f)
+            else -> Pair(0.95f, 1.0f)
         }
 
         tts?.setSpeechRate(rate)

@@ -1407,7 +1407,7 @@ fun generateShareableCardBitmap(
 
         textPaint.color = android.graphics.Color.parseColor("#F59E0B")
         textPaint.textSize = 34f
-        canvas.drawText("• Recuerda • Reconstrucción & Soberanía", 120f, (height - 150).toFloat(), textPaint)
+        canvas.drawText("• ADRIANA • adriana.app", 120f, (height - 150).toFloat(), textPaint)
 
         val cachePath = java.io.File(context.cacheDir, "shared_card.png")
         val stream = java.io.FileOutputStream(cachePath)

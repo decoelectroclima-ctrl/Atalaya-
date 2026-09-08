@@ -71,6 +71,7 @@ fun OnboardingScreen(
     var selectedDecisionMaker by remember { mutableStateOf("OTRA_PERSONA") }
     var selectedHasChildren by remember { mutableStateOf(false) }
     var selectedCohabitation by remember { mutableStateOf(false) }
+    var selectedMarriedOrEngaged by remember { mutableStateOf(false) }
     var selectedAnticipatedGrief by remember { mutableStateOf("NO") }
     var selectedEmotionalSituation by remember { mutableStateOf("ansiedad, tristeza, confusión") }
     var selectedContactType by remember { mutableStateOf("CONTACTO_CERO_REAL") }
@@ -615,6 +616,92 @@ fun OnboardingScreen(
                                             }
                                         }
                                     }
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Text(
+                                        text = "¿Convivíais en el mismo hogar?",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    val cohabitationOptions = listOf(
+                                        false to "No, vivíamos separados",
+                                        true to "Sí, convivíamos"
+                                    )
+                                    cohabitationOptions.forEach { (value, label) ->
+                                        val isSelected = selectedCohabitation == value
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp)
+                                                .clickable {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    selectedCohabitation = value
+                                                },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedCohabitation = value
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(selectedColor = SoltarAmber)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Text(
+                                        text = "¿Estabais casados o comprometidos?",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    val marriedOptions = listOf(
+                                        false to "No",
+                                        true to "Sí, casados o comprometidos"
+                                    )
+                                    marriedOptions.forEach { (value, label) ->
+                                        val isSelected = selectedMarriedOrEngaged == value
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp)
+                                                .clickable {
+                                                    viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                    selectedMarriedOrEngaged = value
+                                                },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = if (isSelected) SoltarAmber.copy(alpha = 0.12f) else SoltarSurface,
+                                            border = BorderStroke(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) SoltarAmber else SoltarBorder)
+                                        ) {
+                                            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                RadioButton(
+                                                    selected = isSelected,
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        selectedMarriedOrEngaged = value
+                                                    },
+                                                    colors = RadioButtonDefaults.colors(selectedColor = SoltarAmber)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text(text = label, style = MaterialTheme.typography.bodyMedium, color = if (isSelected) SoltarAmber else TextPrimary, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
@@ -1057,7 +1144,7 @@ fun OnboardingScreen(
                                 breakupReason = selectedBreakupReason,
                                 freeHistoryNotes = "",
                                 cohabitation = selectedCohabitation,
-                                marriedOrEngaged = false,
+                                marriedOrEngaged = selectedMarriedOrEngaged,
                                 previousBreakupsCount = 0
                             )
                             onComplete()

@@ -64,9 +64,6 @@ fun SemanticBellAndSoundscapesDialog(
         }
     }
 
-    var activeTrackId by remember { mutableStateOf<String?>(null) }
-    var isRealPlaying by remember { mutableStateOf(false) }
-
     // Timer coroutine for semantic bell with conscious meditative rhythm (every 20 seconds)
     LaunchedEffect(bellRoundsRemaining, isBellPlaying) {
         if (isBellPlaying && bellRoundsRemaining > 0) {
@@ -82,13 +79,8 @@ fun SemanticBellAndSoundscapesDialog(
     }
 
     DisposableEffect(Unit) {
-        SoltarSoundManager.onMeditationPlaybackChanged = { playing ->
-            isRealPlaying = playing
-            if (!playing) activeTrackId = null
-        }
         onDispose {
             SoltarSoundManager.stopSoundscape()
-            SoltarSoundManager.stopRealMeditation()
             SoltarTtsManager.stop()
         }
     }
@@ -96,7 +88,6 @@ fun SemanticBellAndSoundscapesDialog(
     Dialog(
         onDismissRequest = {
             SoltarSoundManager.stopSoundscape()
-            SoltarSoundManager.stopRealMeditation()
             SoltarTtsManager.stop()
             onDismiss()
         },
@@ -208,354 +199,289 @@ fun SemanticBellAndSoundscapesDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Content
-                if (selectedTab == 0) {
-                    // CAMPANA SEMÁNTICA
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        item {
-                            Card(
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
-                                border = BorderStroke(1.dp, SoltarBorder)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(
-                                        text = "FRECUENCIA 528HZ • ANCLAJE SENSORIAL",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = SoltarAmber,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "La campana semántica emite un armónico afinado para interromper el ciclo rumiante, anclarte en el presente y regular tu sistema nervioso ante picos de ansiedad o impulso.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary,
-                                        lineHeight = 20.sp
-                                    )
-                                }
-                            }
-                        }
-
-                        item {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                
-                                // Pulsing bell indicator
-                                Box(
-                                    modifier = Modifier
-                                        .size(110.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isBellPlaying) SoltarAmber.copy(alpha = 0.25f) else SoltarSurface)
-                                        .clickable {
-                                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                            if (isBellPlaying) {
-                                                isBellPlaying = false
-                                                bellRoundsRemaining = 0
-                                            } else {
-                                                isBellPlaying = true
-                                                bellRoundsRemaining = selectedDurationMinutes * 6 // 6 strikes per minute approx
-                                            }
-                                        },
-                                    contentAlignment = Alignment.Center
+                when (selectedTab) {
+                    0 -> {
+                        // CAMPANA SEMÁNTICA
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            item {
+                                Card(
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                                    border = BorderStroke(1.dp, SoltarBorder)
                                 ) {
-                                    Icon(
-                                        imageVector = if (isBellPlaying) Icons.Default.Pause else Icons.Default.NotificationsActive,
-                                        contentDescription = null,
-                                        tint = SoltarAmber,
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Text(
-                                    text = if (isBellPlaying) "Sesión Activa ($bellRoundsRemaining campanadas restantes)" else "Pulsa para iniciar campana",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                Text(
-                                    text = "Duración de la sesión:",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = TextSecondary
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    listOf(1, 3, 5).forEach { mins ->
-                                        FilterChip(
-                                            selected = selectedDurationMinutes == mins,
-                                            onClick = {
-                                                selectedDurationMinutes = mins
-                                                if (!isBellPlaying) {
-                                                    SoltarSoundManager.playSound(SoltarSoundManager.SoundType.CALM_BELL)
-                                                }
-                                            },
-                                            label = { Text("$mins min") },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = SoltarAmber,
-                                                selectedLabelColor = SoltarBackground,
-                                                containerColor = SoltarSurface,
-                                                labelColor = TextPrimary
-                                            )
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    // PAISAJES DE CALMA
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        item {
-                            Text(
-                                text = "Elige un entorno sonoro para sostener tu calma y regular tu atención:",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
-
-                        val landscapes = listOf(
-                            Triple(SoltarSoundManager.SoundscapeType.KINTSUGI_RAIN, "Lluvia Kintsugi", "Gotas suaves sobre cerámica y filtración armónica"),
-                            Triple(SoltarSoundManager.SoundscapeType.OCEAN_WAVES, "Olas de Sostén", "Marea rítmica para respiración y contención del impulso"),
-                            Triple(SoltarSoundManager.SoundscapeType.FOREST_CALM, "Bosque de Calma", "Cuencos tibetanos y brisa sutil entre pinos"),
-                            Triple(SoltarSoundManager.SoundscapeType.DEEP_SILENCE, "Viento y Silencio", "Frecuencias puras 528Hz de reconstrucción neural")
-                        )
-
-                        items(landscapes.size) { index ->
-                            val (type, title, desc) = landscapes[index]
-                            val isPlaying = activeSoundscape == type
-
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                        if (isPlaying) {
-                                            SoltarSoundManager.stopSoundscape()
-                                            activeSoundscape = null
-                                        } else {
-                                            SoltarSoundManager.startSoundscape(type)
-                                            activeSoundscape = type
-                                        }
-                                    },
-                                shape = RoundedCornerShape(14.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isPlaying) SoltarSurfaceElevated else SoltarSurface
-                                ),
-                                border = BorderStroke(1.dp, if (isPlaying) SoltarAmber else SoltarBorderSubtle)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
                                         Text(
-                                            text = title,
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = if (isPlaying) SoltarAmber else TextPrimary,
+                                            text = "FRECUENCIA 528HZ • ANCLAJE SENSORIAL",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = SoltarAmber,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
                                         Text(
-                                            text = desc,
+                                            text = "La campana semántica emite un armónico afinado para interromper el ciclo rumiante, anclarte en el presente y regular tu sistema nervioso ante picos de ansiedad o impulso.",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = TextSecondary,
-                                            fontSize = 12.sp
+                                            lineHeight = 20.sp
                                         )
                                     }
+                                }
+                            }
 
+                            item {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    
+                                    // Pulsing bell indicator
                                     Box(
                                         modifier = Modifier
-                                            .size(38.dp)
+                                            .size(110.dp)
                                             .clip(CircleShape)
-                                            .background(if (isPlaying) SoltarAmber else SoltarSurfaceElevated),
+                                            .background(if (isBellPlaying) SoltarAmber.copy(alpha = 0.25f) else SoltarSurface)
+                                            .clickable {
+                                                viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                if (isBellPlaying) {
+                                                    isBellPlaying = false
+                                                    bellRoundsRemaining = 0
+                                                } else {
+                                                    isBellPlaying = true
+                                                    bellRoundsRemaining = selectedDurationMinutes * 6 // 6 strikes per minute approx
+                                                }
+                                            },
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                            imageVector = if (isBellPlaying) Icons.Default.Pause else Icons.Default.NotificationsActive,
                                             contentDescription = null,
-                                            tint = if (isPlaying) SoltarBackground else SoltarAmber,
-                                            modifier = Modifier.size(20.dp)
+                                            tint = SoltarAmber,
+                                            modifier = Modifier.size(48.dp)
                                         )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Text(
+                                        text = if (isBellPlaying) "Sesión Activa ($bellRoundsRemaining campanadas restantes)" else "Pulsa para iniciar campana",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+
+                                    Spacer(modifier = Modifier.height(20.dp))
+
+                                    Text(
+                                        text = "Duración de la sesión:",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = TextSecondary
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        listOf(1, 3, 5).forEach { mins ->
+                                            FilterChip(
+                                                selected = selectedDurationMinutes == mins,
+                                                onClick = {
+                                                    selectedDurationMinutes = mins
+                                                    if (!isBellPlaying) {
+                                                        SoltarSoundManager.playSound(SoltarSoundManager.SoundType.CALM_BELL)
+                                                    }
+                                                },
+                                                label = { Text("$mins min") },
+                                                colors = FilterChipDefaults.filterChipColors(
+                                                    selectedContainerColor = SoltarAmber,
+                                                    selectedLabelColor = SoltarBackground,
+                                                    containerColor = SoltarSurface,
+                                                    labelColor = TextPrimary
+                                                )
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-
-                if (selectedTab == 2) {
-                    // TAB 2: MEDITACIÓN GUIADA REAL (Voz Humana Profesional)
-                    var selectedCategory by remember { mutableStateOf("TODAS") }
-                    val tracks = SoltarSoundManager.realMeditationTracks
-                    val filteredTracks = if (selectedCategory == "TODAS") tracks else tracks.filter { it.category == selectedCategory }
-
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        item {
-                            Column {
+                    1 -> {
+                        // PAISAJES DE CALMA
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            item {
                                 Text(
-                                    text = "MEDITACIONES GUIADAS CON VOZ HUMANA REAL",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = SoltarAmber,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Sesiones profesionales grabadas con voz humana real, diseñadas específicamente para el procesamiento de duelos, el corte del contacto cero y la superación personal.",
+                                    text = "Elige un entorno sonoro para sostener tu calma y regular tu atención:",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary
                                 )
-                                Spacer(modifier = Modifier.height(10.dp))
+                            }
 
-                                // Category chips
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf("TODAS", "DUELO", "CONTACTO CERO", "SUPERACIÓN").forEach { cat ->
-                                        FilterChip(
-                                            selected = selectedCategory == cat,
-                                            onClick = { selectedCategory = cat },
-                                            label = { Text(cat, fontSize = 11.sp) },
-                                            colors = FilterChipDefaults.filterChipColors(
-                                                selectedContainerColor = SoltarAmber,
-                                                selectedLabelColor = SoltarBackground,
-                                                containerColor = SoltarSurface,
-                                                labelColor = TextPrimary
+                            val landscapes = listOf(
+                                Triple(SoltarSoundManager.SoundscapeType.KINTSUGI_RAIN, "Lluvia Kintsugi", "Gotas suaves sobre cerámica y filtración armónica"),
+                                Triple(SoltarSoundManager.SoundscapeType.OCEAN_WAVES, "Olas de Sostén", "Marea rítmica para respiración y contención del impulso"),
+                                Triple(SoltarSoundManager.SoundscapeType.FOREST_CALM, "Bosque de Calma", "Cuencos tibetanos y brisa sutil entre pinos"),
+                                Triple(SoltarSoundManager.SoundscapeType.DEEP_SILENCE, "Viento y Silencio", "Frecuencias puras 528Hz de reconstrucción neural")
+                            )
+
+                            items(landscapes.size) { index ->
+                                val (type, title, desc) = landscapes[index]
+                                val isPlaying = activeSoundscape == type
+
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                            if (isPlaying) {
+                                                SoltarSoundManager.stopSoundscape()
+                                                activeSoundscape = null
+                                            } else {
+                                                SoltarSoundManager.startSoundscape(type)
+                                                activeSoundscape = type
+                                            }
+                                        },
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isPlaying) SoltarSurfaceElevated else SoltarSurface
+                                    ),
+                                    border = BorderStroke(1.dp, if (isPlaying) SoltarAmber else SoltarBorderSubtle)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = title,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                color = if (isPlaying) SoltarAmber else TextPrimary,
+                                                fontWeight = FontWeight.Bold
                                             )
-                                        )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = desc,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = TextSecondary,
+                                                fontSize = 12.sp
+                                            )
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isPlaying) SoltarAmber else SoltarSurfaceElevated),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                                contentDescription = null,
+                                                tint = if (isPlaying) SoltarBackground else SoltarAmber,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
+                    }
+                    2 -> {
+                        // MEDITACIÓN GUIADA POR IA (con TTS)
+                        val framework = uiState.preferredFramework
+                        val userName = settings?.userName ?: ""
+                        val latestCheckin = checkins.firstOrNull()
+                        val script = remember(vulnerabilityScore, framework, latestCheckin) {
+                            OnDeviceLlmEngine.generateGuidedMeditationScript(
+                                vulnerabilityScore = vulnerabilityScore.toInt(),
+                                framework = framework,
+                                userName = userName,
+                                latestCheckin = latestCheckin
+                            )
+                        }
 
-                        items(filteredTracks.size) { index ->
-                            val track = filteredTracks[index]
-                            val isPlayingThis = activeTrackId == track.id && isRealPlaying
-
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                        if (isPlayingThis) {
-                                            SoltarSoundManager.stopRealMeditation()
-                                            activeTrackId = null
-                                        } else {
-                                            activeTrackId = track.id
-                                            SoltarSoundManager.playRealMeditation(track.audioUrl, context) {
-                                                activeTrackId = null
-                                            }
-                                        }
-                                    },
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (isPlayingThis) SoltarSurfaceElevated else SoltarSurface
-                                ),
-                                border = BorderStroke(1.dp, if (isPlayingThis) SoltarAmber else SoltarBorder)
-                            ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Surface(
-                                            shape = RoundedCornerShape(6.dp),
-                                            color = SoltarAmber.copy(alpha = 0.2f)
-                                        ) {
-                                            Text(
-                                                text = track.category,
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = SoltarAmber,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                            )
-                                        }
-                                        Text(
-                                            text = track.duration,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = TextSecondary
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(10.dp))
-
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            item {
+                                Column(modifier = Modifier.fillMaxWidth()) {
                                     Text(
-                                        text = track.title,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = TextPrimary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-
-                                    Spacer(modifier = Modifier.height(4.dp))
-
-                                    Text(
-                                        text = track.subtitle,
-                                        style = MaterialTheme.typography.bodySmall,
+                                        text = "MEDITACIÓN GUIADA PERSONALIZADA (IA)",
+                                        style = MaterialTheme.typography.labelSmall,
                                         color = SoltarAmber,
-                                        fontWeight = FontWeight.Medium
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
                                     )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
+                                    Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = track.description,
+                                        text = "Sesión generada específicamente para tu estado emocional actual por FOCO.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary,
-                                        lineHeight = 18.sp
+                                        color = TextSecondary
                                     )
-
                                     Spacer(modifier = Modifier.height(14.dp))
 
-                                    Button(
-                                        onClick = {
-                                            if (isPlayingThis) {
-                                                SoltarSoundManager.stopRealMeditation()
-                                                activeTrackId = null
-                                            } else {
-                                                activeTrackId = track.id
-                                                SoltarSoundManager.playRealMeditation(track.audioUrl, context) {
-                                                    activeTrackId = null
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                                        border = BorderStroke(1.dp, SoltarBorder)
+                                    ) {
+                                        Column(modifier = Modifier.padding(18.dp)) {
+                                            Text(
+                                                text = script.title,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = TextPrimary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = script.fullText,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = TextSecondary,
+                                                lineHeight = 22.sp
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                            ) {
+                                                Button(
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        SoltarTtsManager.speakMeditation(script.fullText, vulnerabilityScore.toInt())
+                                                    },
+                                                    modifier = Modifier.weight(1f),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                                                ) {
+                                                    Icon(Icons.Default.VolumeUp, contentDescription = null, tint = SoltarBackground, modifier = Modifier.size(18.dp))
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Text("Escuchar Voz", color = SoltarBackground, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                                }
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                                        SoltarTtsManager.stop()
+                                                    },
+                                                    modifier = Modifier.weight(1f),
+                                                    shape = RoundedCornerShape(12.dp),
+                                                    border = BorderStroke(1.dp, SoltarBorder)
+                                                ) {
+                                                    Icon(Icons.Default.Stop, contentDescription = null, tint = TextPrimary, modifier = Modifier.size(18.dp))
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Text("Detener", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                                 }
                                             }
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = if (isPlayingThis) Color(0xFFEF4444) else SoltarAmber,
-                                            contentColor = if (isPlayingThis) Color.White else SoltarBackground
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isPlayingThis) Icons.Default.Stop else Icons.Default.PlayArrow,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = if (isPlayingThis) "Detener Sesión" else "Escuchar Meditación Real",
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        }
                                     }
                                 }
                             }

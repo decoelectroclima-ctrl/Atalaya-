@@ -1399,7 +1399,7 @@ fun ProfileScreen(
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:support@adrianaapp.com")
+                                data = Uri.parse("mailto:adriana.app.suelta@gmail.com")
                                 putExtra(Intent.EXTRA_SUBJECT, "Reportar problema - Recuerda v${BuildConfig.VERSION_NAME}")
                             }
                             context.startActivity(intent)
@@ -1416,7 +1416,7 @@ fun ProfileScreen(
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:support@adrianaapp.com")
+                                data = Uri.parse("mailto:adriana.app.suelta@gmail.com")
                                 putExtra(Intent.EXTRA_SUBJECT, "Sugerir una mejora - Recuerda")
                             }
                             context.startActivity(intent)
@@ -1433,7 +1433,7 @@ fun ProfileScreen(
                     Button(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:support@adrianaapp.com")
+                                data = Uri.parse("mailto:adriana.app.suelta@gmail.com")
                                 putExtra(Intent.EXTRA_SUBJECT, "Contacto soporte - Recuerda")
                             }
                             context.startActivity(intent)
