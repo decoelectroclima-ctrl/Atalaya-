@@ -69,51 +69,34 @@ object SoltarSoundManager {
 
     fun playRealMeditation(url: String, context: Context, onComplete: () -> Unit = {}) {
         stopRealMeditation()
-        try {
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                setDataSource(url)
-                prepareAsync()
-                setOnPreparedListener { mp ->
-                    mp.start()
-                    onMeditationPlaybackChanged?.invoke(true)
-                }
-                setOnCompletionListener {
-                    stopRealMeditation()
-                    onComplete()
-                }
-                setOnErrorListener { _, _, _ ->
-                    stopRealMeditation()
-                    playOfflineMeditationFallback(onComplete)
-                    true
-                }
+        // 100% Offline offline-first meditation synthesis: guaranteed zero internet dependency
+        scope.launch {
+            try {
+                onMeditationPlaybackChanged?.invoke(true)
+                // Stage 1: Opening grounding tone (432 Hz)
+                generateSingingBowl(baseFreq = 432.0, durationMs = 3500, harmonics = doubleArrayOf(1.0, 2.76, 5.4), weights = doubleArrayOf(0.6, 0.25, 0.1))
+                kotlinx.coroutines.delay(800)
+                // Stage 2: Heart coherence & transformation frequency (528 Hz)
+                generateSingingBowl(baseFreq = 528.0, durationMs = 4000, harmonics = doubleArrayOf(1.0, 2.0, 3.0), weights = doubleArrayOf(0.6, 0.3, 0.1))
+                kotlinx.coroutines.delay(800)
+                // Stage 3: Deep release tone (396 Hz)
+                generateSingingBowl(baseFreq = 396.0, durationMs = 4000, harmonics = doubleArrayOf(1.0, 2.5, 4.2), weights = doubleArrayOf(0.6, 0.25, 0.15))
+                kotlinx.coroutines.delay(800)
+                // Stage 4: Closing harmonic seal (432 Hz)
+                generateSingingBowl(baseFreq = 432.0, durationMs = 3500, harmonics = doubleArrayOf(1.0, 2.76, 5.4), weights = doubleArrayOf(0.6, 0.25, 0.1))
+                
+                onMeditationPlaybackChanged?.invoke(false)
+                onComplete()
+            } catch (e: Exception) {
+                Log.e("SoltarSoundManager", "Error in offline meditation synthesis", e)
+                onMeditationPlaybackChanged?.invoke(false)
+                onComplete()
             }
-        } catch (e: Exception) {
-            Log.e("SoltarSoundManager", "Error playing real meditation URL, falling back to offline synthesized meditation", e)
-            playOfflineMeditationFallback(onComplete)
         }
     }
 
     private fun playOfflineMeditationFallback(onComplete: () -> Unit) {
-        scope.launch {
-            try {
-                onMeditationPlaybackChanged?.invoke(true)
-                generateSingingBowl(baseFreq = 432.0, durationMs = 2500, harmonics = doubleArrayOf(1.0, 2.76, 5.4), weights = doubleArrayOf(0.6, 0.25, 0.1))
-                kotlinx.coroutines.delay(500)
-                generateSingingBowl(baseFreq = 528.0, durationMs = 3000, harmonics = doubleArrayOf(1.0, 2.0, 3.0), weights = doubleArrayOf(0.6, 0.3, 0.1))
-                kotlinx.coroutines.delay(500)
-                generateSingingBowl(baseFreq = 432.0, durationMs = 3000, harmonics = doubleArrayOf(1.0, 2.76, 5.4), weights = doubleArrayOf(0.6, 0.25, 0.1))
-                onMeditationPlaybackChanged?.invoke(false)
-                onComplete()
-            } catch (_: Exception) {
-                onMeditationPlaybackChanged?.invoke(false)
-            }
-        }
+        playRealMeditation("", context = android.app.Application(), onComplete)
     }
 
     fun stopRealMeditation() {
