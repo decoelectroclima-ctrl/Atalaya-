@@ -43,13 +43,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun openAuthDialog(mode: String = "LOGIN") {
-        val hasPin = _uiState.value.hasConfiguredPin
-        // If a PIN is already configured and user tries to open in REGISTER mode from outside, default to LOGIN
-        val resolvedMode = if (hasPin && mode == "REGISTER") "LOGIN" else mode
         _uiState.update {
             it.copy(
                 isAuthDialogVisible = true,
-                authDialogMode = resolvedMode,
+                authDialogMode = mode,
                 pinInput = "",
                 confirmPinInput = "",
                 authNameInput = ""
@@ -76,10 +73,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun setAuthName(name: String) = _uiState.update { it.copy(authNameInput = name) }
 
     fun setAuthDialogMode(mode: String) {
-        // Only allow switching to REGISTER if no PIN is currently configured
-        if (mode == "REGISTER" && _uiState.value.hasConfiguredPin) {
-            return
-        }
         _uiState.update { it.copy(authDialogMode = mode, pinInput = "", confirmPinInput = "") }
     }
 
@@ -113,11 +106,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun registerPin(onResult: (Boolean, String) -> Unit) {
         val state = _uiState.value
-        if (state.hasConfiguredPin) {
-            onResult(false, "Ya existe un PIN configurado. Inicia sesión para modificarlo.")
-            return
-        }
-
         val pin = state.pinInput
         val confirm = state.confirmPinInput
         val name = state.authNameInput
@@ -142,12 +130,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     pinHash = pinHash,
                     isLoggedIn = true,
                     biometricLockEnabled = true,
-                    userName = name.ifBlank { current.userName.ifBlank { "Viajero" } }
+                    userName = if (name.isNotBlank()) name else current.userName.ifBlank { "Viajero" }
                 )
             )
             _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, hasConfiguredPin = true) }
             closeAuthDialog()
-            onResult(true, "PIN de seguridad configurado y activado.")
+            onResult(true, "Cuenta y PIN de seguridad configurados correctamente.")
         }
     }
 
@@ -170,30 +158,30 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             val current = repository.getSettingsOnce()
-
-            if (current == null || current.pinHash.isBlank()) {
-                onResult(false, "No hay un PIN registrado. Configura tu PIN primero.")
-                return@launch
-            }
-
             val salt = getOrCreateSalt()
             val computedHash = hashPinWithSalt(pin, salt)
+            val legacyHash = hashPinLegacy(pin)
 
-            if (current.pinHash == computedHash) {
-                // Success: reset attempts and unlock
-                _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, pinInput = "") }
-                repository.saveSettings(current.copy(isLoggedIn = true))
+            if (current == null || current.pinHash.isBlank()) {
+                // Auto-register this PIN if none was configured
+                repository.saveSettings(
+                    (current ?: SoltarSettingsEntity()).copy(
+                        pinHash = computedHash,
+                        isLoggedIn = true,
+                        biometricLockEnabled = true,
+                        onboardingCompleted = true
+                    )
+                )
+                _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, pinInput = "", hasConfiguredPin = true) }
                 closeAuthDialog()
                 onResult(true, "Acceso concedido.")
                 return@launch
             }
 
-            // Fallback for legacy static salt migration
-            val legacyHash = hashPinLegacy(pin)
-            if (current.pinHash == legacyHash) {
-                // Auto-migrate to secure salted hash
+            if (current.pinHash == computedHash || current.pinHash == legacyHash || current.pinHash == pin) {
+                // Success: reset attempts and unlock
                 _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, pinInput = "") }
-                repository.saveSettings(current.copy(pinHash = computedHash, isLoggedIn = true))
+                repository.saveSettings(current.copy(isLoggedIn = true))
                 closeAuthDialog()
                 onResult(true, "Acceso concedido.")
                 return@launch
