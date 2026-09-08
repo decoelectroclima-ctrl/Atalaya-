@@ -115,29 +115,14 @@ fun OnboardingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Bar with Step Counter & Emergency Button
+            // Top Bar with Emergency / Need Help button only (step counter removed per user request)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (isIntroPage) Color(0xFFEBE4DC) else SoltarSurfaceElevated,
-                    border = BorderStroke(1.dp, if (isIntroPage) Color(0xFFD5CDC3) else SoltarBorder)
-                ) {
-                    Text(
-                        text = "Recuerda • Paso ${currentStepIndex + 1} de $totalSteps",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (isIntroPage) Color(0xFF8F1825) else SoltarAmber,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
-
                 // Emergency / Need Help button accessible during onboarding
                 TextButton(
                     onClick = {
@@ -224,7 +209,7 @@ fun OnboardingScreen(
                         when (page) {
                             is OnboardingPage.IntroHero -> {
                                 AdrianaIntroScreen(
-                                    modifier = Modifier.fillMaxWidth().height(400.dp)
+                                    modifier = Modifier.fillMaxWidth().fillMaxHeight()
                                 )
                             }
 
