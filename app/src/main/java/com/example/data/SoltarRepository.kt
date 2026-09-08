@@ -82,6 +82,10 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     // Unsent Letters
     val allLetters: Flow<List<UnsentLetterEntity>> = database.unsentLetterDao().getAllLetters()
 
+    suspend fun getAllLettersOnce(): List<UnsentLetterEntity> {
+        return database.unsentLetterDao().getAllLettersOnce()
+    }
+
     suspend fun saveLetter(letter: UnsentLetterEntity): Long {
         return database.unsentLetterDao().insertLetter(letter)
     }
@@ -310,7 +314,10 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         }.minByOrNull { it.second }
 
         val letters = database.unsentLetterDao().getAllLettersOnce()
-        val hasCompletedClosingRitual = letters.any { it.isClosed }
+        val hasCompletedClosingRitual = letters.count { it.isClosed && it.content.trim().length >= 200 } >= 1 &&
+            letters.filter { it.isClosed }.let { closed ->
+                closed.isNotEmpty() && closed.maxOf { it.timestamp } < (now - (3L * 24 * 3600 * 1000))
+            }
 
         val vulnerabilityAssessment = com.example.ai.VulnerabilityAndEvolutionEngine.calculateRealVulnerability(
             currentTime = now,
@@ -325,7 +332,7 @@ class SoltarRepository(private val database: AdrianaDatabase) {
             idealizations = emptyList()
         )
 
-        val progressStageName = "Fase ${com.example.ui.managers.ProgressManager.calculateProgressStage(totalDays)}"
+        val progressStageName = "Fase ${com.example.ui.managers.ProgressManager.calculateProgressStage(totalDays, vulnerabilityAssessment.score)}"
         val journeyStage = settings?.journeyStage ?: "RECOVERY"
         val lifeCoachFocus = settings?.lifeCoachFocus ?: ""
 

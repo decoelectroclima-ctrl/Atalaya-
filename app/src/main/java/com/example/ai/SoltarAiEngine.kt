@@ -457,7 +457,7 @@ Integra de forma fluida y natural la reflexión central, una referencia sutil a 
 
         // 3. Motor clínico y de razonamiento local de alta profundidad (Offline & Context-Aware)
         Log.d(TAG, "Executing advanced local clinical coach reasoning")
-        return@withContext executeAdvancedLocalClinicalReasoning(cleanInput, isRumination, framework, userContext, systemInstruction)
+        return@withContext executeAdvancedLocalClinicalReasoning(cleanInput, isRumination, framework, userContext, intent, systemInstruction)
     }
 
     fun executeAdvancedLocalClinicalReasoning(
@@ -465,8 +465,16 @@ Integra de forma fluida y natural la reflexión central, una referencia sutil a 
         isRumination: Boolean,
         framework: SoltarFramework,
         userContext: SoltarUserContext,
+        intent: MessageIntent = MessageIntent.CONTENIDO_EMOCIONAL,
         systemInstruction: String? = null
     ): SoltarAiResponse {
+        val name = if (userContext.userName.isNotBlank() && userContext.userName != "Viajero") userContext.userName else "amigo/a"
+        if (intent == MessageIntent.SALUDO_O_CASUAL) {
+            return SoltarAiResponse("Hola, $name. Aqui estoy si necesitas algo.", false, "CASUAL", "")
+        }
+        if (intent == MessageIntent.PREGUNTA_META) {
+            return SoltarAiResponse("Soy FOCO, tu coach dentro de la app. Funciono de forma segura y privada, integrado en tu dispositivo.", false, "META", "")
+        }
         val capsule = ClinicalKnowledgeBase.findRelevantCapsule(input, framework)
 
         // Selección de variante clínica no repetitiva, profunda y adaptada al marco filosófico/clínico
@@ -477,7 +485,6 @@ Integra de forma fluida y natural la reflexión central, una referencia sutil a 
             userContext = userContext
         )
 
-        val name = if (userContext.userName.isNotBlank() && userContext.userName != "Viajero") userContext.userName else "amigo/a"
         val cleanBody = coreText.replace("**", "").trim()
         val quoteRef = if (capsule.quoteOrSource.isNotBlank()) " Como decía ${capsule.author}, «${capsule.quoteOrSource}»." else ""
         val questionPart = if (capsule.socraticPrompt.isNotBlank()) " Pregúntate esto: ¿${capsule.socraticPrompt.removeSuffix("?")}?" else ""
@@ -524,6 +531,29 @@ Integra de forma fluida y natural la reflexión central, una referencia sutil a 
         }
 
         val capsule = ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
+
+        // 0. Intento con IA on-device (Gemma) — prioridad, gratis, sin conexión
+        if (OnDeviceLlmEngine.isReady()) {
+            try {
+                val localPrompt = """
+                    Eres el mentor reflexivo de Recuerda. Marco: ${framework.name}.
+                    Entrada de diario (emocion: $moodTag): $cleanInput
+                    Capsula de referencia: ${capsule.diagnosisPrinciple} / ${capsule.clinicalGuidance}
+                    Responde con: 1) feedback breve (2-3 frases), 2) una pregunta socratica, 3) una micro-accion.
+                """.trimIndent()
+                val reply = OnDeviceLlmEngine.generate(localPrompt, framework, userContext, capsule)
+                if (reply.isNotBlank()) {
+                    return@withContext JournalMentorshipResult(
+                        feedback = reply.trim(),
+                        corePrinciple = capsule.quoteOrSource + " - " + capsule.author,
+                        socraticQuestion = capsule.socraticPrompt,
+                        concreteAction = capsule.concreteAction
+                    )
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "OnDeviceLlmEngine journal mentorship failed, trying Gemini", e)
+            }
+        }
 
         // 1. Intento con Gemini API
         val apiKey = try {
@@ -684,6 +714,50 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
 
         val latest = entries.first().content
         val previous = if (entries.size > 1) entries[1].content else ""
+
+        // 0. Intento con IA on-device (Gemma) — prioridad, gratis, sin conexión
+        if (OnDeviceLlmEngine.isReady()) {
+            try {
+                val prompt = """
+Eres el sistema de análisis lingüístico y clínico de Recuerda. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
+Detecta con rigor clínico y devuelve un objeto JSON estricto con exactamente estas claves:
+- "nivelAutonomia" (entero de 0 a 10)
+- "lenguajeRumiativo" (entero de 0 a 10)
+- "distorsionesCognitivas" (lista de strings detectadas entre: "Catastrofismo", "Pensamiento blanco/negro", "Personalización", u otras si aparecen)
+- "cambioDesdeUltimaEntrada" (texto breve describiendo la evolución o contraste con la entrada previa).
+
+ÚLTIMA ENTRADA:
+$latest
+
+ENTRADA ANTERIOR (si existe):
+$previous
+                """.trimIndent()
+                val reply = OnDeviceLlmEngine.generate(prompt, userContext = userContext)
+                if (reply.isNotBlank()) {
+                    val cleanJson = reply.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
+                    val parsed = JSONObject(cleanJson)
+                    val autonomia = parsed.optInt("nivelAutonomia", 5)
+                    val rumiativo = parsed.optInt("lenguajeRumiativo", 5)
+                    val distortionsArray = parsed.optJSONArray("distorsionesCognitivas")
+                    val distortions = mutableListOf<String>()
+                    if (distortionsArray != null) {
+                        for (i in 0 until distortionsArray.length()) {
+                            distortions.add(distortionsArray.getString(i))
+                        }
+                    }
+                    val cambio = parsed.optString("cambioDesdeUltimaEntrada", "Evolución favorable.")
+
+                    return@withContext LinguisticAnalysisResult(
+                        nivelAutonomia = autonomia,
+                        lenguajeRumiativo = rumiativo,
+                        distorsionesCognitivas = distortions,
+                        cambioDesdeUltimaEntrada = cambio
+                    )
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "OnDeviceLlmEngine linguistic analysis failed, trying Gemini", e)
+            }
+        }
 
         val apiKey = try {
             BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""

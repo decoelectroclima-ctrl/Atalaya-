@@ -2713,6 +2713,16 @@ private fun LegalAndContactSection(viewModel: SoltarViewModel) {
                     Icon(Icons.Default.Email, contentDescription = "Enviar Correo", tint = SoltarAmber, modifier = Modifier.size(20.dp))
                 }
             }
+
+            HorizontalDivider(color = SoltarBorderSubtle)
+            Text(
+                text = "Construido con la ayuda de Claude (Anthropic) en cada etapa de diseno, auditoria y depuracion.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+                fontSize = 11.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+            )
         }
     }
 }

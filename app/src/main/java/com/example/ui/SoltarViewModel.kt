@@ -557,17 +557,26 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             val currentRelapses = relapses.value
             val userContext = repository.getUnifiedUserContext()
 
+            val recentFreeText = buildList {
+                addAll(journalEntries.value.take(5).map { it.content })
+                addAll(letters.value.filter { it.isClosed }.take(3).map { it.content })
+                addAll(currentCheckins.take(5).map { it.firstThoughts })
+            }
+
             val evaluation = com.example.ui.managers.JourneyStageEvaluator.evaluate(
                 settings = currentSettings,
                 checkins = currentCheckins,
                 relapses = currentRelapses,
-                hasCompletedClosingRitual = userContext.hasCompletedClosingRitual
+                hasCompletedClosingRitual = userContext.hasCompletedClosingRitual,
+                recentFreeText = recentFreeText
             )
 
             if (evaluation.shouldUpgradeToLifeCoach) {
                 repository.saveSettings(currentSettings.copy(journeyStage = "LIFE_COACH"))
                 playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-                showNotification(evaluation.transitionMessage ?: "Has recorrido un largo camino. Ahora podemos trabajar en quién quieres ser.")
+                showNotification(evaluation.transitionMessage ?: "Has recorrido un largo camino. Ahora podemos trabajar en quien quieres ser.")
+            } else if (evaluation.wasBlockedByQualitativeCheck) {
+                showNotification(evaluation.transitionMessage ?: "Sigamos un poco mas de tiempo en este proceso antes de dar el salto.")
             }
         }
     }

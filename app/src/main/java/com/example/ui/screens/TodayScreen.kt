@@ -109,7 +109,7 @@ fun TodayScreen(
             else -> Triple("Reconstrucción Kintsugi • Plena Autonomía", 180, 1.0f)
         }
     }
-    val progressStage = remember(days) { ProgressManager.calculateProgressStage(days.toInt()) }
+    val progressStage = remember(days, vulnerabilityScore) { ProgressManager.calculateProgressStage(days.toInt(), vulnerabilityScore) }
 
     var isThermometerExpanded by remember { mutableStateOf(false) }
 
