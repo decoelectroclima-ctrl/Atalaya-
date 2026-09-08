@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,6 +67,128 @@ fun ProfileScreen(
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountConfirmDialog by remember { mutableStateOf(false) }
     var showMandatoryJournalTimeDialog by remember { mutableStateOf(false) }
+    var showExportDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
+    var exportPin by remember { mutableStateOf("1234") }
+    var importPin by remember { mutableStateOf("1234") }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val tempFile = java.io.File.createTempFile("factor_export", ".dat", context.cacheDir)
+                val success = viewModel.exportData(exportPin, tempFile)
+                if (success) {
+                    context.contentResolver.openOutputStream(uri)?.use { output ->
+                        tempFile.inputStream().use { input -> input.copyTo(output) }
+                    }
+                    viewModel.showNotification("📦 Datos exportados y cifrados con éxito")
+                } else {
+                    viewModel.showNotification("❌ Error al exportar datos")
+                }
+            } catch (e: Exception) {
+                viewModel.showNotification("❌ Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val tempFile = java.io.File.createTempFile("factor_import", ".dat", context.cacheDir)
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    tempFile.outputStream().use { output -> input.copyTo(output) }
+                }
+                val success = viewModel.importData(importPin, tempFile)
+                if (success) {
+                    viewModel.showNotification("📥 Datos importados y restaurados con éxito")
+                } else {
+                    viewModel.showNotification("❌ PIN incorrecto o archivo de respaldo inválido")
+                }
+            } catch (e: Exception) {
+                viewModel.showNotification("❌ Error al importar: ${e.localizedMessage}")
+            }
+        }
+    }
+    if (showExportDialog) {
+        AlertDialog(
+            onDismissRequest = { showExportDialog = false },
+            title = { Text("Exportar Respaldo Cifrado", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Introduce un PIN de cifrado de 4 dígitos o contraseña para proteger tu respaldo:", color = TextSecondary, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = exportPin,
+                        onValueChange = { exportPin = it },
+                        label = { Text("PIN de Cifrado") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SoltarAmber, cursorColor = SoltarAmber, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showExportDialog = false
+                        exportLauncher.launch("factor_backup_${System.currentTimeMillis()}.dat")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                ) {
+                    Text("Continuar", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showExportDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportDialog = false },
+            title = { Text("Importar Respaldo", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Introduce el PIN con el que fue cifrado el archivo de respaldo:", color = TextSecondary, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = importPin,
+                        onValueChange = { importPin = it },
+                        label = { Text("PIN de Cifrado") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = SoltarAmber, cursorColor = SoltarAmber, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showImportDialog = false
+                        importLauncher.launch("*/*")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                ) {
+                    Text("Seleccionar Archivo", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showImportDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
@@ -2452,21 +2576,25 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(10.dp))
                     
                     OutlinedButton(
-                        onClick = { /* TODO: Implement Export Logic */ },
+                        onClick = { showExportDialog = true },
                         modifier = Modifier.fillMaxWidth().height(44.dp),
                         shape = RoundedCornerShape(10.dp),
                         border = BorderStroke(1.dp, SoltarBorder)
                     ) {
-                        Text("Exportar mis datos de forma segura")
+                        Icon(Icons.Default.Upload, contentDescription = null, tint = SoltarAmber)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Exportar mis datos de forma segura", color = TextPrimary, fontSize = 13.sp)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedButton(
-                        onClick = { /* TODO: Implement Import Logic */ },
+                        onClick = { showImportDialog = true },
                         modifier = Modifier.fillMaxWidth().height(44.dp),
                         shape = RoundedCornerShape(10.dp),
                         border = BorderStroke(1.dp, SoltarBorder)
                     ) {
-                        Text("Importar mis datos")
+                        Icon(Icons.Default.Download, contentDescription = null, tint = SoltarAmber)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Importar mis datos", color = TextPrimary, fontSize = 13.sp)
                     }
                 }
             }

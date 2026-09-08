@@ -89,11 +89,30 @@ object SoltarSoundManager {
                 }
                 setOnErrorListener { _, _, _ ->
                     stopRealMeditation()
-                    false
+                    playOfflineMeditationFallback(onComplete)
+                    true
                 }
             }
         } catch (e: Exception) {
-            Log.e("SoltarSoundManager", "Error playing real meditation", e)
+            Log.e("SoltarSoundManager", "Error playing real meditation URL, falling back to offline synthesized meditation", e)
+            playOfflineMeditationFallback(onComplete)
+        }
+    }
+
+    private fun playOfflineMeditationFallback(onComplete: () -> Unit) {
+        scope.launch {
+            try {
+                onMeditationPlaybackChanged?.invoke(true)
+                generateSingingBowl(baseFreq = 432.0, durationMs = 2500, harmonics = doubleArrayOf(1.0, 2.76, 5.4), weights = doubleArrayOf(0.6, 0.25, 0.1))
+                kotlinx.coroutines.delay(500)
+                generateSingingBowl(baseFreq = 528.0, durationMs = 3000, harmonics = doubleArrayOf(1.0, 2.0, 3.0), weights = doubleArrayOf(0.6, 0.3, 0.1))
+                kotlinx.coroutines.delay(500)
+                generateSingingBowl(baseFreq = 432.0, durationMs = 3000, harmonics = doubleArrayOf(1.0, 2.76, 5.4), weights = doubleArrayOf(0.6, 0.25, 0.1))
+                onMeditationPlaybackChanged?.invoke(false)
+                onComplete()
+            } catch (_: Exception) {
+                onMeditationPlaybackChanged?.invoke(false)
+            }
         }
     }
 

@@ -1488,6 +1488,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
         // Critical safety protocol: Crisis / Self-harm bypasses paywalls and responds immediately in chat
         if (SoltarAiEngine.checkSelfHarmTrigger(text)) {
+            openNeedHelpSheet()
             viewModelScope.launch {
                 repository.saveAiMessage(
                     AiMessageEntity(
@@ -1505,7 +1506,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 )
                 _uiState.update { it.copy(isAiTyping = false) }
-                showNotification("⚠️ Líneas de ayuda y apoyo registradas en tu chat")
+                showNotification("⚠️ Líneas de ayuda y apoyo activadas en tu chat")
             }
             return
         }
@@ -2500,6 +2501,29 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun deleteBeginnerLetter(id: Long) {
         viewModelScope.launch {
             repository.deleteBeginnerLetter(id)
+        }
+    }
+
+    fun exportData(pin: String, file: java.io.File): Boolean {
+        return try {
+            val db = AdrianaDatabase.getDatabase(getApplication())
+            val manager = DataExportManager(db)
+            manager.exportData(pin, file)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun importData(pin: String, file: java.io.File): Boolean {
+        return try {
+            val db = AdrianaDatabase.getDatabase(getApplication())
+            val manager = DataExportManager(db)
+            manager.importData(pin, file)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 

@@ -24,6 +24,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.withStyle
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 
@@ -369,7 +374,7 @@ fun AiCompanionDialog(
                             }
 
                             Text(
-                                text = msg.content,
+                                text = formatMarkdownToAnnotatedString(msg.content),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = TextPrimary,
                                 lineHeight = 22.sp
@@ -435,6 +440,31 @@ fun AiCompanionDialog(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatMarkdownToAnnotatedString(text: String): AnnotatedString {
+    return buildAnnotatedString {
+        val cleaned = text.replace("### ", "").replace("## ", "").replace("# ", "")
+        val parts = cleaned.split("**")
+        for (i in parts.indices) {
+            if (i % 2 == 1 && i < parts.size) {
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(parts[i])
+                }
+            } else {
+                val subParts = parts[i].split("*")
+                for (j in subParts.indices) {
+                    if (j % 2 == 1 && j < subParts.size) {
+                        withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                            append(subParts[j])
+                        }
+                    } else {
+                        append(subParts[j])
                     }
                 }
             }

@@ -34,6 +34,7 @@ import com.example.ui.SoltarViewModel
 import com.example.ui.auth.AuthViewModel
 import com.example.ui.screens.*
 import com.example.ui.theme.*
+import kotlinx.coroutines.launch
 
 sealed class SoltarNavItem(val tab: SoltarTab, val label: String, val icon: ImageVector) {
     object Inicio : SoltarNavItem(SoltarTab.INICIO, "Inicio", Icons.Default.Home)
@@ -156,9 +157,12 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                val scope = rememberCoroutineScope()
                 LaunchedEffect(uiState.notificationMessage) {
                     uiState.notificationMessage?.let { msg ->
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            snackbarHostState.showSnackbar(msg)
+                        }
                         viewModel.clearNotification()
                     }
                 }
