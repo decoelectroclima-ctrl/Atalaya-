@@ -994,6 +994,11 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun saveTodayCheckin() {
         val s = _uiState.value
         val todayKey = getTodayDateKey()
+        val checkinFreeText = "${s.checkinNoteInput} ${s.checkinFirstThoughtsInput}".trim()
+        if (checkinFreeText.isNotBlank() && SoltarAiEngine.checkSelfHarmTrigger(checkinFreeText)) {
+            openNeedHelpSheet()
+            showNotification("⚠️ Detectamos que este texto refleja mucho dolor. Te mostramos ayuda inmediata.")
+        }
         viewModelScope.launch {
             repository.saveCheckin(
                 CheckinEntity(
@@ -1006,6 +1011,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     rumination = s.todayRumination,
                     urgeToContact = s.todayUrgeToContact,
                     autonomy = s.todayAutonomy,
+                    firstThoughts = s.checkinFirstThoughtsInput,
                     focusBodyAction = s.focusBodyInput,
                     focusSelfAction = s.focusSelfInput,
                     focusSocialAction = s.focusSocialInput,
@@ -1154,6 +1160,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun saveUnsentLetter() {
         val s = _uiState.value
         if (s.letterTitleInput.isBlank() || s.letterContentInput.isBlank()) return
+        if (SoltarAiEngine.checkSelfHarmTrigger(s.letterContentInput)) {
+            openNeedHelpSheet()
+            showNotification("⚠️ Detectamos que este texto refleja mucho dolor. Te mostramos ayuda inmediata.")
+        }
         viewModelScope.launch {
             repository.saveLetter(
                 UnsentLetterEntity(
@@ -1359,6 +1369,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleVoluntaryExitDialog(visible: Boolean) = _uiState.update { it.copy(isVoluntaryExitVisible = visible) }
     
     fun saveTimeCapsule(title: String, content: String, unlockAt: Long) {
+        if (SoltarAiEngine.checkSelfHarmTrigger(content)) {
+            openNeedHelpSheet()
+            showNotification("⚠️ Detectamos que este texto refleja mucho dolor. Te mostramos ayuda inmediata.")
+        }
         viewModelScope.launch {
             repository.saveTimeCapsule(
                 TimeCapsuleEntity(
@@ -1575,6 +1589,11 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         if (cleanContent.isBlank()) {
             showNotification("⚠️ Escribe algo en tu diario antes de guardar.")
             return
+        }
+
+        if (SoltarAiEngine.checkSelfHarmTrigger(cleanContent)) {
+            openNeedHelpSheet()
+            showNotification("⚠️ Detectamos que este texto refleja mucho dolor. Te mostramos ayuda inmediata.")
         }
 
         viewModelScope.launch {
@@ -2142,6 +2161,13 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun saveEmotionalCheckin() {
         val state = _uiState.value
         val dateKey = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+        val checkinFreeText = "${state.checkinFirstThoughtsInput} ${state.checkinFreeNoteInput}".trim()
+        if (checkinFreeText.isNotBlank() && SoltarAiEngine.checkSelfHarmTrigger(checkinFreeText)) {
+            openNeedHelpSheet()
+            showNotification("⚠️ Detectamos que este texto refleja mucho dolor. Te mostramos ayuda inmediata.")
+        }
+
         viewModelScope.launch {
             repository.saveCheckin(
                 CheckinEntity(

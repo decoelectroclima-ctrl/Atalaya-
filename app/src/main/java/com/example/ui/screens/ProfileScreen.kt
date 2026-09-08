@@ -2698,16 +2698,16 @@ private fun LegalAndContactSection(viewModel: SoltarViewModel) {
             ) {
                 Column {
                     Text("Contacto Oficial & Soporte", style = MaterialTheme.typography.labelMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
-                    Text("adriana.app.soltar@gmail.com", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontSize = 12.sp)
+                    Text("adriana.app.suelta@gmail.com", style = MaterialTheme.typography.bodySmall, color = SoltarAmber, fontSize = 12.sp)
                 }
                 IconButton(onClick = {
                     try {
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
-                            data = Uri.parse("mailto:adriana.app.soltar@gmail.com?subject=Soporte%20Adriana")
+                            data = Uri.parse("mailto:adriana.app.suelta@gmail.com?subject=Soporte%20Adriana")
                         }
                         context.startActivity(intent)
                     } catch (e: Exception) {
-                        Toast.makeText(context, "adriana.app.soltar@gmail.com", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "adriana.app.suelta@gmail.com", Toast.LENGTH_LONG).show()
                     }
                 }) {
                     Icon(Icons.Default.Email, contentDescription = "Enviar Correo", tint = SoltarAmber, modifier = Modifier.size(20.dp))

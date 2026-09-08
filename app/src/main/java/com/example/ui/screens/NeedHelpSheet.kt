@@ -20,7 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,6 +45,11 @@ fun NeedHelpSheet(
     val uiState by viewModel.uiState.collectAsState()
     val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    LaunchedEffect(Unit) {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
 
     var isTtsSpeaking by remember { mutableStateOf(SoltarTtsManager.isSpeaking()) }
 

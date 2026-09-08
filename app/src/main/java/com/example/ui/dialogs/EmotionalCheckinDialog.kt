@@ -17,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,7 @@ fun EmotionalCheckinDialog(
     onDismiss: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val haptic = LocalHapticFeedback.current
 
     val emotionalStates = listOf("🌟 Muy bien", "🙂 Bien", "😐 Neutral", "🌧️ Mal", "⛈️ Muy mal")
     val predominantEmotions = listOf("Nostalgia", "Ansiedad", "Rabia", "Calma", "Tristeza", "Soledad", "Esperanza")
@@ -335,6 +338,7 @@ fun EmotionalCheckinDialog(
                     Spacer(modifier = Modifier.height(10.dp))
                     Button(
                         onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             viewModel.playSound(SoltarSoundManager.SoundType.WARM_CHIME)
                             viewModel.saveEmotionalCheckin()
                             onDismiss()

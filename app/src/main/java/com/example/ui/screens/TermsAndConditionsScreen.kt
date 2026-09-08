@@ -101,7 +101,7 @@ fun TermsAndConditionsScreen(
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("1. Titularidad y Objeto", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Titular: Javier Jiménez Fernández (adriana.app.soltar@gmail.com). ADRIANA es una aplicación móvil diseñada como herramienta de autorregulación reflexiva y acompañamiento en procesos de duelo afectivo, separación y ruptura sentimental.",
+                            text = "Titular: Javier Jiménez Fernández (adriana.app.suelta@gmail.com). ADRIANA es una aplicación móvil diseñada como herramienta de autorregulación reflexiva y acompañamiento en procesos de duelo afectivo, separación y ruptura sentimental.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             lineHeight = 18.sp

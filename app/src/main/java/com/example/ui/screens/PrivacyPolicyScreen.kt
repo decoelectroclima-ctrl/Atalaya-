@@ -101,7 +101,7 @@ fun PrivacyPolicyScreen(
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("1. Responsable del Tratamiento", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "Titular: Javier Jiménez Fernández\nContacto de Privacidad: adriana.app.soltar@gmail.com",
+                            text = "Titular: Javier Jiménez Fernández\nContacto de Privacidad: adriana.app.suelta@gmail.com",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             lineHeight = 18.sp
@@ -165,7 +165,7 @@ fun PrivacyPolicyScreen(
                     Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("5. Derechos del Usuario (ARCO)", style = MaterialTheme.typography.titleSmall, color = TextPrimary, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "El usuario tiene derecho a acceder, rectificar, exportar o eliminar todos sus datos en cualquier momento mediante las opciones de configuración de la aplicación o contactando en adriana.app.soltar@gmail.com.",
+                            text = "El usuario tiene derecho a acceder, rectificar, exportar o eliminar todos sus datos en cualquier momento mediante las opciones de configuración de la aplicación o contactando en adriana.app.suelta@gmail.com.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             lineHeight = 18.sp

@@ -12,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,7 @@ fun UnsentLetterDialog(
     onDismiss: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val haptic = LocalHapticFeedback.current
 
     val categories = listOf("Despedida", "Rabia / Enfadado", "Agradecimiento", "Cosas que no dije", "Cápsula al Yo Futuro")
 
@@ -65,6 +68,7 @@ fun UnsentLetterDialog(
 
                     TextButton(
                         onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             viewModel.saveUnsentLetter()
                             onDismiss()
                         },
@@ -179,6 +183,7 @@ fun UnsentLetterDialog(
 
                 Button(
                     onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         viewModel.saveUnsentLetter()
                         onDismiss()
                     },

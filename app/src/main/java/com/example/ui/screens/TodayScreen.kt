@@ -24,7 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +58,7 @@ fun TodayScreen(
     val settings by viewModel.settings.collectAsState()
     val checkins by viewModel.checkins.collectAsState()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     val vulnerabilityScore by viewModel.vulnerabilityScore.collectAsState()
     val vulnerabilityMode = when {
@@ -1709,6 +1712,7 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                             viewModel.saveTodayCheckin()
                         },
@@ -1783,6 +1787,7 @@ fun TodayScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
                             onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.playSound(SoltarSoundManager.SoundType.CALM_BELL)
                                 viewModel.saveTodayCheckin()
                             },

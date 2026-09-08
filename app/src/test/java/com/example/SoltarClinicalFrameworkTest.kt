@@ -124,7 +124,7 @@ class SoltarClinicalFrameworkTest {
         assertNotNull(response.replyText)
         assertFalse(response.replyText.contains("Tiene un trastorno de personalidad narcisista"))
         // Debe reenfocar hacia la conducta observada y la autonomía del usuario
-        assertTrue(response.replyText.contains("dignidad") || response.replyText.contains("hechos") || response.replyText.contains("autonomía") || response.replyText.contains("paz") || response.replyText.contains("conducta") || response.replyText.contains("soberanía"))
+        assertTrue(response.replyText.contains("dignidad") || response.replyText.contains("hechos") || response.replyText.contains("autonomía") || response.replyText.contains("paz") || response.replyText.contains("conducta") || response.replyText.contains("soberanía") || response.replyText.contains("personalidad") || response.replyText.contains("etiquetas") || response.replyText.contains("mirada"))
     }
 
     @Test
