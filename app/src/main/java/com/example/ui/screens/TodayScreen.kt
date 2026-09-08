@@ -1416,25 +1416,20 @@ fun TodayScreen(
             }
         }
 
-        // Semantic Bell & Calm Soundscapes (Pro Feature)
+        // Semantic Bell & Calm Soundscapes (Public Feature)
         if (vulnerabilityMode != "REFUGIO") {
             item {
-                val entitlements = UserEntitlements.fromSettings(settings)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            if (entitlements.isPremium) {
-                                showSemanticBellDialog = true
-                            } else {
-                                viewModel.openPaywall(SubscriptionPlan.MONTHLY)
-                            }
+                            showSemanticBellDialog = true
                         }
                         .testTag("semantic_bell_card"),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                    border = BorderStroke(1.dp, if (entitlements.isPremium) SoltarAmber else SoltarBorder)
+                    border = BorderStroke(1.dp, SoltarBorder)
                 ) {
                     Row(
                         modifier = Modifier
@@ -1466,14 +1461,6 @@ fun TodayScreen(
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 1.sp
                                 )
-                                if (!entitlements.isPremium) {
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = SoltarAmber.copy(alpha = 0.2f)
-                                    ) {
-                                        Text("PRO", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = SoltarAmber, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp))
-                                    }
-                                }
                             }
                             Text(
                                 text = "Regulación auditiva 528Hz y entornos sonoros inmersivos",
@@ -1483,9 +1470,9 @@ fun TodayScreen(
                             )
                         }
                         Icon(
-                            imageVector = if (entitlements.isPremium) Icons.Default.ChevronRight else Icons.Default.Lock,
+                            imageVector = Icons.Default.ChevronRight,
                             contentDescription = null,
-                            tint = if (entitlements.isPremium) TextSecondary else SoltarAmber,
+                            tint = TextSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }

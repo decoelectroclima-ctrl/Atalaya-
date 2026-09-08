@@ -1,8 +1,11 @@
 package com.example.audio
 
+import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.media.MediaPlayer
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,6 +23,96 @@ object SoltarSoundManager {
 
     var isSoundEnabled: Boolean = true
     private val scope = CoroutineScope(Dispatchers.Default)
+
+    data class RealMeditationTrack(
+        val id: String,
+        val title: String,
+        val category: String, // "DUELO", "CONTACTO CERO", "SUPERACIÓN"
+        val subtitle: String,
+        val duration: String,
+        val audioUrl: String,
+        val description: String
+    )
+
+    val realMeditationTracks = listOf(
+        RealMeditationTrack(
+            id = "duelo_1",
+            title = "Sanación Profunda del Duelo y Pérdida",
+            category = "DUELO",
+            subtitle = "Tránsito compasivo del dolor y aceptación",
+            duration = "12 min",
+            audioUrl = "https://ia801400.us.archive.org/11/items/GuidedMeditationsForHealingAndPeace/HealingGriefMeditation.mp3",
+            description = "Una sesión guiada por voz humana profesional diseñada para sostenerte en momentos de pérdida, permitiendo que el dolor respire sin que te desborde."
+        ),
+        RealMeditationTrack(
+            id = "contacto_cero_1",
+            title = "Soberanía Emocional en Contacto Cero",
+            category = "CONTACTO CERO",
+            subtitle = "Corte de bucles, obsesión y anclaje al presente",
+            duration = "10 min",
+            audioUrl = "https://ia800900.us.archive.org/23/items/MindfulnessAndLettingGoMeditations/LettingGoOfAttachment.mp3",
+            description = "Especialmente preparada para los momentos de urgencia por buscar o escribir a la otra persona. Fortalece tus límites internos y disuelve la rumiación."
+        ),
+        RealMeditationTrack(
+            id = "superacion_1",
+            title = "Renacimiento y Superación Personal",
+            category = "SUPERACIÓN",
+            subtitle = "Reconstrucción de la propia identidad y libertad",
+            duration = "15 min",
+            audioUrl = "https://ia801500.us.archive.org/30/items/PersonalGrowthAndEmpowermentAudio/RebuildingSelfWorth.mp3",
+            description = "Un espacio de reencuentro contigo mismo para recuperar tu valor personal, soltar las expectativas ajenas y abrir paso a tu nueva etapa vital."
+        )
+    )
+
+    private var mediaPlayer: MediaPlayer? = null
+    var onMeditationPlaybackChanged: ((Boolean) -> Unit)? = null
+
+    fun playRealMeditation(url: String, context: Context, onComplete: () -> Unit = {}) {
+        stopRealMeditation()
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                setDataSource(url)
+                prepareAsync()
+                setOnPreparedListener { mp ->
+                    mp.start()
+                    onMeditationPlaybackChanged?.invoke(true)
+                }
+                setOnCompletionListener {
+                    stopRealMeditation()
+                    onComplete()
+                }
+                setOnErrorListener { _, _, _ ->
+                    stopRealMeditation()
+                    false
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SoltarSoundManager", "Error playing real meditation", e)
+        }
+    }
+
+    fun stopRealMeditation() {
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+        } catch (_: Exception) {}
+        mediaPlayer = null
+        onMeditationPlaybackChanged?.invoke(false)
+    }
+
+    fun isRealMeditationPlaying(): Boolean {
+        return try {
+            mediaPlayer?.isPlaying == true
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     enum class SoundType {
         WARM_CHIME,
