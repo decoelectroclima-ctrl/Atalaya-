@@ -72,6 +72,14 @@ fun PersonalJournalDialog(
             decorFitsSystemWindows = false
         )
     ) {
+        if (uiState.isTemporalMirrorModalVisible) {
+            TemporalMirrorDialog(
+                viewModel = viewModel,
+                onDismiss = { viewModel.toggleTemporalMirrorModal(false) }
+            )
+            return@Dialog
+        }
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -253,6 +261,101 @@ private fun JournalWriteView(
                         text = "Vuelca tus pensamientos sin juicio. Al guardar, puedes solicitar una mentoría filosófica basada en tu escrito.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
+                    )
+                }
+            }
+        }
+
+        item {
+            val context = LocalContext.current
+            var isListening by remember { mutableStateOf(false) }
+            val speechLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+                androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) {
+                    try {
+                        val intent = android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+                        }
+                        val recognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(context)
+                        recognizer.setRecognitionListener(object : android.speech.RecognitionListener {
+                            override fun onReadyForSpeech(params: android.os.Bundle?) { isListening = true }
+                            override fun onBeginningOfSpeech() {}
+                            override fun onRmsChanged(rmsdB: Float) {}
+                            override fun onBufferReceived(buffer: ByteArray?) {}
+                            override fun onEndOfSpeech() { isListening = false }
+                            override fun onError(error: Int) { isListening = false }
+                            override fun onResults(results: android.os.Bundle?) {
+                                isListening = false
+                                val matches = results?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)
+                                if (!matches.isNullOrEmpty()) {
+                                    val spoken = matches[0]
+                                    val cur = uiState.journalInputContent
+                                    viewModel.setJournalInputContent(if (cur.isBlank()) spoken else "$cur $spoken")
+                                }
+                            }
+                            override fun onPartialResults(partialResults: android.os.Bundle?) {}
+                            override fun onEvent(eventType: Int, params: android.os.Bundle?) {}
+                        })
+                        recognizer.startListening(intent)
+                    } catch (e: Exception) {
+                        isListening = false
+                    }
+                } else {
+                    viewModel.showNotification("⚠️ Permiso de micrófono requerido")
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        speechLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (isListening) Color(0xFFEF4444) else SoltarSurfaceElevated),
+                    border = BorderStroke(1.dp, if (isListening) Color(0xFFEF4444) else SoltarBorder),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isListening) Icons.Default.Mic else Icons.Default.MicNone,
+                        contentDescription = null,
+                        tint = if (isListening) Color.White else SoltarAmber,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isListening) "Escuchando..." else "Diario por Voz",
+                        color = if (isListening) Color.White else TextPrimary,
+                        fontSize = 12.sp
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.toggleTemporalMirrorModal(true)
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarSurfaceElevated),
+                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.History,
+                        contentDescription = null,
+                        tint = SoltarAmber,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "✨ Espejo Temporal",
+                        color = TextPrimary,
+                        fontSize = 12.sp
                     )
                 }
             }

@@ -496,6 +496,13 @@ class MainActivity : ComponentActivity() {
                             onDismiss = { viewModel.toggleVoluntaryExitDialog(false) }
                         )
                     }
+
+                    if (uiState.isBeginnerLetterModalVisible) {
+                        com.example.ui.dialogs.BeginnerLetterDialog(
+                            viewModel = viewModel,
+                            onDismiss = { viewModel.toggleBeginnerLetterModal(false) }
+                        )
+                    }
                 }
             }
         }

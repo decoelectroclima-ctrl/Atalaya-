@@ -378,5 +378,17 @@ data class UnifiedUserContext(
     val lifeCoachFocus: String = ""
 )
 
+@Serializable
+@Entity(tableName = "beginner_letters")
+data class BeginnerLetterEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val authorStageDays: Int,
+    val targetStageDays: Int = 3,
+    val content: String,
+    val encouragementTitle: String = "Desde el otro lado del desfiladero",
+    val isIncomingFromPeer: Boolean = false,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
 
 

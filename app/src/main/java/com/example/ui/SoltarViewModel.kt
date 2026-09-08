@@ -92,6 +92,8 @@ data class SoltarUiState(
     val isFounderExperienceVisible: Boolean = false,
     val isConversationAnalyzerVisible: Boolean = false,
     val isEmotionalCheckinVisible: Boolean = false,
+    val isTemporalMirrorModalVisible: Boolean = false,
+    val isBeginnerLetterModalVisible: Boolean = false,
     val checkinStateInput: String = "Neutral",
     val checkinFirstThoughtsInput: String = "",
     val checkinUrgeInput: Float = 2f,
@@ -241,6 +243,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val identityGoals: StateFlow<List<IdentityGoalEntity>> = repository.allIdentityGoals
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val beginnerLetters: StateFlow<List<BeginnerLetterEntity>> = repository.allBeginnerLetters
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 
@@ -2475,6 +2480,27 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             title.contains("Pensamientos", true) -> _uiState.update { it.copy(isThoughtModalVisible = true) }
             title.contains("Metas", true) -> _uiState.update { it.copy(isIdentityGoalModalVisible = true) }
             else -> openUrgeSheet()
+        }
+    }
+
+    fun toggleTemporalMirrorModal(visible: Boolean) {
+        _uiState.update { it.copy(isTemporalMirrorModalVisible = visible) }
+    }
+
+    fun toggleBeginnerLetterModal(visible: Boolean) {
+        _uiState.update { it.copy(isBeginnerLetterModalVisible = visible) }
+    }
+
+    fun saveBeginnerLetter(letter: BeginnerLetterEntity) {
+        viewModelScope.launch {
+            repository.saveBeginnerLetter(letter)
+            showNotification("💌 Carta enviada con éxito al ecosistema")
+        }
+    }
+
+    fun deleteBeginnerLetter(id: Long) {
+        viewModelScope.launch {
+            repository.deleteBeginnerLetter(id)
         }
     }
 

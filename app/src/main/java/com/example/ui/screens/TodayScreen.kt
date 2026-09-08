@@ -240,6 +240,103 @@ fun TodayScreen(
             }
         }
 
+        // Passive Difficult Days Pattern Detection Card
+        item {
+            val difficultDayAlert = remember(checkins) {
+                if (checkins.size >= 4) {
+                    val dayOfWeekPain = mutableMapOf<Int, MutableList<Float>>()
+                    checkins.forEach { c ->
+                        val cal = Calendar.getInstance().apply { timeInMillis = c.timestamp }
+                        val dow = cal.get(Calendar.DAY_OF_WEEK)
+                        dayOfWeekPain.getOrPut(dow) { mutableListOf() }.add(c.pain)
+                    }
+                    val sundayAvg = dayOfWeekPain[Calendar.SUNDAY]?.let { if (it.isNotEmpty()) it.average() else 0.0 } ?: 0.0
+                    val overallAvg = checkins.map { c -> c.pain }.average()
+                    if (sundayAvg > (overallAvg + 0.8)) {
+                        "Patrón Histórico Detectado: Los domingos registras sistemáticamente mayor vulnerabilidad y dolor emocional. Nos anticipamos hoy para proteger tu calma."
+                    } else null
+                } else null
+            }
+
+            if (difficultDayAlert != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                    border = BorderStroke(1.dp, SoltarAmber)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.Insights, contentDescription = null, tint = SoltarAmber)
+                            Text(
+                                text = "🧠 Detección Pasiva de Patrones",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Text(
+                            text = difficultDayAlert,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextPrimary,
+                            lineHeight = 18.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Beginner Letter Card Entry
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        viewModel.toggleBeginnerLetterModal(true)
+                    },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarSage.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(SoltarSage.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.FavoriteBorder, contentDescription = null, tint = SoltarSage, modifier = Modifier.size(22.dp))
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Carta a Quien Empieza Donde Tú",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Comparte tu sabiduría o lee cartas de apoyo anónimo.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = SoltarSage)
+                }
+            }
+        }
+
         // Coach Life Dashboard (When journeyStage == "LIFE_COACH")
         val currentStage = settings?.journeyStage ?: "RECOVERY"
         if (currentStage == "LIFE_COACH") {

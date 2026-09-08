@@ -288,6 +288,21 @@ interface RiskDateDao {
     suspend fun deleteRiskDate(id: Long)
 }
 
+@Dao
+interface BeginnerLetterDao {
+    @Query("SELECT * FROM beginner_letters ORDER BY timestamp DESC")
+    fun getAllBeginnerLetters(): Flow<List<BeginnerLetterEntity>>
+
+    @Query("SELECT * FROM beginner_letters ORDER BY timestamp DESC")
+    suspend fun getAllBeginnerLettersOnce(): List<BeginnerLetterEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBeginnerLetter(letter: BeginnerLetterEntity): Long
+
+    @Query("DELETE FROM beginner_letters WHERE id = :id")
+    suspend fun deleteBeginnerLetter(id: Long)
+}
+
 
 
 

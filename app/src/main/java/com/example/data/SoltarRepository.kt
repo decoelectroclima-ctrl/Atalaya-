@@ -353,4 +353,19 @@ class SoltarRepository(private val database: AdrianaDatabase) {
             lifeCoachFocus = lifeCoachFocus
         )
     }
+
+    // Beginner Letters (Carta a quien empieza donde tú empezaste)
+    val allBeginnerLetters: Flow<List<BeginnerLetterEntity>> = database.beginnerLetterDao().getAllBeginnerLetters()
+
+    suspend fun getAllBeginnerLettersOnce(): List<BeginnerLetterEntity> {
+        return database.beginnerLetterDao().getAllBeginnerLettersOnce()
+    }
+
+    suspend fun saveBeginnerLetter(letter: BeginnerLetterEntity): Long {
+        return database.beginnerLetterDao().insertBeginnerLetter(letter)
+    }
+
+    suspend fun deleteBeginnerLetter(id: Long) {
+        database.beginnerLetterDao().deleteBeginnerLetter(id)
+    }
 }
