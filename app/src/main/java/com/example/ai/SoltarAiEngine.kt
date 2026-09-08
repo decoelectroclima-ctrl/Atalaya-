@@ -659,41 +659,55 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
                 nivelAutonomia = 5,
                 lenguajeRumiativo = 5,
                 distorsionesCognitivas = emptyList(),
-                cambioDesdeUltimaEntrada = "Aún no hay entradas en tu diario. Comienza a escribir para calibrar tu proceso."
+                cambioDesdeUltimaEntrada = "Aún no hay entradas registradas en tu diario. Comienza a escribir para activar el análisis clínico y calibrar tu proceso de autonomía."
             )
         }
         val latest = entries.first().content.lowercase()
         val previous = if (entries.size > 1) entries[1].content.lowercase() else ""
 
-        val posWords = listOf("yo", "puedo", "decido", "libertad", "paz", "tranquilidad", "presente", "aprender", "crecer")
-        val negWords = listOf("él", "ella", "sin", "esperando", "culpa", "nunca", "por qué", "extraño", "dependo")
+        // Semantic markers
+        val agencyWords = listOf("yo", "elijo", "decido", "puedo", "comprendo", "aprendo", "crezco", "paz", "avanzar", "presente", "responsabilidad", "propio")
+        val ruminationWords = listOf("por qué", "si hubiera", "otra vez", "contacto", "perfil", "extraño", "dependo", "esperando", "culpa", "nunca podré", "olvidar")
+        val otherFocusWords = listOf("él", "ella", "suyo", "decidió", "hizo", "dijo", "cambió", "mensajes", "visto")
 
-        val posCount = posWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
-        val negCount = negWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
+        val agencyCount = agencyWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
+        val ruminationCount = ruminationWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
+        val otherCount = otherFocusWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
 
-        val autonomia = (5 + (posCount - negCount)).coerceIn(0, 10)
-        val rumiativo = (5 + (negCount - posCount)).coerceIn(0, 10)
+        // Score calculation: autonomy increases with agency, decreases with other-focus and rumination
+        val autonomia = (5 + agencyCount - otherCount - (ruminationCount / 2)).coerceIn(1, 10)
+        val rumiativo = (3 + ruminationCount + (otherCount / 2) - agencyCount).coerceIn(1, 10)
 
+        // Cognitive distortions detection
         val distortions = mutableListOf<String>()
-        val catastrofismoKeywords = listOf("terrible", "horrible", "catástrofe", "fin del mundo", "no lo soporto", "insoportable", "ruina", "destruido")
-        val bwKeywords = listOf("todo", "nada", "nunca", "siempre", "perfecto", "pésimo", "absolutamente")
-        val personalizacionKeywords = listOf("por mi culpa", "lo hizo para", "me lo hizo", "es mi responsabilidad", "me odia")
+        val catastrofismoKw = listOf("terrible", "horrible", "catástrofe", "fin del mundo", "no lo soporto", "insoportable", "ruina", "destruido", "muero")
+        val bwKw = listOf("todo", "nada", "nunca", "siempre", "perfecto", "pésimo", "absolutamente", "jamás", "todos")
+        val personalizacionKw = listOf("por mi culpa", "lo hizo para", "me lo hizo", "es mi responsabilidad", "me odia", "provoqué")
+        val mindReadingKw = listOf("sé que piensa", "seguro que cree", "me está ignorando", "lo hace para fastidiar")
+        val emotionalReasoningKw = listOf("siento que es verdad", "sé que volverá", "tengo el pálpito", "mi intuición me dice que")
 
-        if (catastrofismoKeywords.any { latest.contains(it) }) distortions.add("Catastrofismo")
-        if (bwKeywords.any { latest.contains(it) }) distortions.add("Pensamiento blanco/negro")
-        if (personalizacionKeywords.any { latest.contains(it) }) distortions.add("Personalización")
+        if (catastrofismoKw.any { latest.contains(it) }) distortions.add("Catastrofismo")
+        if (bwKw.any { latest.contains(it) }) distortions.add("Pensamiento Blanco/Negro")
+        if (personalizacionKw.any { latest.contains(it) }) distortions.add("Personalización")
+        if (mindReadingKw.any { latest.contains(it) }) distortions.add("Lectura de Mente")
+        if (emotionalReasoningKw.any { latest.contains(it) }) distortions.add("Razonamiento Emocional")
 
         val cambio = if (previous.isNotBlank()) {
-            val prevPos = posWords.sumOf { word -> previous.windowed(word.length).count { it == word } }
-            if (posCount > prevPos) {
-                "Mayor sentido de agencia y autonomía respecto a tu entrada anterior."
-            } else if (posCount < prevPos) {
-                "Ligero incremento en la carga emocional o rumiación en comparación con tu registro previo."
-            } else {
-                "Estabilidad emocional y reflexiva sostenida desde tu último registro."
+            val prevAgency = agencyWords.sumOf { word -> previous.windowed(word.length).count { it == word } }
+            val prevRum = ruminationWords.sumOf { word -> previous.windowed(word.length).count { it == word } }
+            
+            when {
+                agencyCount > prevAgency && ruminationCount <= prevRum -> 
+                    "Evolución notable: Tu discurso muestra mayor sentido de agencia personal y menor carga rumiativa respecto a tu registro anterior."
+                ruminationCount < prevRum -> 
+                    "Descompresión emocional: Se observa una reducción en los bucles de rumiación y mayor apertura hacia el presente."
+                ruminationCount > prevRum + 1 -> 
+                    "Alerta de bucle: Se detecta un incremento en los pensamientos centrados en el pasado y la otra persona. Es momento de aplicar grounding o desconexión digital."
+                else -> 
+                    "Estabilidad reflexiva: Tu tono mantiene la continuidad con tu entrada previa, consolidando el procesamiento del duelo."
             }
         } else {
-            "Primera entrada registrada. Has dado un paso fundamental hacia la autoconsciencia."
+            "Primera entrada registrada en tu bitácora. Has dado un paso fundamental hacia la autoconsciencia y el registro honesto de tu vivencia."
         }
 
         return LinguisticAnalysisResult(

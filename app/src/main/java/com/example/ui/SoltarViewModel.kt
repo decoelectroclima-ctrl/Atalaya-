@@ -484,7 +484,6 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                             isOnboardingVisible = !currentSettings.onboardingCompleted,
                             preferredFramework = framework,
                             currentWisdomCard = newCard,
-                            isAuthDialogVisible = shouldShowAuth,
                             reminderHourInput = currentSettings.reminderHour,
                             reminderMinuteInput = currentSettings.reminderMinute,
                             notificationsEnabled = currentSettings.notificationsEnabled,
