@@ -81,6 +81,7 @@ fun KintsugiHeart(progressStage: Int, vulnerabilityScore: Int = 40, modifier: Mo
 fun ProgressiveLandscape(
     progressStage: Int,
     vulnerabilityScore: Int = 40,
+    todayRuminationLevel: Float? = null, // NUEVO: 0-10, viene del checkin de HOY si existe
     modifier: Modifier = Modifier,
     onTapSun: (() -> Unit)? = null,
     onTapTree: (() -> Unit)? = null,
@@ -101,6 +102,13 @@ fun ProgressiveLandscape(
             6 -> listOf(Color(0xFFA3CDEF), Color(0xFF85B3D1)) // Bright sunny day
             7 -> listOf(Color(0xFFC2E0FF), Color(0xFFA3CDEF)) // Radiant horizon
             else -> listOf(Color(0xFFE0F2FE), Color(0xFFBAE6FD)) // Serene masterpiece sky
+        }
+
+        val todayIsHard = (todayRuminationLevel ?: 0f) >= 7f
+        val fogAlpha = if (todayIsHard) {
+            (((todayRuminationLevel ?: 7f) - 6f) / 4f).coerceIn(0.25f, 0.55f)
+        } else {
+            0f
         }
 
         Box(
@@ -151,6 +159,12 @@ fun ProgressiveLandscape(
                         endY = h
                     )
                 )
+
+                if (fogAlpha > 0f) {
+                    drawRect(
+                        color = Color(0xFF4A5568).copy(alpha = fogAlpha)
+                    )
+                }
 
                 // Sun element starting from stage 3 onwards
                 if (stage >= 3) {

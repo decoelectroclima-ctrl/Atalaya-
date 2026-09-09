@@ -887,11 +887,19 @@ fun TodayScreen(
 
         // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
         item {
+            val todayCheckin = checkins.firstOrNull {
+                val cal1 = java.util.Calendar.getInstance().apply { timeInMillis = it.timestamp }
+                val cal2 = java.util.Calendar.getInstance()
+                cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR) &&
+                cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR)
+            }
+
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
                 ProgressiveLandscape(
                     progressStage = progressStage,
                     vulnerabilityScore = vulnerabilityScore,
+                    todayRuminationLevel = todayCheckin?.rumination,
                     onTapSun = {
                         viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                         // Abrir Diario
