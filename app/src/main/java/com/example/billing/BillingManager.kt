@@ -215,13 +215,25 @@ class BillingManager(
     }
 
     fun restorePurchases(onComplete: (Boolean, String) -> Unit) {
-        val params = QueryPurchasesParams.newBuilder()
+        val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        billingClient.queryPurchasesAsync(params) { billingResult, purchasesList ->
+        billingClient.queryPurchasesAsync(subsParams) { billingResult, subsList ->
+            val activePurchases = mutableListOf<Purchase>()
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val activePurchases = purchasesList.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+                subsList?.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }?.let { activePurchases.addAll(it) }
+            }
+
+            val inappParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+
+            billingClient.queryPurchasesAsync(inappParams) { inappResult, inapplist ->
+                if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    inapplist?.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }?.let { activePurchases.addAll(it) }
+                }
+
                 if (activePurchases.isNotEmpty()) {
                     for (purchase in activePurchases) {
                         if (!purchase.isAcknowledged) {
@@ -229,12 +241,10 @@ class BillingManager(
                         }
                     }
                     _isPremium.update { true }
-                    onComplete(true, "¡Suscripción restaurada con éxito!")
+                    onComplete(true, "¡Compras/Suscripciones restauradas con éxito!")
                 } else {
-                    onComplete(false, "No se encontraron suscripciones activas vinculadas a tu cuenta de Google Play.")
+                    onComplete(false, "No se encontraron compras o suscripciones activas vinculadas a tu cuenta de Google Play.")
                 }
-            } else {
-                onComplete(false, "Error al conectar con Google Play (${billingResult.debugMessage})")
             }
         }
     }

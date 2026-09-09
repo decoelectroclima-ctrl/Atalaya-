@@ -313,7 +313,9 @@ data class SoltarSettingsEntity(
     val freeHistoryNotes: String = "",
     // Journey Stage: "RECOVERY" (Ruptura, Duelo, Contacto Cero) or "LIFE_COACH" (Crecimiento, Autoestima, Hábitos, Propósito)
     val journeyStage: String = "RECOVERY",
-    val lifeCoachFocus: String = "autoestima, confianza personal, hábitos"
+    val lifeCoachFocus: String = "autoestima, confianza personal, hábitos",
+    val pinnedToolIds: String = "", // ids de herramientas fijadas por el usuario, separados por coma
+    val toolsShelfExpanded: Boolean = false // si el usuario dejo la seccion "Mas herramientas" desplegada
 ) {
     fun toClinicalContextSummary(): String {
         return """

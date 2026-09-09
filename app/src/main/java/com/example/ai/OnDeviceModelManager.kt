@@ -76,7 +76,7 @@ object OnDeviceModelManager {
         if (modelFile.exists() && modelFile.length() > 0) {
             val actualSize = modelFile.length()
             val actualHash = computeFileSha256(modelFile)
-            val isCorrupt = (actualHash.isNotBlank() && !actualHash.equals(EXPECTED_SHA256, ignoreCase = true)) || (actualSize != EXPECTED_SIZE_BYTES)
+            val isCorrupt = actualHash.isBlank() || !actualHash.equals(EXPECTED_SHA256, ignoreCase = true) || (actualSize != EXPECTED_SIZE_BYTES)
             if (isCorrupt) {
                 modelFile.delete()
                 _modelState.value = ModelState.NotDownloaded(isExplicitlyDeleted = false)
@@ -108,7 +108,7 @@ object OnDeviceModelManager {
         if (modelFile.exists() && modelFile.length() > 0) {
             val actualSize = modelFile.length()
             val actualHash = computeFileSha256(modelFile)
-            val isCorrupt = (actualHash.isNotBlank() && !actualHash.equals(EXPECTED_SHA256, ignoreCase = true)) || (actualSize != EXPECTED_SIZE_BYTES)
+            val isCorrupt = actualHash.isBlank() || !actualHash.equals(EXPECTED_SHA256, ignoreCase = true) || (actualSize != EXPECTED_SIZE_BYTES)
             if (!isCorrupt) {
                 if (isEnabled) {
                     _modelState.value = ModelState.Ready(modelFile)
@@ -161,8 +161,8 @@ object OnDeviceModelManager {
                             val actualSize = modelFile.length()
                             val actualHash = computeFileSha256(modelFile)
                             val sizeMatches = (actualSize == EXPECTED_SIZE_BYTES)
-                            val hashMatches = actualHash.isBlank() || actualHash.equals(EXPECTED_SHA256, ignoreCase = true)
-                            val isCorrupt = (actualHash.isNotBlank() && !hashMatches) || (actualSize != EXPECTED_SIZE_BYTES)
+                            val hashMatches = actualHash.isNotBlank() && actualHash.equals(EXPECTED_SHA256, ignoreCase = true)
+                            val isCorrupt = !hashMatches || !sizeMatches
 
                             if (isCorrupt) {
                                 modelFile.delete()

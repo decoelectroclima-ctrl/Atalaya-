@@ -35,6 +35,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
+            val prefs = getApplication<Application>().getSharedPreferences("atalaya_security_prefs", android.content.Context.MODE_PRIVATE)
+            val persistedAttempts = prefs.getInt("failed_attempts", 0)
+            val persistedLockout = prefs.getLong("lockout_until", 0L)
+            _uiState.update { it.copy(failedAttempts = persistedAttempts, lockoutUntilMillis = persistedLockout) }
+
             repository.settings.collect { settings ->
                 val hasPin = !settings?.pinHash.isNullOrBlank()
                 _uiState.update { it.copy(hasConfiguredPin = hasPin) }
@@ -158,30 +163,35 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             val current = repository.getSettingsOnce()
+            if (current == null || current.pinHash.isBlank()) {
+                onResult(false, "No hay ningún PIN configurado. Por favor, realiza el registro inicial.")
+                return@launch
+            }
+
             val salt = getOrCreateSalt()
             val computedHash = hashPinWithSalt(pin, salt)
             val legacyHash = hashPinLegacy(pin)
 
-            if (current == null || current.pinHash.isBlank()) {
-                // Auto-register this PIN if none was configured
-                repository.saveSettings(
-                    (current ?: SoltarSettingsEntity()).copy(
-                        pinHash = computedHash,
-                        isLoggedIn = true,
-                        biometricLockEnabled = true,
-                        onboardingCompleted = true
-                    )
-                )
-                _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, pinInput = "", hasConfiguredPin = true) }
-                closeAuthDialog()
-                onResult(true, "Acceso concedido.")
-                return@launch
+            var isMatch = (current.pinHash == computedHash)
+            var needsMigration = false
+
+            if (!isMatch && current.pinHash == legacyHash) {
+                isMatch = true
+                needsMigration = true
             }
 
-            if (current.pinHash == computedHash || current.pinHash == legacyHash || current.pinHash == pin) {
+            val prefs = getApplication<Application>().getSharedPreferences("atalaya_security_prefs", android.content.Context.MODE_PRIVATE)
+
+            if (isMatch) {
                 // Success: reset attempts and unlock
+                prefs.edit().putInt("failed_attempts", 0).putLong("lockout_until", 0L).apply()
                 _uiState.update { it.copy(failedAttempts = 0, lockoutUntilMillis = 0L, pinInput = "") }
-                repository.saveSettings(current.copy(isLoggedIn = true))
+                
+                val updatedSettings = current.copy(
+                    isLoggedIn = true,
+                    pinHash = if (needsMigration) computedHash else current.pinHash
+                )
+                repository.saveSettings(updatedSettings)
                 closeAuthDialog()
                 onResult(true, "Acceso concedido.")
                 return@launch
@@ -189,13 +199,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
             // Failed attempt handling
             val newAttempts = state.failedAttempts + 1
+            val lockoutDuration = (30_000L * (1L shl (newAttempts - 5).coerceAtLeast(0))).coerceAtMost(3600_000L) // exponential backoff after 5 attempts
+            
             if (newAttempts >= 5) {
-                val lockoutDuration = 30_000L // 30 seconds lockout
                 val lockUntil = now + lockoutDuration
+                prefs.edit().putInt("failed_attempts", newAttempts).putLong("lockout_until", lockUntil).apply()
                 _uiState.update { it.copy(failedAttempts = newAttempts, lockoutUntilMillis = lockUntil, pinInput = "") }
-                onResult(false, "5 intentos fallidos consecutivos. Bloqueado temporalmente por 30 segundos.")
+                val sec = lockoutDuration / 1000
+                onResult(false, "Demasiados intentos fallidos. Bloqueado temporalmente por $sec segundos.")
             } else {
                 val remaining = 5 - newAttempts
+                prefs.edit().putInt("failed_attempts", newAttempts).apply()
                 _uiState.update { it.copy(failedAttempts = newAttempts, pinInput = "") }
                 onResult(false, "PIN incorrecto. Te quedan $remaining intento(s) antes del bloqueo temporal.")
             }

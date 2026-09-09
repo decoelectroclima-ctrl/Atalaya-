@@ -145,10 +145,25 @@ class DataExportManager(private val database: AdrianaDatabase) {
         )
     }
 
-    suspend fun exportClinicalNarrativeToFile(outputFile: File) {
+    suspend fun exportClinicalNarrativeToFile(pin: String, outputFile: File) {
         val report = generateClinicalNarrativeReport()
+        val salt = ByteArray(16).apply { SecureRandom().nextBytes(this) }
+        val iv = ByteArray(GCM_IV_LENGTH).apply { SecureRandom().nextBytes(this) }
+
+        val spec = PBEKeySpec(pin.toCharArray(), salt, ITERATIONS, KEY_LENGTH)
+        val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+        val secretKey = SecretKeySpec(factory.generateSecret(spec).encoded, "AES")
+
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv))
+        val encryptedData = cipher.doFinal(report.toByteArray(Charsets.UTF_8))
+
         FileOutputStream(outputFile).use {
-            it.write(report.toByteArray(Charsets.UTF_8))
+            it.write(MAGIC)
+            it.write(FORMAT_VERSION.toInt())
+            it.write(salt)
+            it.write(iv)
+            it.write(encryptedData)
         }
     }
 }

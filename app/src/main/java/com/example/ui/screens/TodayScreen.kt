@@ -1620,6 +1620,31 @@ fun TodayScreen(
         }
         }
 
+        item {
+            Spacer(modifier = Modifier.height(20.dp))
+
+            val pinnedIds = remember(settings?.pinnedToolIds) {
+                settings?.pinnedToolIds?.split(",")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
+            }
+
+            com.example.ui.components.ToolsShelf(
+                allTools = listOf(
+                    com.example.ui.components.ToolItem("journal", "Diario", Icons.Default.Book) { viewModel.openJournalModal() },
+                    com.example.ui.components.ToolItem("unsent_letter", "Carta no enviada", Icons.Default.Mail) { viewModel.toggleLetterModal(true) },
+                    com.example.ui.components.ToolItem("time_capsule", "Cápsula del tiempo", Icons.Default.Schedule) { viewModel.toggleTimeCapsuleModal(true) },
+                    com.example.ui.components.ToolItem("wisdom", "Biblioteca de sabiduría", Icons.Default.MenuBook) { viewModel.toggleWisdomLibraryDialog(true) },
+                    com.example.ui.components.ToolItem("support_contacts", "Contactos de apoyo", Icons.Default.ContactPhone) { viewModel.openSupportContactDialog(1) },
+                    com.example.ui.components.ToolItem("encounter_simulator", "Simulador de encuentro", Icons.Default.TheaterComedy) { viewModel.toggleEncounterSimulator(true) },
+                    com.example.ui.components.ToolItem("identity_goals", "Metas de identidad", Icons.Default.Flag) { viewModel.toggleIdentityGoalModal(true) },
+                    com.example.ui.components.ToolItem("conversation_analyzer", "Analizar conversación", Icons.Default.Forum) { viewModel.toggleConversationAnalyzer(true) }
+                ),
+                pinnedIds = pinnedIds,
+                expanded = settings?.toolsShelfExpanded ?: false,
+                onToggleExpanded = { viewModel.toggleToolsShelfExpanded(it) },
+                onTogglePinned = { viewModel.toggleToolPinned(it) }
+            )
+        }
+
         // 4. THREE TOOL FAMILIES
         item {
             Text(

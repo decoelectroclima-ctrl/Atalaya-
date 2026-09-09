@@ -552,6 +552,26 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun toggleToolPinned(toolId: String) {
+        viewModelScope.launch {
+            val current = settings.value ?: return@launch
+            val currentIds = current.pinnedToolIds.split(",").filter { it.isNotBlank() }.toMutableList()
+            if (currentIds.contains(toolId)) {
+                currentIds.remove(toolId)
+            } else {
+                currentIds.add(toolId)
+            }
+            repository.saveSettings(current.copy(pinnedToolIds = currentIds.joinToString(",")))
+        }
+    }
+
+    fun toggleToolsShelfExpanded(expanded: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: return@launch
+            repository.saveSettings(current.copy(toolsShelfExpanded = expanded))
+        }
+    }
+
     fun evaluateJourneyStage() {
         viewModelScope.launch {
             val currentSettings = settings.value ?: return@launch
