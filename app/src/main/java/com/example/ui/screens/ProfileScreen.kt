@@ -780,6 +780,7 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .testTag("user_account_card"),
                 shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarBorder)
             ) {

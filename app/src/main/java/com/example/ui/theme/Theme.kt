@@ -75,6 +75,7 @@ fun SoltarTheme(
     MaterialTheme(
       colorScheme = colorScheme,
       typography = Typography,
+      shapes = SoltarShapes,
       content = content
     )
   }

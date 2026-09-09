@@ -176,6 +176,7 @@ fun ProcessScreen(
                     .fillMaxWidth()
                     .testTag("linguistic_analysis_card"),
                 shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
             ) {

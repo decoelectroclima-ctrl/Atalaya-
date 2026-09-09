@@ -189,6 +189,7 @@ fun TodayScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, if (currentStage == "LIFE_COACH") SoltarAmber.copy(alpha = 0.6f) else SoltarBorder)
             ) {
@@ -835,6 +836,7 @@ fun TodayScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
                     border = BorderStroke(1.5.dp, SoltarAmber)
                 ) {
@@ -1106,6 +1108,7 @@ fun TodayScreen(
                     .fillMaxWidth()
                     .testTag("wisdom_compass_card"),
                 shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 colors = CardDefaults.cardColors(containerColor = SoltarSurface),
                 border = BorderStroke(1.dp, SoltarBorder)
             ) {
