@@ -43,6 +43,9 @@ interface UrgeEpisodeDao {
     @Query("SELECT * FROM urge_episodes ORDER BY timestamp DESC")
     fun getAllUrgeEpisodes(): Flow<List<UrgeEpisodeEntity>>
 
+    @Query("SELECT * FROM urge_episodes WHERE timestamp >= :sinceTimestamp ORDER BY timestamp DESC")
+    suspend fun getUrgeEpisodesSince(sinceTimestamp: Long): List<UrgeEpisodeEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUrgeEpisode(episode: UrgeEpisodeEntity): Long
 
@@ -54,6 +57,9 @@ interface UrgeEpisodeDao {
 interface ThoughtDao {
     @Query("SELECT * FROM thought_laboratory ORDER BY timestamp DESC")
     fun getAllThoughts(): Flow<List<ThoughtEntity>>
+
+    @Query("SELECT * FROM thought_laboratory WHERE timestamp >= :sinceTimestamp ORDER BY timestamp DESC")
+    suspend fun getThoughtsSince(sinceTimestamp: Long): List<ThoughtEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertThought(thought: ThoughtEntity): Long
@@ -207,6 +213,9 @@ interface RelationshipAuditDao {
 interface JournalDao {
     @Query("SELECT * FROM personal_journal ORDER BY timestamp DESC")
     fun getAllJournalEntries(): Flow<List<JournalEntryEntity>>
+
+    @Query("SELECT * FROM personal_journal WHERE timestamp >= :sinceTimestamp ORDER BY timestamp DESC")
+    suspend fun getJournalEntriesSince(sinceTimestamp: Long): List<JournalEntryEntity>
 
     @Query("SELECT * FROM personal_journal WHERE id = :id LIMIT 1")
     fun getJournalEntryById(id: Long): Flow<JournalEntryEntity?>

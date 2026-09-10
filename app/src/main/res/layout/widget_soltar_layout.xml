@@ -109,7 +109,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Quote / Daily Reflection Tailored to Framework -->
+    <!-- Quote / Daily Reflection Tailored to Framework / Daily Summary Note -->
     <TextView
         android:id="@+id/widget_quote_text"
         android:layout_width="match_parent"
@@ -117,12 +117,12 @@
         android:layout_marginTop="2dp"
         android:layout_marginBottom="4dp"
         android:layout_weight="1"
-        android:contentDescription="Reflexión diaria del marco de referencia"
+        android:contentDescription="Reflexión diaria o resumen motivacional del día"
         android:ellipsize="end"
-        android:maxLines="2"
+        android:maxLines="3"
         android:text="«Sé dueño de tus decisiones y custodio de tu paz hoy.»"
         android:textColor="@color/text_secondary"
-        android:textSize="13sp"
+        android:textSize="12.5sp"
         android:textStyle="italic" />
 
     <!-- 4 Functional Action Buttons Grid -->

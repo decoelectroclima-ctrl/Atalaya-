@@ -612,9 +612,9 @@ Al recuperar tu parte de responsabilidad sobre tus decisiones, recuperas el cont
                 ClinicalVariant(
                     headerGreeting = "**Sustituye la etiqueta patologizante por un límite claro.**",
                     bodyText = """
-No necesitas demostrarle al mundo ni a ti mismo que tu ex tenía un trastorno mental para tener derecho a alejarte. La incompatibilidad profunda o el maltrato emocional son motivos legítimos y suficientes por sí mismos.
+Sustituye las etiquetas diagnósticas por límites firmes. No necesitas demostrarle al mundo ni a ti mismo que tu ex tenía un trastorno mental para tener derecho a alejarte: los hechos observables, la incompatibilidad profunda o el maltrato emocional son motivos legítimos y suficientes por sí mismos para salvaguardar tu dignidad y tu paz.
 
-Cierra el libro de diagnósticos. Tu trabajo terapéutico ahora es sanar tus heridas de apego y construir relaciones donde el respeto mutuo sea la base indispensable.
+Cierra el libro de diagnósticos ajenos. Tu trabajo terapéutico ahora es sanar tus heridas de apego, fortalecer tu autonomía y construir relaciones donde el respeto mutuo sea la base indispensable.
                     """.trimIndent()
                 )
             )

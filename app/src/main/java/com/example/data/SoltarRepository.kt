@@ -38,6 +38,10 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         return database.urgeEpisodeDao().insertUrgeEpisode(episode)
     }
 
+    suspend fun getUrgeEpisodesSince(sinceTimestamp: Long): List<UrgeEpisodeEntity> {
+        return database.urgeEpisodeDao().getUrgeEpisodesSince(sinceTimestamp)
+    }
+
     suspend fun deleteUrgeEpisode(id: Long) {
         database.urgeEpisodeDao().deleteUrgeEpisode(id)
     }
@@ -47,6 +51,10 @@ class SoltarRepository(private val database: AdrianaDatabase) {
 
     suspend fun saveThought(thought: ThoughtEntity): Long {
         return database.thoughtDao().insertThought(thought)
+    }
+
+    suspend fun getThoughtsSince(sinceTimestamp: Long): List<ThoughtEntity> {
+        return database.thoughtDao().getThoughtsSince(sinceTimestamp)
     }
 
     suspend fun closeThoughtLoop(id: Long) {
@@ -202,6 +210,10 @@ class SoltarRepository(private val database: AdrianaDatabase) {
 
     suspend fun saveJournalEntry(entry: JournalEntryEntity): Long {
         return database.journalDao().insertJournalEntry(entry)
+    }
+
+    suspend fun getJournalEntriesSince(sinceTimestamp: Long): List<JournalEntryEntity> {
+        return database.journalDao().getJournalEntriesSince(sinceTimestamp)
     }
 
     suspend fun updateJournalFeedback(

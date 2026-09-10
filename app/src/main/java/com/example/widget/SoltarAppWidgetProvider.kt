@@ -171,6 +171,7 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                 var framework = SoltarFramework.PSICOLOGIA_MODERNA
                 var appThemeMode = "LIGHT"
                 var vulnerabilityScore = 40
+                var dailySummary: com.example.ai.DailySummaryData? = null
 
                 val config = SoltarWidgetConfigManager.loadConfig(context, appWidgetId)
 
@@ -204,6 +205,19 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                         val avg = recentCheckins.map { (it.pain + it.anxiety + it.rumination) / 3f }.average().toFloat()
                         vulnerabilityScore = (avg * 10f).toInt().coerceIn(0, 100)
                     }
+
+                    val startOfDay = com.example.ai.DailySummaryEngine.getStartOfTodayMillis()
+                    val todayJournals = db.journalDao().getJournalEntriesSince(startOfDay)
+                    val todayThoughts = db.thoughtDao().getThoughtsSince(startOfDay)
+                    val todayUrges = db.urgeEpisodeDao().getUrgeEpisodesSince(startOfDay)
+
+                    dailySummary = com.example.ai.DailySummaryEngine.generateDailySummary(
+                        journals = todayJournals,
+                        thoughts = todayThoughts,
+                        urges = todayUrges,
+                        framework = framework,
+                        userName = userName
+                    )
                 } catch (_: Exception) {}
 
                 val progressStage = com.example.ui.managers.ProgressManager.calculateProgressStage(days, vulnerabilityScore)
@@ -244,11 +258,18 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
 
                 val quoteIndex = (days % quoteList.size).coerceIn(0, quoteList.size - 1)
                 val quote = when (config.quoteSource) {
+                    SoltarWidgetConfig.SOURCE_DAILY_SUMMARY -> dailySummary?.briefMotivationalNote ?: quoteList[quoteIndex]
                     SoltarWidgetConfig.SOURCE_CUSTOM -> config.customMantra.ifBlank { "«Sé dueño de tus decisiones y custodio de tu paz hoy.»" }
                     SoltarWidgetConfig.SOURCE_STOIC -> stoicQuotes[days % stoicQuotes.size]
                     SoltarWidgetConfig.SOURCE_CATHOLIC -> catholicQuotes[days % catholicQuotes.size]
                     SoltarWidgetConfig.SOURCE_PSYCHOLOGY -> psychologyQuotes[days % psychologyQuotes.size]
-                    else -> quoteList[quoteIndex]
+                    else -> {
+                        if (dailySummary != null && dailySummary.hasActivityToday) {
+                            dailySummary.briefMotivationalNote
+                        } else {
+                            quoteList[quoteIndex]
+                        }
+                    }
                 }
 
                 val views = RemoteViews(context.packageName, R.layout.widget_soltar_layout).apply {

@@ -263,6 +263,7 @@ fun WidgetConfigureScreen(
 
                     val sources = listOf(
                         SoltarWidgetConfig.SOURCE_PROFILE to "📱 Según mi perfil en la app",
+                        SoltarWidgetConfig.SOURCE_DAILY_SUMMARY to "✨ Resumen Diario (Insights de diario, mente e impulsos)",
                         SoltarWidgetConfig.SOURCE_STOIC to "🏛️ Estoicismo (Marco Aurelio, Séneca, Epicteto)",
                         SoltarWidgetConfig.SOURCE_PSYCHOLOGY to "🧠 Psicología (Apego, Rolón, Congost, ACT)",
                         SoltarWidgetConfig.SOURCE_CATHOLIC to "✝️ Fe Católica (Proverbios, Salmos, San Agustín)",
@@ -627,6 +628,7 @@ fun WidgetLivePreviewCard(
     }
 
     val sampleQuote = when {
+        config.quoteSource == SoltarWidgetConfig.SOURCE_DAILY_SUMMARY -> "✨ Resumen: Venciste 1 impulso de contacto, aclaraste tus pensamientos y registraste tu calma en el diario."
         config.quoteSource == SoltarWidgetConfig.SOURCE_CUSTOM && config.customMantra.isNotBlank() -> "«${config.customMantra}»"
         config.quoteSource == SoltarWidgetConfig.SOURCE_STOIC -> "«No son las cosas las que atormentan, sino el juicio sobre ellas.» — Epicteto"
         config.quoteSource == SoltarWidgetConfig.SOURCE_CATHOLIC -> "«Guarda tu corazón, porque de él brota la vida.» — Prov 4:23"

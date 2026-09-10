@@ -432,6 +432,36 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         )
     )
 
+    // Real-Time Daily Summary Engine (Consolidates today's Journals, Thoughts, and Urges)
+    val dailySummary: StateFlow<com.example.ai.DailySummaryData> = combine(
+        journalEntries,
+        thoughts,
+        urgeEpisodes,
+        settings
+    ) { journals, allThoughts, allUrges, currentSettings ->
+        val startOfDay = com.example.ai.DailySummaryEngine.getStartOfTodayMillis()
+        val todayJournals = journals.filter { it.timestamp >= startOfDay }
+        val todayThoughts = allThoughts.filter { it.timestamp >= startOfDay }
+        val todayUrges = allUrges.filter { it.timestamp >= startOfDay }
+
+        val framework = currentSettings?.preferredFramework?.let {
+            try { SoltarFramework.valueOf(it) } catch (_: Exception) { SoltarFramework.PSICOLOGIA_MODERNA }
+        } ?: SoltarFramework.PSICOLOGIA_MODERNA
+        val userName = currentSettings?.userName?.takeIf { it.isNotBlank() } ?: "Viajero"
+
+        com.example.ai.DailySummaryEngine.generateDailySummary(
+            journals = todayJournals,
+            thoughts = todayThoughts,
+            urges = todayUrges,
+            framework = framework,
+            userName = userName
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        com.example.ai.DailySummaryEngine.generateDailySummary(emptyList(), emptyList(), emptyList())
+    )
+
     private var urgeTimerJob: Job? = null
 
     private val _todayGriefPatterns = MutableStateFlow<List<String>>(emptyList())
@@ -457,6 +487,15 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         observeJournalEntriesForLinguisticAnalysis()
         evaluateJourneyStage()
         refreshTodayGriefPatterns()
+        observeDailySummaryForWidgetSync()
+    }
+
+    private fun observeDailySummaryForWidgetSync() {
+        viewModelScope.launch {
+            dailySummary.collect {
+                com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())
+            }
+        }
     }
 
     fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }

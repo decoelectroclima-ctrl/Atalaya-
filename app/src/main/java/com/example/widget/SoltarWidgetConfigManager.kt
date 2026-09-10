@@ -21,6 +21,7 @@ data class SoltarWidgetConfig(
 ) {
     companion object {
         const val SOURCE_PROFILE = "PROFILE"
+        const val SOURCE_DAILY_SUMMARY = "DAILY_SUMMARY"
         const val SOURCE_STOIC = "STOIC"
         const val SOURCE_PSYCHOLOGY = "PSYCHOLOGY"
         const val SOURCE_CATHOLIC = "CATHOLIC"
