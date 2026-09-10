@@ -122,7 +122,7 @@ fun TemporalMirrorDialog(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(text = "📝", fontSize = 36.sp)
+                        Text(text = "", fontSize = 36.sp)
                         Text(
                             text = "Necesitas al menos 2 entradas en tu diario para activar el Espejo Temporal.",
                             style = MaterialTheme.typography.bodyMedium,

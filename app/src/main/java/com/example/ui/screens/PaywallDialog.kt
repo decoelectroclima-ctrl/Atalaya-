@@ -257,7 +257,7 @@ fun PaywallDialog(
 
                 // Security & Dignity Footer
                 Text(
-                    text = "🔒 Separación estricta: Tus datos emocionales se procesan bajo cifrado local y jamás se cruzan con datos de facturación. Facturación gestionada mediante Google Play.",
+                    text = "Separación estricta: Tus datos emocionales se procesan bajo cifrado local y jamás se cruzan con datos de facturación. Facturación gestionada mediante Google Play.",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
                     textAlign = TextAlign.Center,

@@ -104,7 +104,7 @@ fun TimeCapsuleComparisonDialog(
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
-                                text = "✉️ «${letter.title}»",
+                                text = "«${letter.title}»",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = SoltarBlue,
                                 fontWeight = FontWeight.Bold

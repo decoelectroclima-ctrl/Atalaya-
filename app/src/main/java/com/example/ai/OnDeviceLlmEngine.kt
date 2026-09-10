@@ -686,4 +686,40 @@ object OnDeviceLlmEngine {
             base
         }
     }
+
+    fun detectGriefPatternsToday(recentFreeText: List<String>): List<String> {
+        val joined = recentFreeText.filter { it.isNotBlank() }.takeLast(3).joinToString("\n---\n")
+        if (joined.isBlank() || !isReady()) return emptyList()
+
+        val prompt = """
+            Lee estos fragmentos recientes de una persona procesando una ruptura.
+            Identifica QUE patrones emocionales aparecen HOY en el texto, de esta lista fija:
+            NEGACION, IRA, NEGOCIACION, TRISTEZA, ACEPTACION
+
+            Pueden aparecer VARIOS a la vez, o ninguno si el texto no refleja claramente
+            ninguno de estos. No es una escala ni un orden - son patrones independientes
+            que pueden convivir el mismo dia.
+
+            - NEGACION: minimiza o evita reconocer el dolor o la realidad de la ruptura.
+            - IRA: enojo, resentimiento, reproche hacia la ex-pareja o la situacion.
+            - NEGOCIACION: "si hubiera hecho X", fantasias de reconciliacion, condicionales.
+            - TRISTEZA: pena, vacio, llanto, anhelo genuino.
+            - ACEPTACION: reconocimiento realista de la situacion, sin negarla ni pelear con ella.
+
+            Responde UNICAMENTE con las palabras que apliquen, separadas por coma, o la
+            palabra NINGUNO si no aplica ninguna. Sin explicacion adicional.
+
+            Texto:
+            $joined
+        """.trimIndent()
+
+        return try {
+            val raw = generate(prompt).trim().uppercase()
+            if (raw.contains("NINGUNO")) return emptyList()
+            listOf("NEGACION", "IRA", "NEGOCIACION", "TRISTEZA", "ACEPTACION")
+                .filter { raw.contains(it) }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }

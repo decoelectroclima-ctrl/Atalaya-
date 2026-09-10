@@ -187,7 +187,7 @@ fun MandatoryJournalPendingScreen(viewModel: SoltarViewModel) {
                                 requestMentorship = false
                             )
                         } else {
-                            viewModel.showNotification("⚠️ Escribe al menos unas palabras para desbloquear la app.")
+                            viewModel.showNotification("Escribe al menos unas palabras para desbloquear la app.")
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

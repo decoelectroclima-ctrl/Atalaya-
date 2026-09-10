@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity() {
                 val isMandatoryJournalPending by viewModel.isMandatoryJournalPending.collectAsStateWithLifecycle()
 
                 val isAnyModalOpen = uiState.isNeedHelpSheetVisible ||
+                        uiState.isToolsShelfSheetVisible ||
                         uiState.isUrgeSheetVisible ||
                         uiState.isNoThinkingSheetVisible ||
                         uiState.isAiCompanionSheetVisible ||

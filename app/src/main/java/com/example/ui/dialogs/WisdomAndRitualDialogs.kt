@@ -94,7 +94,7 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = if (isMilestoneReached) "✨ Hito Alcanzado: Banco Personal de Sabiduría" else "🔒 Banco Personal (Se desbloquea al alcanzar 30 días o 5 check-ins)",
+                            text = if (isMilestoneReached) "Hito Alcanzado: Banco Personal de Sabiduría" else "Banco Personal (Se desbloquea al alcanzar 30 días o 5 check-ins)",
                             style = MaterialTheme.typography.titleSmall,
                             color = if (isMilestoneReached) SoltarAmber else TextSecondary,
                             fontWeight = FontWeight.Bold
@@ -122,7 +122,7 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                                     if (contributionInput.isNotBlank()) {
                                         viewModel.saveWisdomContribution(framework.key, contributionInput.trim())
                                         contributionInput = ""
-                                        successMsg = "✨ ¡Frase guardada en tu banco personal!"
+                                        successMsg = "¡Frase guardada en tu banco personal!"
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
@@ -237,7 +237,7 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isUnlocked) "Ritual de Cierre Personalizado (IA On-Device)" else "🔒 Ritual Bloqueado") },
+        title = { Text(if (isUnlocked) "Ritual de Cierre Personalizado (IA On-Device)" else "Ritual Bloqueado") },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 if (!isUnlocked) {

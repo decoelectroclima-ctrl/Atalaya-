@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -49,6 +51,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(
     viewModel: SoltarViewModel,
@@ -77,6 +80,7 @@ fun TodayScreen(
     var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         viewModel.evaluateJourneyStage()
+        viewModel.refreshTodayGriefPatterns()
         while (true) {
             delay(1000)
             currentTime = System.currentTimeMillis()
@@ -1503,6 +1507,64 @@ fun TodayScreen(
                 border = BorderStroke(1.dp, SoltarBorder)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    val todayPatterns by viewModel.todayGriefPatterns.collectAsState()
+
+                    if (todayPatterns.isNotEmpty()) {
+                        Text(
+                            text = "Hoy tu escritura refleja algo de:",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextMuted
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.horizontalScroll(rememberScrollState())
+                        ) {
+                            val labels = mapOf(
+                                "NEGACION" to Pair("Negación", Icons.Default.Cloud),
+                                "IRA" to Pair("Ira", Icons.Default.LocalFireDepartment),
+                                "NEGOCIACION" to Pair("Negociación", Icons.Default.Sync),
+                                "TRISTEZA" to Pair("Tristeza", Icons.Default.WaterDrop),
+                                "ACEPTACION" to Pair("Aceptación", Icons.Default.WbSunny)
+                            )
+                            todayPatterns.forEach { pattern ->
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = SoltarAmber.copy(alpha = 0.12f),
+                                    border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.3f))
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    ) {
+                                        val info = labels[pattern]
+                                        if (info != null) {
+                                            Icon(
+                                                imageVector = info.second,
+                                                contentDescription = null,
+                                                tint = SoltarAmber,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Text(
+                                                text = info.first,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = SoltarAmber
+                                            )
+                                        } else {
+                                            Text(
+                                                text = pattern,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = SoltarAmber
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
                     Text(
                         text = "¿CÓMO ESTÁS EN ESTE MOMENTO?",
                         style = MaterialTheme.typography.labelSmall,
@@ -1520,18 +1582,18 @@ fun TodayScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     val feelings = listOf(
-                        "🚨 Ansiedad / Ganas de escribir",
-                        "💭 Mente en bucle",
-                        "🥀 Nostalgia / Idealización",
-                        "⚖️ Confusión / Culpabilidad",
-                        "🌿 En calma / Reconstrucción"
+                        Pair("Ansiedad / Ganas de escribir", Icons.Default.Bolt),
+                        Pair("Mente en bucle", Icons.Default.Psychology),
+                        Pair("Nostalgia / Idealización", Icons.Default.Visibility),
+                        Pair("Confusión / Culpabilidad", Icons.Default.Balance),
+                        Pair("En calma / Reconstrucción", Icons.Default.Spa)
                     )
 
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(feelings) { feeling ->
+                        items(feelings) { (feeling, iconVec) ->
                             val isSelected = uiState.selectedFeeling == feeling
                             FilterChip(
                                 selected = isSelected,
@@ -1540,6 +1602,13 @@ fun TodayScreen(
                                     viewModel.setSelectedFeeling(if (isSelected) "" else feeling)
                                 },
                                 label = { Text(feeling, fontSize = 12.sp) },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = iconVec,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = SoltarAmber,
                                     selectedLabelColor = SoltarBackground,
@@ -1558,7 +1627,7 @@ fun TodayScreen(
                     ) {
                         Spacer(modifier = Modifier.height(14.dp))
                         when (uiState.selectedFeeling) {
-                            "🚨 Ansiedad / Ganas de escribir" -> InterventionBanner(
+                            "Ansiedad / Ganas de escribir" -> InterventionBanner(
                                 title = "Protocolo de Urgencia Somática",
                                 description = "Tu cuerpo tiene un pico de dopamina. No actúes ahora. Inicia el protocolo de 20 minutos.",
                                 ctaText = "Abrir Modo Impulso (20 min)",
@@ -1569,7 +1638,7 @@ fun TodayScreen(
                                     viewModel.openUrgeSheet()
                                 }
                             )
-                            "💭 Mente en bucle" -> InterventionBanner(
+                            "Mente en bucle" -> InterventionBanner(
                                 title = "Desarmar Pensamientos Intrusivos",
                                 description = "Separa hechos objetivos de interpretaciones catastróficas con el laboratorio TCC.",
                                 ctaText = "Abrir Laboratorio de Pensamiento",
@@ -1580,7 +1649,7 @@ fun TodayScreen(
                                     viewModel.toggleThoughtModal(true)
                                 }
                             )
-                            "🥀 Nostalgia / Idealización" -> InterventionBanner(
+                            "Nostalgia / Idealización" -> InterventionBanner(
                                 title = "Antídoto de Realidad",
                                 description = "Tu memoria borra lo malo y amplifica lo bueno. Revisa el contraste de realidad.",
                                 ctaText = "Ver Antídoto de Idealización",
@@ -1591,7 +1660,7 @@ fun TodayScreen(
                                     viewModel.toggleIdealizationModal(true)
                                 }
                             )
-                            "⚖️ Confusión / Culpabilidad" -> InterventionBanner(
+                            "Confusión / Culpabilidad" -> InterventionBanner(
                                 title = "Auditoría de 3 Responsabilidades",
                                 description = "Ni toda la culpa es tuya, ni la otra persona es un monstruo. Claridad y ecuanimidad.",
                                 ctaText = "Auditar la Relación",
@@ -1602,7 +1671,7 @@ fun TodayScreen(
                                     viewModel.toggleAuditModal(true)
                                 }
                             )
-                            "🌿 En calma / Reconstrucción" -> InterventionBanner(
+                            "En calma / Reconstrucción" -> InterventionBanner(
                                 title = "Reconectar con tu Autonomía",
                                 description = "Aprovecha la serenidad para avanzar en tus metas de identidad y proyectos personales.",
                                 ctaText = "Ver Metas de Identidad",
@@ -1627,22 +1696,30 @@ fun TodayScreen(
                 settings?.pinnedToolIds?.split(",")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
             }
 
-            com.example.ui.components.ToolsShelf(
-                allTools = listOf(
-                    com.example.ui.components.ToolItem("journal", "Diario", Icons.Default.Book) { viewModel.openJournalModal() },
-                    com.example.ui.components.ToolItem("unsent_letter", "Carta no enviada", Icons.Default.Mail) { viewModel.toggleLetterModal(true) },
-                    com.example.ui.components.ToolItem("time_capsule", "Cápsula del tiempo", Icons.Default.Schedule) { viewModel.toggleTimeCapsuleModal(true) },
-                    com.example.ui.components.ToolItem("wisdom", "Biblioteca de sabiduría", Icons.Default.MenuBook) { viewModel.toggleWisdomLibraryDialog(true) },
-                    com.example.ui.components.ToolItem("support_contacts", "Contactos de apoyo", Icons.Default.ContactPhone) { viewModel.openSupportContactDialog(1) },
-                    com.example.ui.components.ToolItem("encounter_simulator", "Simulador de encuentro", Icons.Default.TheaterComedy) { viewModel.toggleEncounterSimulator(true) },
-                    com.example.ui.components.ToolItem("identity_goals", "Metas de identidad", Icons.Default.Flag) { viewModel.toggleIdentityGoalModal(true) },
-                    com.example.ui.components.ToolItem("conversation_analyzer", "Analizar conversación", Icons.Default.Forum) { viewModel.toggleConversationAnalyzer(true) }
-                ),
-                pinnedIds = pinnedIds,
-                expanded = settings?.toolsShelfExpanded ?: false,
-                onToggleExpanded = { viewModel.toggleToolsShelfExpanded(it) },
-                onTogglePinned = { viewModel.toggleToolPinned(it) }
-            )
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.toggleToolsShelfSheetVisible(true) },
+                shape = RoundedCornerShape(14.dp),
+                color = SoltarSurface,
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.GridView, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = if (pinnedIds.isEmpty()) "Mis Herramientas" else "Mis Herramientas (${pinnedIds.size} fijadas)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted, modifier = Modifier.size(18.dp))
+                }
+            }
         }
 
         // 4. THREE TOOL FAMILIES
@@ -1920,6 +1997,34 @@ fun TodayScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (uiState.isToolsShelfSheetVisible) {
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.toggleToolsShelfSheetVisible(false) },
+            containerColor = SoltarSurface
+        ) {
+            val pinnedIdsSheet = remember(settings?.pinnedToolIds) {
+                settings?.pinnedToolIds?.split(",")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
+            }
+            com.example.ui.components.ToolsShelf(
+                allTools = listOf(
+                    com.example.ui.components.ToolItem("journal", "Diario", Icons.Default.Book) { viewModel.toggleToolsShelfSheetVisible(false); viewModel.openJournalModal() },
+                    com.example.ui.components.ToolItem("unsent_letter", "Carta no enviada", Icons.Default.Mail) { viewModel.toggleLetterModal(true) },
+                    com.example.ui.components.ToolItem("time_capsule", "Cápsula del tiempo", Icons.Default.Schedule) { viewModel.toggleTimeCapsuleModal(true) },
+                    com.example.ui.components.ToolItem("wisdom", "Biblioteca de sabiduría", Icons.Default.MenuBook) { viewModel.toggleWisdomLibraryDialog(true) },
+                    com.example.ui.components.ToolItem("support_contacts", "Contactos de apoyo", Icons.Default.ContactPhone) { viewModel.openSupportContactDialog(1) },
+                    com.example.ui.components.ToolItem("encounter_simulator", "Simulador de encuentro", Icons.Default.TheaterComedy) { viewModel.toggleEncounterSimulator(true) },
+                    com.example.ui.components.ToolItem("identity_goals", "Metas de identidad", Icons.Default.Flag) { viewModel.toggleIdentityGoalModal(true) },
+                    com.example.ui.components.ToolItem("conversation_analyzer", "Analizar conversación", Icons.Default.Forum) { viewModel.toggleConversationAnalyzer(true) }
+                ),
+                pinnedIds = pinnedIdsSheet,
+                expanded = true, // dentro de la hoja modal, mostrar todo desplegado - ya no hace falta colapsar, el usuario abrio la hoja a proposito
+                onToggleExpanded = { },
+                onTogglePinned = { viewModel.toggleToolPinned(it) },
+                modifier = Modifier.padding(20.dp)
+            )
         }
     }
 

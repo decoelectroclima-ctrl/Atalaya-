@@ -124,7 +124,7 @@ fun BeginnerLetterDialog(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "✍️ Escribe una carta para quien empieza hoy",
+                                text = "Escribe una carta para quien empieza hoy",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary

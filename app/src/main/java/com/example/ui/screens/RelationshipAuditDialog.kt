@@ -138,7 +138,7 @@ fun RelationshipAuditDialog(
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = if (showGuidedAssistant) "Ocultar" else "✨ Ayúdame a identificar",
+                                    text = if (showGuidedAssistant) "Ocultar" else "Ayúdame a identificar",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = SoltarAmber,
                                     fontWeight = FontWeight.Bold

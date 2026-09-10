@@ -94,6 +94,7 @@ data class SoltarUiState(
     val isEmotionalCheckinVisible: Boolean = false,
     val isTemporalMirrorModalVisible: Boolean = false,
     val isBeginnerLetterModalVisible: Boolean = false,
+    val isToolsShelfSheetVisible: Boolean = false,
     val checkinStateInput: String = "Neutral",
     val checkinFirstThoughtsInput: String = "",
     val checkinUrgeInput: Float = 2f,
@@ -433,6 +434,20 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     private var urgeTimerJob: Job? = null
 
+    private val _todayGriefPatterns = MutableStateFlow<List<String>>(emptyList())
+    val todayGriefPatterns: StateFlow<List<String>> = _todayGriefPatterns.asStateFlow()
+
+    fun refreshTodayGriefPatterns() {
+        viewModelScope.launch {
+            val recentFreeText = buildList {
+                addAll(journalEntries.value.take(3).map { it.content })
+                addAll(letters.value.filter { it.isClosed }.take(3).map { it.content })
+                addAll(checkins.value.take(3).map { it.firstThoughts })
+            }
+            _todayGriefPatterns.value = com.example.ai.OnDeviceLlmEngine.detectGriefPatternsToday(recentFreeText)
+        }
+    }
+
     init {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             AdrianaDatabase.populateInitialDataIfEmpty(AdrianaDatabase.getDatabase(application))
@@ -441,9 +456,11 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         observeSettings()
         observeJournalEntriesForLinguisticAnalysis()
         evaluateJourneyStage()
+        refreshTodayGriefPatterns()
     }
 
     fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
+    fun toggleToolsShelfSheetVisible(visible: Boolean) = _uiState.update { it.copy(isToolsShelfSheetVisible = visible) }
     fun openNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = true) }
     fun closeNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = false) }
 
@@ -573,6 +590,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun evaluateJourneyStage() {
+        refreshTodayGriefPatterns()
         viewModelScope.launch {
             val currentSettings = settings.value ?: return@launch
             if (currentSettings.journeyStage == "LIFE_COACH") return@launch
@@ -816,7 +834,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             }
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("✨ ¡Bienvenido a Recuerda! Tu perfil y contexto han sido configurados.")
+            showNotification("¡Bienvenido a Recuerda! Tu perfil y contexto han sido configurados.")
         }
     }
 
@@ -832,7 +850,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     initialStartDateSet = true
                 )
             )
-            showNotification("⏱️ Fecha de Contacto Cero actualizada correctamente.")
+            showNotification("Fecha de Contacto Cero actualizada correctamente.")
             playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
             com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(getApplication())
         }
@@ -995,7 +1013,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             )
             closeUrgeSheet()
-            showNotification("🛡️ Impulso regulado y guardado en tu historial.")
+            showNotification("Impulso regulado y guardado en tu historial.")
         }
     }
 
@@ -1095,7 +1113,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     thoughtDependsOnMeInput = ""
                 )
             }
-            showNotification("🔒 Bucle de pensamiento analizado y cerrado con éxito.")
+            showNotification("Bucle de pensamiento analizado y cerrado con éxito.")
         }
     }
 
@@ -1136,7 +1154,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     auditPatternInput = ""
                 )
             }
-            showNotification("⚖️ Evento de la relación auditado con ecuanimidad.")
+            showNotification("Evento de la relación auditado con ecuanimidad.")
         }
     }
 
@@ -1166,7 +1184,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     idealizationRealityInput = ""
                 )
             }
-            showNotification("💡 Par de contraste agregado al antídoto de idealización.")
+            showNotification("Par de contraste agregado al antídoto de idealización.")
         }
     }
 
@@ -1203,14 +1221,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     letterContentInput = ""
                 )
             }
-            showNotification("✉️ Carta privada guardada de forma segura.")
+            showNotification("Carta privada guardada de forma segura.")
         }
     }
 
     fun performLetterCeremony(id: Long) {
         viewModelScope.launch {
             repository.performClosingCeremony(id)
-            showNotification("🕯️ Ceremonia de cierre realizada. La carta queda sellada.")
+            showNotification("Ceremonia de cierre realizada. La carta queda sellada.")
         }
     }
 
@@ -1405,14 +1423,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     unlockAtTimestamp = unlockAt
                 )
             )
-            showNotification("⏳ Cápsula del tiempo sellada. Nos vemos en el futuro.")
+            showNotification("Cápsula del tiempo sellada. Nos vemos en el futuro.")
         }
     }
 
     fun unlockTimeCapsule(id: Long) {
         viewModelScope.launch {
             repository.unlockTimeCapsule(id)
-            showNotification("🔓 Cápsula del tiempo desbloqueada.")
+            showNotification("Cápsula del tiempo desbloqueada.")
         }
     }
 
@@ -1424,7 +1442,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     quote = quote
                 )
             )
-            showNotification("✨ ¡Frase guardada en tu banco personal!")
+            showNotification("¡Frase guardada en tu banco personal!")
         }
     }
 
@@ -1526,7 +1544,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 )
                 _uiState.update { it.copy(isAiTyping = false) }
-                showNotification("⚠️ Líneas de ayuda y apoyo activadas en tu chat")
+                showNotification("Líneas de ayuda y apoyo activadas en tu chat")
             }
             return
         }
@@ -1612,7 +1630,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     ) {
         val cleanContent = content.trim()
         if (cleanContent.isBlank()) {
-            showNotification("⚠️ Escribe algo en tu diario antes de guardar.")
+            showNotification("Escribe algo en tu diario antes de guardar.")
             return
         }
 
@@ -1658,9 +1676,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     if (updated != null) {
                         _uiState.update { it.copy(selectedJournalEntry = updated) }
                     }
-                    showNotification("✨ Mentoría filosófica generada con éxito.")
+                    showNotification("Mentoría filosófica generada con éxito.")
                 } catch (e: Exception) {
-                    showNotification("⚠️ Entrada guardada. No se pudo conectar con el mentor.")
+                    showNotification("Entrada guardada. No se pudo conectar con el mentor.")
                 } finally {
                     _uiState.update { it.copy(isGeneratingJournalMentorship = false) }
                 }
@@ -1701,9 +1719,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 if (updated != null) {
                     _uiState.update { it.copy(selectedJournalEntry = updated) }
                 }
-                showNotification("✨ Nueva perspectiva filosófica generada.")
+                showNotification("Nueva perspectiva filosófica generada.")
             } catch (e: Exception) {
-                showNotification("⚠️ No se pudo regenerar la mentoría.")
+                showNotification("No se pudo regenerar la mentoría.")
             } finally {
                 _uiState.update { it.copy(isGeneratingJournalMentorship = false) }
             }
@@ -1716,7 +1734,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             if (_uiState.value.selectedJournalEntry?.id == id) {
                 _uiState.update { it.copy(selectedJournalEntry = null) }
             }
-            showNotification("🗑️ Entrada de diario eliminada.")
+            showNotification("Entrada de diario eliminada.")
         }
     }
 
@@ -1741,7 +1759,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             )
             toggleMemoryModal(false)
-            showNotification("🗑️ Historial de conversación eliminado con éxito.")
+            showNotification("Historial de conversación eliminado con éxito.")
         }
     }
 
@@ -1789,7 +1807,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         val rel = s.contactRelationshipInput.trim()
 
         if (name.isBlank()) {
-            showNotification("⚠️ Por favor, introduce el nombre del contacto.")
+            showNotification("Por favor, introduce el nombre del contacto.")
             return
         }
 
@@ -1819,7 +1837,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             }
             repository.saveSettings(updated)
             playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-            showNotification("🗑️ Contacto eliminado de tu Red de Apoyo.")
+            showNotification("Contacto eliminado de tu Red de Apoyo.")
         }
     }
 
@@ -1907,7 +1925,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             )
             _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("🌟 Has iniciado tus 7 días de prueba gratis en Recuerda Premium.")
+            showNotification("Has iniciado tus 7 días de prueba gratis en Recuerda Premium.")
         }
     }
 
@@ -1922,7 +1940,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 )
             )
             playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-            showNotification("ℹ️ Tu suscripción ha sido cancelada. Mantienes el acceso a Recuerda Free.")
+            showNotification("Tu suscripción ha sido cancelada. Mantienes el acceso a Recuerda Free.")
         }
     }
 
@@ -2015,7 +2033,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             }
             playSound(com.example.audio.SoltarSoundManager.SoundType.CALM_BELL)
             val formattedTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", clampedHour, clampedMin)
-            showNotification("⏰ Recordatorio diario programado para las $formattedTime hs.")
+            showNotification("Recordatorio diario programado para las $formattedTime hs.")
         }
     }
 
@@ -2031,10 +2049,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     current.reminderMinute
                 )
                 val formattedTime = String.format(java.util.Locale.getDefault(), "%02d:%02d", current.reminderHour, current.reminderMinute)
-                showNotification("🔔 Recordatorios diarios activados ($formattedTime hs)")
+                showNotification("Recordatorios diarios activados ($formattedTime hs)")
             } else {
                 com.example.notifications.SoltarNotificationHelper.cancelDailyReminder(getApplication())
-                showNotification("🔕 Recordatorios diarios desactivados")
+                showNotification("Recordatorios diarios desactivados")
             }
             _uiState.update { it.copy(notificationsEnabled = enabled) }
             playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
@@ -2048,14 +2066,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             repository.saveSettings(updated)
             _uiState.update { it.copy(inactivityAlertsEnabled = enabled) }
             playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-            showNotification(if (enabled) "🌿 Acompañamiento empático tras 3 días activado" else "Acompañamiento por inactividad desactivado")
+            showNotification(if (enabled) "Acompañamiento empático tras 3 días activado" else "Acompañamiento por inactividad desactivado")
         }
     }
 
     fun triggerTestDailyReminder() {
         com.example.notifications.SoltarNotificationHelper.sendDailyCheckinNotification(getApplication())
         playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-        showNotification("🔔 Notificación de recordatorio diario enviada")
+        showNotification("Notificación de recordatorio diario enviada")
     }
 
     fun triggerTestInactivityReminder() {
@@ -2069,7 +2087,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             framework = framework
         )
         playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
-        showNotification("🌿 Notificación empática (3 días sin registro) enviada")
+        showNotification("Notificación empática (3 días sin registro) enviada")
     }
 
     fun triggerTestMilestoneReminder(days: Int = 7) {
@@ -2083,7 +2101,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             userName = userName
         )
         playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-        showNotification("🎉 Notificación de celebración de hito ($days días) enviada")
+        showNotification("Notificación de celebración de hito ($days días) enviada")
     }
 
     // --- B5: Trigger Events ---
@@ -2209,7 +2227,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.update {
                 it.copy(
                     isEmotionalCheckinVisible = false,
-                    notificationMessage = "✨ Check-in emocional guardado con éxito. Evolución registrada."
+                    notificationMessage = "Check-in emocional guardado con éxito. Evolución registrada."
                 )
             }
         }
@@ -2230,7 +2248,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun saveRiskDate() {
         val s = _uiState.value
         if (s.riskDateTitleInput.isBlank()) {
-            showNotification("⚠️ Por favor, introduce un título para la fecha de riesgo.")
+            showNotification("Por favor, introduce un título para la fecha de riesgo.")
             return
         }
         viewModelScope.launch {
@@ -2250,14 +2268,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     riskDateStrategyInput = ""
                 )
             }
-            showNotification("📅 Fecha clave de riesgo anticipado guardada con éxito.")
+            showNotification("Fecha clave de riesgo anticipado guardada con éxito.")
         }
     }
 
     fun deleteRiskDate(id: Long) {
         viewModelScope.launch {
             repository.deleteRiskDate(id)
-            showNotification("🗑️ Fecha de riesgo eliminada.")
+            showNotification("Fecha de riesgo eliminada.")
         }
     }
 
@@ -2456,7 +2474,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             message.ifBlank { "Mantén tu enfoque y respira hondo." }
         )
         playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-        showNotification("🔔 Notificación de prueba enviada")
+        showNotification("Notificación de prueba enviada")
     }
 
     fun restoreDefaultPresetReminders() {
@@ -2478,7 +2496,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             }
             _uiState.update { it.copy(customNotifications = merged) }
             playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("✨ Plantillas de recordatorios programables cargadas")
+            showNotification("Plantillas de recordatorios programables cargadas")
         }
     }
 
@@ -2553,7 +2571,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 id = 101L,
                 hour = 8,
                 minute = 30,
-                title = "🌅 Intención Matutina",
+                title = "Intención Matutina",
                 message = "Respira hondo: hoy eliges tu paz mental y tu soberanía emocional.",
                 enabled = true
             ),
@@ -2561,7 +2579,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 id = 102L,
                 hour = 14,
                 minute = 0,
-                title = "🛡️ Pausa Antirrumiación",
+                title = "Pausa Antirrumiación",
                 message = "Si surge urgencia de buscar o escribir, haz una pausa. El impulso pasará.",
                 enabled = true
             ),
@@ -2569,7 +2587,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 id = 103L,
                 hour = 18,
                 minute = 30,
-                title = "🌿 Chequeo de Calma & Autocuidado",
+                title = "Chequeo de Calma & Autocuidado",
                 message = "Tómate un respiro, bebe agua y valida el camino que has recorrido.",
                 enabled = true
             ),

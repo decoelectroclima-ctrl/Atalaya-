@@ -297,7 +297,7 @@ fun TimeCapsuleDialog(
                             ) {
                                 Column(modifier = Modifier.padding(14.dp)) {
                                     Text(
-                                        text = "📜 CARTA ORIGINAL ESCRITA HACE $daysElapsed DÍAS:",
+                                        text = "CARTA ORIGINAL ESCRITA HACE $daysElapsed DÍAS:",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = TextSecondary,
                                         fontWeight = FontWeight.Bold
@@ -402,7 +402,7 @@ fun TimeCapsuleDialog(
                                                 )
                                                 Spacer(modifier = Modifier.height(4.dp))
                                                 Text(
-                                                    text = if (isReady) "✨ Lista para desbloquear y comparar con tu diario" else "🔒 Desbloqueo en $remainingDays días (${dateFormat.format(Date(cap.unlockAtTimestamp))})",
+                                                    text = if (isReady) "Lista para desbloquear y comparar con tu diario" else "Desbloqueo en $remainingDays días (${dateFormat.format(Date(cap.unlockAtTimestamp))})",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = if (isReady) SoltarAmber else TextSecondary
                                                 )

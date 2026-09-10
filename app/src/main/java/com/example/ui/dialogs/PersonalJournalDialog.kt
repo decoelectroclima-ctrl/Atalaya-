@@ -55,14 +55,14 @@ fun PersonalJournalDialog(
     var viewingEntryDetail by remember { mutableStateOf(uiState.selectedJournalEntry) }
 
     val moodTags = listOf(
-        "🌿 Calma",
-        "🥀 Nostalgia",
-        "⚡ Ansiedad",
-        "💡 Claridad",
-        "🌧️ Duelo",
-        "✨ Gratitud",
-        "🛡️ Valentía",
-        "🌪️ Confusión"
+        "Calma",
+        "Nostalgia",
+        "Ansiedad",
+        "Claridad",
+        "Duelo",
+        "Gratitud",
+        "Valentía",
+        "Confusión"
     )
 
     Dialog(
@@ -194,7 +194,7 @@ fun PersonalJournalDialog(
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clip = ClipData.newPlainText("Diario Adriana", textToCopy)
                                 clipboard.setPrimaryClip(clip)
-                                viewModel.showNotification("📋 Copiado al portapapeles")
+                                viewModel.showNotification("Copiado al portapapeles")
                             }
                         )
                     } else if (activeTab == 0) {
@@ -303,7 +303,7 @@ private fun JournalWriteView(
                         isListening = false
                     }
                 } else {
-                    viewModel.showNotification("⚠️ Permiso de micrófono requerido")
+                    viewModel.showNotification("Permiso de micrófono requerido")
                 }
             }
 
@@ -353,7 +353,7 @@ private fun JournalWriteView(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "✨ Espejo Temporal",
+                        text = "Espejo Temporal",
                         color = TextPrimary,
                         fontSize = 12.sp
                     )
@@ -416,9 +416,9 @@ private fun JournalWriteView(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     val frameworks = listOf(
-                        Triple(SoltarFramework.ESTOICO, "🏛️ Estoicismo", "Dicotomía del control y fortaleza"),
-                        Triple(SoltarFramework.PSICOLOGIA_MODERNA, "🧠 Psicología", "Apego, duelo y límites"),
-                        Triple(SoltarFramework.CATOLICO, "🕊️ Trascendente", "Esperanza y custodia del corazón")
+                        Triple(SoltarFramework.ESTOICO, "Estoicismo", "Dicotomía del control y fortaleza"),
+                        Triple(SoltarFramework.PSICOLOGIA_MODERNA, "Psicología", "Apego, duelo y límites"),
+                        Triple(SoltarFramework.CATOLICO, "Trascendente", "Esperanza y custodia del corazón")
                     )
 
                     frameworks.forEach { (fw, label, _) ->
@@ -1027,9 +1027,9 @@ private fun JournalEntryDetailView(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             val options = listOf(
-                                SoltarFramework.ESTOICO to "🏛️ Estoica",
-                                SoltarFramework.PSICOLOGIA_MODERNA to "🧠 Psicología",
-                                SoltarFramework.CATOLICO to "🕊️ Trascendente"
+                                SoltarFramework.ESTOICO to "Estoica",
+                                SoltarFramework.PSICOLOGIA_MODERNA to "Psicología",
+                                SoltarFramework.CATOLICO to "Trascendente"
                             )
                             options.forEach { (fw, label) ->
                                 val isCurrent = entry.philosophicalFramework == fw.name

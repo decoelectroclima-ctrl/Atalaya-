@@ -166,7 +166,7 @@ fun SupportHubComponent(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Muro anónimo local y comunitario (Sin perfiles, nombres ni datos personales — Almacenamiento seguro local cifrado). Comparte logros (ej. 'Hoy he llegado a 30 días') o apoya con un ❤️.",
+                    text = "Muro anónimo local y comunitario (Sin perfiles, nombres ni datos personales — Almacenamiento seguro local cifrado). Comparte logros (ej. 'Hoy he llegado a 30 días') o apoya con afecto.",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                     fontSize = 11.sp,
@@ -246,7 +246,7 @@ fun SupportHubComponent(
                                         onClick = { viewModel.likePeerSupportPost(post.id) },
                                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
                                     ) {
-                                        Text("❤️ ${post.likes}", color = UrgeAlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Text("${post.likes}", color = UrgeAlertRed, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }

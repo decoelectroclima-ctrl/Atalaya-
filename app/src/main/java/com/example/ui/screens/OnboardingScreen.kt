@@ -1051,7 +1051,7 @@ fun OnboardingScreen(
                                                 Spacer(modifier = Modifier.height(4.dp))
                                                 Text(rec.rationale, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
                                                 Spacer(modifier = Modifier.height(4.dp))
-                                                Text("💡 ${rec.primaryBenefit}", style = MaterialTheme.typography.bodySmall, color = SoltarSage, fontWeight = FontWeight.SemiBold)
+                                                Text("${rec.primaryBenefit}", style = MaterialTheme.typography.bodySmall, color = SoltarSage, fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                     }

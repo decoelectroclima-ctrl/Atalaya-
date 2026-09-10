@@ -83,12 +83,12 @@ fun ProfileScreen(
                     context.contentResolver.openOutputStream(uri)?.use { output ->
                         tempFile.inputStream().use { input -> input.copyTo(output) }
                     }
-                    viewModel.showNotification("📦 Datos exportados y cifrados con éxito")
+                    viewModel.showNotification("Datos exportados y cifrados con éxito")
                 } else {
-                    viewModel.showNotification("❌ Error al exportar datos")
+                    viewModel.showNotification("Error al exportar datos")
                 }
             } catch (e: Exception) {
-                viewModel.showNotification("❌ Error: ${e.localizedMessage}")
+                viewModel.showNotification("Error: ${e.localizedMessage}")
             }
         }
     }
@@ -104,12 +104,12 @@ fun ProfileScreen(
                 }
                 val success = viewModel.importData(importPin, tempFile)
                 if (success) {
-                    viewModel.showNotification("📥 Datos importados y restaurados con éxito")
+                    viewModel.showNotification("Datos importados y restaurados con éxito")
                 } else {
-                    viewModel.showNotification("❌ PIN incorrecto o archivo de respaldo inválido")
+                    viewModel.showNotification("PIN incorrecto o archivo de respaldo inválido")
                 }
             } catch (e: Exception) {
-                viewModel.showNotification("❌ Error al importar: ${e.localizedMessage}")
+                viewModel.showNotification("Error al importar: ${e.localizedMessage}")
             }
         }
     }
@@ -296,10 +296,10 @@ fun ProfileScreen(
                                 letterSpacing = 2.sp
                             )
                             Text(
-                                text = if (tempHour in 5..11) "🌅 Mañana"
-                                else if (tempHour in 12..18) "🌤️ Tarde"
-                                else if (tempHour in 19..22) "🌙 Noche (Recomendado)"
-                                else "🌌 Madrugada",
+                                text = if (tempHour in 5..11) "Mañana"
+                                else if (tempHour in 12..18) "Tarde"
+                                else if (tempHour in 19..22) "Noche (Recomendado)"
+                                else "Madrugada",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                                 fontSize = 11.sp
@@ -589,10 +589,10 @@ fun ProfileScreen(
                                 color = SoltarAmber,
                                 letterSpacing = 2.sp
                             )
-                            val timePeriod = if (tempHour in 5..11) "🌅 Mañana"
-                            else if (tempHour in 12..18) "🌤️ Tarde"
-                            else if (tempHour in 19..22) "🌙 Noche"
-                            else "🌌 Madrugada"
+                            val timePeriod = if (tempHour in 5..11) "Mañana"
+                            else if (tempHour in 12..18) "Tarde"
+                            else if (tempHour in 19..22) "Noche"
+                            else "Madrugada"
                             Text(
                                 text = timePeriod,
                                 style = MaterialTheme.typography.bodySmall,
@@ -2349,7 +2349,7 @@ fun ProfileScreen(
                                     border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f)),
                                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                                 ) {
-                                    Text("🔔 Diario", color = SoltarAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("Diario", color = SoltarAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
 
                                 Button(
@@ -2360,7 +2360,7 @@ fun ProfileScreen(
                                     border = BorderStroke(1.dp, SoltarSage.copy(alpha = 0.4f)),
                                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                                 ) {
-                                    Text("🌿 Empatía (3d)", color = SoltarSage, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("Empatía (3d)", color = SoltarSage, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
 
                                 Button(
@@ -2371,7 +2371,7 @@ fun ProfileScreen(
                                     border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f)),
                                     contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
                                 ) {
-                                    Text("🎉 Hito (7d)", color = SoltarAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("Hito (7d)", color = SoltarAmber, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -2405,7 +2405,7 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "💡 Cómo añadirlo: Ve a la pantalla de inicio de tu teléfono, mantén presionado un espacio vacío, selecciona 'Widgets', busca 'Recuerda' y arrástralo a tu pantalla.",
+                                text = "Cómo añadirlo: Ve a la pantalla de inicio de tu teléfono, mantén presionado un espacio vacío, selecciona 'Widgets', busca 'Recuerda' y arrástralo a tu pantalla.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextMuted,
                                 fontSize = 11.sp,
@@ -2436,7 +2436,7 @@ fun ProfileScreen(
                                     onClick = {
                                         viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                                         com.example.widget.SoltarAppWidgetProvider.notifyWidgetDataChanged(context)
-                                        viewModel.showNotification("🔄 Widget sincronizado con éxito")
+                                        viewModel.showNotification("Widget sincronizado con éxito")
                                     },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(8.dp),

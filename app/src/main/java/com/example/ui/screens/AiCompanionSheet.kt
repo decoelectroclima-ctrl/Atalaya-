@@ -318,7 +318,7 @@ fun AiCompanionDialog(
                                 border = BorderStroke(1.dp, SoltarBorder)
                             ) {
                                 Text(
-                                    text = "⚖️ Aviso ético y clínico: Recuerda es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
+                                    text = "Aviso ético y clínico: Recuerda es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted,
                                     modifier = Modifier.padding(10.dp),

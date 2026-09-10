@@ -244,7 +244,7 @@ fun EncounterSimulatorDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "🎭 $exName (${selectedTone.label})",
+                                text = "$exName (${selectedTone.label})",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold

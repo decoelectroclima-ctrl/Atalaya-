@@ -38,9 +38,9 @@ fun EmotionalCheckinDialog(
     val uiState by viewModel.uiState.collectAsState()
     val haptic = LocalHapticFeedback.current
 
-    val emotionalStates = listOf("🌟 Muy bien", "🙂 Bien", "😐 Neutral", "🌧️ Mal", "⛈️ Muy mal")
+    val emotionalStates = listOf("Muy bien", "Bien", "Neutral", "Mal", "Muy mal")
     val predominantEmotions = listOf("Nostalgia", "Ansiedad", "Rabia", "Calma", "Tristeza", "Soledad", "Esperanza")
-    val comparisonOptions = listOf("📈 Mejor", "➡️ Igual", "📉 Peor")
+    val comparisonOptions = listOf("Mejor", "Igual", "Peor")
 
     Dialog(
         onDismissRequest = onDismiss,
