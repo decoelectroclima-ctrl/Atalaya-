@@ -2565,6 +2565,32 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    suspend fun generateKintsugiDocument(): String = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val db = AdrianaDatabase.getDatabase(getApplication())
+        val manager = DataExportManager(db)
+        manager.generateClinicalNarrativeReport()
+    }
+
+    suspend fun exportKintsugiToFile(pin: String, file: java.io.File): Boolean = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        try {
+            val db = AdrianaDatabase.getDatabase(getApplication())
+            val manager = DataExportManager(db)
+            manager.exportClinicalNarrativeToFile(pin, file)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun analyzeAttachmentPatterns(): com.example.ai.OnDeviceLlmEngine.AttachmentPatternInsight = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        com.example.ai.OnDeviceLlmEngine.analyzeAttachmentPatterns(
+            journals = journalEntries.value,
+            letters = letters.value,
+            relapses = relapses.value
+        )
+    }
+
     companion object {
         val DEFAULT_PRESET_REMINDERS = listOf(
             CustomNotificationItem(

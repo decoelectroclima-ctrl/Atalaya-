@@ -47,6 +47,19 @@ fun NeedHelpSheet(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
+    val detectedCountry = remember {
+        try {
+            val tm = context.getSystemService(android.content.Context.TELEPHONY_SERVICE) as? android.telephony.TelephonyManager
+            val simCountry = tm?.networkCountryIso?.takeIf { it.isNotBlank() }
+            simCountry ?: java.util.Locale.getDefault().country
+        } catch (_: Exception) {
+            java.util.Locale.getDefault().country
+        }
+    }
+    val crisisResources = remember(detectedCountry) {
+        com.example.data.CrisisResources.forCountryCode(detectedCountry)
+    }
+
     LaunchedEffect(Unit) {
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     }
@@ -517,7 +530,11 @@ fun NeedHelpSheet(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Si estás en una situación de sufrimiento extremo o crisis:",
+                        text = if (crisisResources == com.example.data.CrisisResources.GENERICO_LATAM) {
+                            "Si estás en una situación de sufrimiento extremo o crisis:"
+                        } else {
+                            "Recursos para ${crisisResources.countryName}:"
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                         fontSize = 11.sp
@@ -525,37 +542,43 @@ fun NeedHelpSheet(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        EmergencyCallButton(
-                            title = "024 (España)",
-                            phone = "024",
-                            modifier = Modifier.weight(1f),
+                        crisisResources.lines.forEach { line ->
+                            EmergencyCallButton(
+                                title = line.label,
+                                phone = line.phone,
+                                modifier = Modifier.fillMaxWidth(),
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${line.phone}"))
+                                    context.startActivity(intent)
+                                }
+                            )
+                        }
+
+                        OutlinedButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:024"))
-                                context.startActivity(intent)
-                            }
-                        )
-                        EmergencyCallButton(
-                            title = "988 (USA/LatAm)",
-                            phone = "988",
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:988"))
-                                context.startActivity(intent)
-                            }
-                        )
-                        EmergencyCallButton(
-                            title = "112 / 911",
-                            phone = "112",
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:112"))
-                                context.startActivity(intent)
-                            }
-                        )
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://findahelpline.com/es-ES"))
+                                    context.startActivity(intent)
+                                } catch (_: Exception) { }
+                            },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 38.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, SoltarBorderSubtle),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Buscar ayuda en mi país",
+                                color = TextSecondary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }
@@ -574,13 +597,26 @@ private fun EmergencyCallButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(38.dp),
+        modifier = modifier.heightIn(min = 38.dp),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, SoltarBorder),
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
     ) {
-        Icon(Icons.Default.Phone, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(title, color = TextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Icon(Icons.Default.Phone, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                color = TextPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
     }
 }

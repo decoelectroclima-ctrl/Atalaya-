@@ -6,6 +6,11 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.widget.RemoteViews
 import com.example.MainActivity
 import com.example.R
@@ -76,6 +81,88 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
             } catch (_: Exception) {}
         }
 
+        private fun drawKintsugiHeartBitmap(sizePx: Int, progressStage: Int, vulnerabilityScore: Int): Bitmap {
+            val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            val w = sizePx.toFloat()
+            val h = sizePx.toFloat()
+
+            val goldColor = Color.parseColor("#E7A94F") // coincide con RawDarkAmber en Color.kt
+            val darkCrackColor = Color.parseColor("#2C3E50")
+            val heartColor = Color.parseColor("#E57373")
+
+            val heartPath = Path().apply {
+                moveTo(w / 2f, h * 0.8f)
+                cubicTo(0f, h * 0.3f, w * 0.15f, 0f, w / 2f, h * 0.35f)
+                cubicTo(w * 0.85f, 0f, w, h * 0.3f, w / 2f, h * 0.8f)
+            }
+
+            val alphaMultiplier = if (vulnerabilityScore >= 70) 0.8f else 1.0f
+            val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = heartColor
+                alpha = (((0.25f + (progressStage * 0.08f)) * alphaMultiplier) * 255).toInt().coerceIn(0, 255)
+                style = Paint.Style.FILL
+            }
+            canvas.drawPath(heartPath, fillPaint)
+
+            val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.WHITE
+                style = Paint.Style.STROKE
+                strokeWidth = 3.5f
+            }
+            canvas.drawPath(heartPath, strokePaint)
+
+            val crack1Start = floatArrayOf(w * 0.5f, h * 0.25f)
+            val crack1End = floatArrayOf(w * 0.5f, h * 0.75f)
+            val crack2Start = floatArrayOf(w * 0.3f, h * 0.4f)
+            val crack2End = floatArrayOf(w * 0.65f, h * 0.55f)
+            val crack3Start = floatArrayOf(w * 0.4f, h * 0.6f)
+            val crack3End = floatArrayOf(w * 0.7f, h * 0.35f)
+            val crack4Start = floatArrayOf(w * 0.25f, h * 0.3f)
+            val crack4End = floatArrayOf(w * 0.4f, h * 0.5f)
+
+            val crackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                strokeCap = Paint.Cap.ROUND
+            }
+
+            if (progressStage == 1) {
+                crackPaint.color = darkCrackColor
+                crackPaint.strokeWidth = 3f
+                canvas.drawLine(crack1Start[0], crack1Start[1], crack1End[0], crack1End[1], crackPaint)
+                crackPaint.strokeWidth = 2.5f
+                canvas.drawLine(crack2Start[0], crack2Start[1], crack2End[0], crack2End[1], crackPaint)
+            } else {
+                crackPaint.color = goldColor
+                crackPaint.strokeWidth = 2f + (progressStage * 0.4f)
+                canvas.drawLine(crack1Start[0], crack1Start[1], crack1End[0], crack1End[1], crackPaint)
+                if (progressStage >= 3) {
+                    crackPaint.strokeWidth = 2f + (progressStage * 0.3f)
+                    canvas.drawLine(crack2Start[0], crack2Start[1], crack2End[0], crack2End[1], crackPaint)
+                }
+                if (progressStage >= 5) {
+                    crackPaint.strokeWidth = 2.5f + (progressStage * 0.3f)
+                    canvas.drawLine(crack3Start[0], crack3Start[1], crack3End[0], crack3End[1], crackPaint)
+                }
+                if (progressStage >= 7) {
+                    crackPaint.strokeWidth = 3f + (progressStage * 0.2f)
+                    canvas.drawLine(crack4Start[0], crack4Start[1], crack4End[0], crack4End[1], crackPaint)
+                }
+                val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = goldColor
+                    style = Paint.Style.FILL
+                }
+                if (progressStage >= 6) {
+                    canvas.drawCircle(crack1End[0], crack1End[1], 4f, dotPaint)
+                    canvas.drawCircle(crack2End[0], crack2End[1], 3.5f, dotPaint)
+                }
+                if (progressStage == 8) {
+                    canvas.drawCircle(crack3End[0], crack3End[1], 4.5f, dotPaint)
+                    canvas.drawCircle(crack1Start[0], crack1Start[1], 4f, dotPaint)
+                }
+            }
+            return bitmap
+        }
+
         fun updateAppWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
             CoroutineScope(Dispatchers.IO).launch {
                 var days = 14
@@ -83,6 +170,7 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                 var userName = "Viajero"
                 var framework = SoltarFramework.PSICOLOGIA_MODERNA
                 var appThemeMode = "LIGHT"
+                var vulnerabilityScore = 40
 
                 val config = SoltarWidgetConfigManager.loadConfig(context, appWidgetId)
 
@@ -110,7 +198,16 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                             appThemeMode = settings.themeMode
                         }
                     }
+
+                    val recentCheckins = db.checkinDao().getRecentCheckins(5)
+                    if (recentCheckins.isNotEmpty()) {
+                        val avg = recentCheckins.map { (it.pain + it.anxiety + it.rumination) / 3f }.average().toFloat()
+                        vulnerabilityScore = (avg * 10f).toInt().coerceIn(0, 100)
+                    }
                 } catch (_: Exception) {}
+
+                val progressStage = com.example.ui.managers.ProgressManager.calculateProgressStage(days, vulnerabilityScore)
+                val heartBitmap = drawKintsugiHeartBitmap(sizePx = 150, progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
 
                 val isDark = when (config.themeMode) {
                     SoltarWidgetConfig.THEME_DARK -> true
@@ -126,10 +223,10 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                     else -> 1.0f
                 }
 
-                val phaseBadge = when {
-                    days < 7 -> "⚡ Desintoxicación"
-                    days < 30 -> "🛡️ Soberanía"
-                    days < 60 -> "💡 Claridad"
+                val phaseBadge = when (progressStage) {
+                    1 -> "⚡ Desintoxicación"
+                    in 2..3 -> "🛡️ Soberanía"
+                    in 4..5 -> "💡 Claridad"
                     else -> "✨ Reconstrucción"
                 }
 
@@ -157,6 +254,10 @@ class SoltarAppWidgetProvider : AppWidgetProvider() {
                 val views = RemoteViews(context.packageName, R.layout.widget_soltar_layout).apply {
                     setInt(R.id.widget_root, "setBackgroundResource", bgRes)
                     setFloat(R.id.widget_root, "setAlpha", alphaVal)
+
+                    // Kintsugi Heart
+                    setImageViewBitmap(R.id.widget_kintsugi_heart, heartBitmap)
+                    setViewVisibility(R.id.widget_kintsugi_heart, if (config.showDaysCounter) android.view.View.VISIBLE else android.view.View.GONE)
 
                     // Apply Visibility settings from config
                     setViewVisibility(R.id.widget_days_count, if (config.showDaysCounter) android.view.View.VISIBLE else android.view.View.GONE)

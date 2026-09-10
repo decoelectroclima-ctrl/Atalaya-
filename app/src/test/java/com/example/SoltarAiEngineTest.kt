@@ -214,4 +214,37 @@ class SoltarAiEngineTest {
             }
         }
     }
+
+    @Test
+    fun testAttachmentPatternAnalysisInsufficientData() {
+        val now = System.currentTimeMillis()
+        val emptyJournals = emptyList<com.example.data.JournalEntryEntity>()
+        val emptyLetters = emptyList<com.example.data.UnsentLetterEntity>()
+        val emptyRelapses = emptyList<com.example.data.RelapseEntity>()
+
+        val resultEmpty = com.example.ai.OnDeviceLlmEngine.analyzeAttachmentPatterns(
+            journals = emptyJournals,
+            letters = emptyLetters,
+            relapses = emptyRelapses
+        )
+        assertFalse(resultEmpty.hasEnoughData)
+        assertTrue(resultEmpty.description.contains("al menos 10 entradas"))
+
+        // Test with 10 entries but span < 21 days
+        val shortSpanJournals = (0 until 10).map { i ->
+            com.example.data.JournalEntryEntity(
+                id = i.toLong(),
+                timestamp = now - (i * 1000L * 3600 * 24), // only 10 days span
+                content = "Entrada de prueba de diario número $i",
+                moodTag = "Neutral"
+            )
+        }
+        val resultShortSpan = com.example.ai.OnDeviceLlmEngine.analyzeAttachmentPatterns(
+            journals = shortSpanJournals,
+            letters = emptyLetters,
+            relapses = emptyRelapses
+        )
+        assertFalse(resultShortSpan.hasEnoughData)
+        assertTrue(resultShortSpan.description.contains("3 semanas o más"))
+    }
 }

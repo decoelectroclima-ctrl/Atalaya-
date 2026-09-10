@@ -212,6 +212,7 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
     val settings = viewModel.settings.collectAsState().value
     val checkins = viewModel.checkins.collectAsState().value
     val journals = viewModel.journalEntries.collectAsState().value
+    val letters = viewModel.letters.collectAsState().value
     val framework = SoltarFramework.fromKey(settings?.preferredFramework)
 
     val startTs = settings?.breakupDateTimestamp ?: (System.currentTimeMillis() - (14L * 24 * 3600 * 1000))
@@ -223,7 +224,7 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
     var step by remember { mutableIntStateOf(0) }
     val userName = settings?.userName ?: ""
 
-    val generatedSteps = remember(checkins, journals, days, settings) {
+    val generatedSteps = remember(checkins, journals, letters, days, settings) {
         com.example.ai.OnDeviceLlmEngine.generateClosingRitualSteps(
             checkins = checkins,
             journals = journals,
@@ -231,9 +232,12 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
             breakupDays = days.toInt(),
             relDuration = settings?.relDuration ?: "",
             breakupReason = settings?.breakupReason ?: "",
-            framework = framework
+            framework = framework,
+            letters = letters
         )
     }
+
+    val totalSteps = if (generatedSteps.isNotEmpty()) generatedSteps.size else 4
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -262,7 +266,7 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                             ) {
                                 Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(14.dp))
                                 Text(
-                                    text = "Paso ${step + 1} de 4 • ${currentStepData.phaseName}",
+                                    text = "Paso ${step + 1} de $totalSteps • ${currentStepData.phaseName}",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = SoltarAmber,
                                     fontWeight = FontWeight.Bold
@@ -345,11 +349,11 @@ fun ClosingRitualDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                     }
                     Button(
                         onClick = {
-                            if (step < 3) step++ else onDismiss()
+                            if (step < totalSteps - 1) step++ else onDismiss()
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
                     ) {
-                        Text(if (step < 3) "Siguiente Paso" else "Finalizar Ritual", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                        Text(if (step < totalSteps - 1) "Siguiente Paso" else "Finalizar Ritual", color = SoltarBackground, fontWeight = FontWeight.Bold)
                     }
                 }
             } else {

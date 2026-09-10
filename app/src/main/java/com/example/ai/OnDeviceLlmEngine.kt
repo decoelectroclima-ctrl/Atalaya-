@@ -119,6 +119,14 @@ object OnDeviceLlmEngine {
         val proactivePrescription: String
     )
 
+    data class AttachmentPatternInsight(
+        val hasEnoughData: Boolean,
+        val patternName: String,
+        val description: String,
+        val evidenceExcerpt: String,
+        val gentleSuggestion: String
+    )
+
     data class FrameworkRecommendation(
         val recommendedFramework: SoltarFramework,
         val matchConfidencePercentage: Int,
@@ -214,7 +222,8 @@ object OnDeviceLlmEngine {
         breakupDays: Int,
         relDuration: String = "",
         breakupReason: String = "",
-        framework: SoltarFramework = SoltarFramework.ESTOICO
+        framework: SoltarFramework = SoltarFramework.ESTOICO,
+        letters: List<UnsentLetterEntity> = emptyList()
     ): List<ClosingRitualStepAi> {
         val name = if (userName.isNotBlank()) userName else "Viajero"
         val fallback = listOf(
@@ -248,21 +257,91 @@ object OnDeviceLlmEngine {
             )
         )
         if (!isReady()) return fallback
-        val checkinSummary = checkins.takeLast(3).joinToString("; ") { "Dolor: ${it.pain}, Nota: ${it.note}" }
-        val journalSummary = journals.takeLast(2).joinToString("; ") { it.content.take(60) }
-        val prompt = "Genera 4 pasos estructurados para un ritual de cierre personalizados para $name, con $breakupDays días de ruptura, duración '$relDuration', motivo '$breakupReason', checkins recientes: [$checkinSummary], diarios: [$journalSummary] bajo el marco ${framework.name}. Devuelve cada paso en una línea con el formato 'FaseNombre | Titulo | Guia | PreguntaReflexion', un paso por línea, 4 líneas en total."
+
+        val checkinsWithNotes = checkins.filter { it.firstThoughts.isNotBlank() || it.note.isNotBlank() }
+        val selectedCheckins = if (checkinsWithNotes.size <= 8) {
+            checkinsWithNotes
+        } else {
+            val stepSize = (checkinsWithNotes.size - 1).toDouble() / 7.0
+            (0..7).map { i ->
+                val index = Math.round(i * stepSize).toInt().coerceIn(0, checkinsWithNotes.size - 1)
+                checkinsWithNotes[index]
+            }.distinctBy { it.id }
+        }
+        val checkinSummary = if (selectedCheckins.isEmpty()) {
+            "Sin notas registradas"
+        } else {
+            selectedCheckins.joinToString("; ") { c ->
+                val noteText = when {
+                    c.note.isNotBlank() && c.firstThoughts.isNotBlank() -> "${c.note} / ${c.firstThoughts}"
+                    c.note.isNotBlank() -> c.note
+                    else -> c.firstThoughts
+                }
+                "Dolor: ${c.pain.toInt()}, Nota: ${noteText.take(120)}"
+            }
+        }
+
+        val selectedJournals = journals.filter { it.content.isNotBlank() }
+            .sortedByDescending { it.content.length }
+            .take(4)
+        val journalSummary = if (selectedJournals.isEmpty()) {
+            "Sin entradas de diario"
+        } else {
+            selectedJournals.joinToString("; ") { it.content.take(200) }
+        }
+
+        val closedLetters = letters.filter { it.isClosed }.take(2)
+        val letterTitlesSummary = if (closedLetters.isEmpty()) {
+            "Ninguna carta cerrada"
+        } else {
+            closedLetters.joinToString("; ") { "${it.category}: '${it.title}'" }
+        }
+
+        val prompt = """
+            Vas a diseñar un ritual de cierre COMPLETO Y ÚNICO para $name, basado específicamente en
+            SU historia, no en una plantilla genérica. Han pasado $breakupDays días desde la ruptura
+            (duración de la relación: '$relDuration', motivo: '$breakupReason').
+
+            Marco filosófico a aplicar: ${framework.title} (${framework.description}).
+
+            MATERIAL REAL DE SU PROCESO:
+            Check-ins con notas: [$checkinSummary]
+            Fragmentos de diario: [$journalSummary]
+            Cartas cerradas: [$letterTitlesSummary]
+
+            Diseña entre 3 y 6 fases (tú decides cuántas según lo que esta historia específica necesite
+            cerrar — no uses siempre el mismo número). Cada fase debe responder a algo CONCRETO que
+            aparece en el material de arriba, no a una etapa de duelo genérica. Por ejemplo, si en las
+            notas aparece resentimiento hacia una traición específica, una fase debe abordar eso
+            directamente, no "perdón" en abstracto.
+
+            Devuelve cada fase en una línea con el formato exacto:
+            FaseNombre | Titulo | Guia | PreguntaReflexion
+
+            Una fase por línea, entre 3 y 6 líneas en total, sin numeración ni texto adicional.
+        """.trimIndent()
+
         return try {
             val resp = generate(prompt, framework)
-            val lines = resp.lines().filter { it.contains("|") }
-            if (lines.size >= 4) {
-                lines.take(4).mapIndexed { index, line ->
+            val validSteps = resp.lines()
+                .map { it.trim() }
+                .filter { it.contains("|") }
+                .mapNotNull { line ->
                     val parts = line.split("|").map { it.trim() }
+                    if (parts.size >= 4 && parts[0].isNotBlank() && parts[1].isNotBlank()) {
+                        parts
+                    } else {
+                        null
+                    }
+                }
+            if (validSteps.size >= 3) {
+                validSteps.take(6).mapIndexed { index, parts ->
                     ClosingRitualStepAi(
                         stepNumber = index + 1,
-                        phaseName = parts.getOrElse(0) { fallback[index].phaseName },
-                        title = parts.getOrElse(1) { fallback[index].title },
-                        guidance = parts.getOrElse(2) { fallback[index].guidance },
-                        reflectionPrompt = parts.getOrElse(3) { fallback[index].reflectionPrompt }
+                        phaseName = parts[0],
+                        title = parts[1],
+                        guidance = parts.getOrElse(2) { "" },
+                        reflectionPrompt = parts.getOrElse(3) { "" }
                     )
                 }
             } else {
@@ -610,6 +689,83 @@ object OnDeviceLlmEngine {
         }
     }
 
+    fun analyzeAttachmentPatterns(
+        journals: List<JournalEntryEntity>,
+        letters: List<UnsentLetterEntity>,
+        relapses: List<RelapseEntity>
+    ): AttachmentPatternInsight {
+        val freeTextEntries = journals.map { it.timestamp to it.content } +
+            letters.map { it.timestamp to it.content }
+        val insufficient = AttachmentPatternInsight(
+            hasEnoughData = false,
+            patternName = "",
+            description = "Todavía no hay suficiente material escrito para identificar patrones de apego con fiabilidad. Sigue escribiendo en tu diario o cartas; esto se activa con al menos 10 entradas de texto libre a lo largo de 3 semanas o más.",
+            evidenceExcerpt = "",
+            gentleSuggestion = ""
+        )
+
+        if (freeTextEntries.size < 10) return insufficient
+        val spanDays = freeTextEntries.let { (it.maxOf { e -> e.first } - it.minOf { e -> e.first }) / (1000L * 3600 * 24) }
+        if (spanDays < 21) return insufficient
+        if (!isReady()) return insufficient
+
+        // Muestra distribuida en el tiempo, no solo lo más reciente: los patrones de apego
+        // se ven en la repetición a lo largo del tiempo, no en el último mensaje.
+        val sorted = freeTextEntries.sortedBy { it.first }
+        val sample = if (sorted.size <= 15) sorted else {
+            val step = sorted.size / 15
+            sorted.filterIndexed { i, _ -> i % step == 0 }.take(15)
+        }
+        val textBlock = sample.joinToString("\n---\n") { it.second.take(300) }
+        val relapseNote = if (relapses.isNotEmpty()) "\nAdemás hubo ${relapses.size} recaídas registradas, con disparadores: ${relapses.take(5).joinToString("; ") { it.trigger }}." else ""
+
+        val prompt = """
+            Eres un analista clínico especializado en teoría del apego. Vas a leer fragmentos de
+            escritura de una persona a lo largo de varias semanas de su proceso de duelo tras una
+            ruptura, y vas a identificar UN patrón de apego o comportamiento recurrente que la
+            persona probablemente NO ve con claridad en sí misma, porque está disperso en el tiempo.
+
+            No repitas obviedades del duelo (tristeza, nostalgia). Busca algo estructural: por
+            ejemplo, idealización recurrente de la ex-pareja seguida de devaluación, necesidad de
+            validación externa disfrazada de autonomía, evitación de la soledad mediante ocupación
+            constante, patrón de vigilancia digital que reaparece en ciclos, autoculpabilización
+            desproporcionada, u otro que emerja realmente del texto.
+
+            FRAGMENTOS (orden cronológico, a lo largo de $spanDays días):
+            $textBlock
+            $relapseNote
+
+            Responde en el formato exacto, una sola línea:
+            NombrePatron | Descripcion | FraseEvidenciaTextual | SugerenciaAmable
+
+            Donde:
+            - NombrePatron: 2-5 palabras, nombra el patrón con claridad clínica pero sin jerga fría.
+            - Descripcion: 2-3 frases explicando el patrón y por qué es difícil verlo desde dentro.
+            - FraseEvidenciaTextual: cita literal y breve (máximo 15 palabras) de UNO de los
+              fragmentos que ejemplifique el patrón, para que la persona reconozca que es real.
+            - SugerenciaAmable: una sugerencia concreta y compasiva, no genérica, de qué hacer con
+              esta información — nunca alarmista ni patologizante.
+        """.trimIndent()
+
+        return try {
+            val resp = generate(prompt)
+            val parts = resp.split("|").map { it.trim() }
+            if (parts.size >= 4 && parts[0].isNotBlank()) {
+                AttachmentPatternInsight(
+                    hasEnoughData = true,
+                    patternName = parts[0],
+                    description = parts[1],
+                    evidenceExcerpt = parts[2],
+                    gentleSuggestion = parts[3]
+                )
+            } else {
+                insufficient
+            }
+        } catch (_: Exception) {
+            insufficient
+        }
+    }
+
     fun enrichContextualRecommendation(
         settings: SoltarSettingsEntity?,
         baseRec: ContextualRecommendation
@@ -634,7 +790,49 @@ object OnDeviceLlmEngine {
         val name = if (userName.isNotBlank()) userName else "Usuario"
         val fallback = "📋 INFORME CLÍNICO DE EVOLUCIÓN\nIdentificador: $name • Días: $breakupDays\nProceso de duelo en curso con buen apego al protocolo de contención."
         if (!isReady()) return fallback
-        val prompt = "Genera un resumen narrativo y clínico genuino de la evolución del duelo para $name a lo largo de $breakupDays días, basado en ${checkins.size} checkins, ${journals.size} diarios y ${letters.size} cartas."
+
+        // Construir contenido real ordenado cronológicamente, tomando muestras representativas
+        // a lo largo de todo el periodo (no solo los últimos registros) para que la narrativa
+        // cubra el arco completo, no solo el estado reciente.
+        val journalSample = journals.sortedBy { it.timestamp }
+            .let { list -> if (list.size <= 8) list else listOf(list.first(), list[list.size / 4], list[list.size / 2], list[list.size * 3 / 4], list.last()) }
+            .joinToString("\n---\n") { "[${java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(it.timestamp))}] (${it.moodTag}) ${it.content.take(400)}" }
+
+        val letterSample = letters.sortedBy { it.timestamp }.takeLast(5)
+            .joinToString("\n---\n") { "[${it.category}] ${it.content.take(300)}" }
+
+        val checkinTrend = checkins.sortedBy { it.timestamp }
+            .let { list -> if (list.size <= 10) list else list.filterIndexed { i, _ -> i % (list.size / 10) == 0 } }
+            .joinToString("; ") { "${it.dateKey}: dolor=${it.pain}, ansiedad=${it.anxiety}, autonomía=${it.autonomy}" }
+
+        val prompt = """
+            Eres un narrador clínico y literario a la vez. Vas a escribir la síntesis narrativa del proceso
+            de duelo de $name, $breakupDays días después de la ruptura, para que la lea la propia persona
+            como cierre de una etapa.
+
+            No es un informe frío de datos. Es un relato honesto, cálido y con autoridad clínica, escrito
+            en segunda persona ("Empezaste...", "Con el tiempo..."), que reconstruye CÓMO evolucionó -no
+            solo QUE pasó- usando lo que la persona realmente escribió.
+
+            FRAGMENTOS REALES DE SU DIARIO (orden cronológico, muestra representativa de todo el periodo):
+            $journalSample
+
+            FRAGMENTOS DE SUS CARTAS NO ENVIADAS:
+            $letterSample
+
+            TENDENCIA NUMÉRICA DE SUS CHECK-INS A LO LARGO DEL TIEMPO:
+            $checkinTrend
+
+            Estructura el relato en 3 movimientos con encabezados en negrita usando **texto**:
+            1. **Cómo empezó** — el dolor inicial, en sus propias palabras, sin suavizarlo.
+            2. **Cómo cambió** — los puntos de inflexión reales que aparecen en los fragmentos, no genéricos.
+            3. **Dónde estás ahora** — un cierre honesto, sin sentimentalismo barato, que reconozca tanto
+               el progreso real como lo que aún queda abierto si lo hay.
+
+            Cita o parafrasea al menos 2 fragmentos concretos de lo que escribió, para que sienta que es
+            SU historia y no una plantilla genérica. Extensión: 350-500 palabras.
+        """.trimIndent()
+
         return try {
             generate(prompt)
         } catch (_: Exception) {

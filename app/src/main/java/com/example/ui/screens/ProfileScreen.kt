@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +32,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -64,6 +66,10 @@ fun ProfileScreen(
     }
 
     val entitlements = remember(settings) { UserEntitlements.fromSettings(settings) }
+    val coroutineScope = rememberCoroutineScope()
+    val journalEntries by viewModel.journalEntries.collectAsState()
+    val letters by viewModel.letters.collectAsState()
+
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var showDeleteAccountConfirmDialog by remember { mutableStateOf(false) }
     var showMandatoryJournalTimeDialog by remember { mutableStateOf(false) }
@@ -71,6 +77,38 @@ fun ProfileScreen(
     var showImportDialog by remember { mutableStateOf(false) }
     var exportPin by remember { mutableStateOf("1234") }
     var importPin by remember { mutableStateOf("1234") }
+
+    var isGeneratingKintsugi by remember { mutableStateOf(false) }
+    var kintsugiReportText by remember { mutableStateOf<String?>(null) }
+    var showKintsugiDialog by remember { mutableStateOf(false) }
+    var showKintsugiExportPinDialog by remember { mutableStateOf(false) }
+    var kintsugiExportPin by remember { mutableStateOf("1234") }
+
+    var isAnalyzingAttachment by remember { mutableStateOf(false) }
+    var attachmentInsight by remember { mutableStateOf<OnDeviceLlmEngine.AttachmentPatternInsight?>(null) }
+
+    val kintsugiExportLauncher = rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                try {
+                    val tempFile = java.io.File.createTempFile("kintsugi_narrative", ".dat", context.cacheDir)
+                    val success = viewModel.exportKintsugiToFile(kintsugiExportPin, tempFile)
+                    if (success) {
+                        context.contentResolver.openOutputStream(uri)?.use { output ->
+                            tempFile.inputStream().use { input -> input.copyTo(output) }
+                        }
+                        viewModel.showNotification("Documento Kintsugi exportado y cifrado con éxito")
+                    } else {
+                        viewModel.showNotification("Error al exportar documento Kintsugi")
+                    }
+                } catch (e: Exception) {
+                    viewModel.showNotification("Error: ${e.localizedMessage}")
+                }
+            }
+        }
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/octet-stream")
@@ -181,6 +219,180 @@ fun ProfileScreen(
             },
             dismissButton = {
                 OutlinedButton(onClick = { showImportDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Diálogo de carga al generar Documento Kintsugi
+    if (isGeneratingKintsugi) {
+        AlertDialog(
+            onDismissRequest = { /* No cancelable durante la generación */ },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber)
+                    Text(
+                        "Generando Documento Kintsugi...",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = SoltarAmber,
+                        modifier = Modifier.size(40.dp),
+                        strokeWidth = 3.dp
+                    )
+                    Text(
+                        text = "La IA on-device está tejiendo tus diarios, cartas no enviadas y evolución emocional en una síntesis narrativa de cierre de etapa...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                }
+            },
+            confirmButton = {},
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Diálogo de visualización del Documento Kintsugi
+    if (showKintsugiDialog && kintsugiReportText != null) {
+        val report = kintsugiReportText!!
+        AlertDialog(
+            onDismissRequest = { showKintsugiDialog = false },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = SoltarAmber)
+                    Text(
+                        text = "Documento Kintsugi",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = report,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary,
+                        fontSize = 13.sp,
+                        lineHeight = 20.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_SUBJECT, "Documento Kintsugi - Recuerda")
+                                putExtra(Intent.EXTRA_TEXT, report)
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Compartir Documento Kintsugi"))
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, SoltarAmber),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Compartir", color = SoltarAmber, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = {
+                            showKintsugiExportPinDialog = true
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Exportar cifrado", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showKintsugiDialog = false }) {
+                    Text("Cerrar", color = TextSecondary)
+                }
+            },
+            containerColor = SoltarSurfaceElevated,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Diálogo de PIN para Exportar Documento Kintsugi cifrado
+    if (showKintsugiExportPinDialog) {
+        AlertDialog(
+            onDismissRequest = { showKintsugiExportPinDialog = false },
+            title = { Text("Exportar Documento Kintsugi Cifrado", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+            text = {
+                Column {
+                    Text("Introduce un PIN de 4 dígitos o contraseña para proteger tu informe narrativo:", color = TextSecondary, fontSize = 13.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = kintsugiExportPin,
+                        onValueChange = { kintsugiExportPin = it },
+                        label = { Text("PIN de Cifrado") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SoltarAmber,
+                            cursorColor = SoltarAmber,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showKintsugiExportPinDialog = false
+                        kintsugiExportLauncher.launch("kintsugi_narrative_${System.currentTimeMillis()}.dat")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                ) {
+                    Text("Guardar Archivo", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showKintsugiExportPinDialog = false }) {
                     Text("Cancelar", color = TextSecondary)
                 }
             },
@@ -2540,6 +2752,229 @@ fun ProfileScreen(
 
 
 
+        // Patrones a largo plazo
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Psychology,
+                            contentDescription = null,
+                            tint = SoltarAmber,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column {
+                            Text(
+                                text = "Patrones a largo plazo",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Detección retrospectiva de apego",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Analiza semanas de registros en tu diario y cartas para identificar patrones de apego o conductas recurrentes que suelen pasar desapercibidas.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            coroutineScope.launch {
+                                isAnalyzingAttachment = true
+                                try {
+                                    attachmentInsight = viewModel.analyzeAttachmentPatterns()
+                                } catch (e: Exception) {
+                                    viewModel.showNotification("Error durante el análisis: ${e.localizedMessage}")
+                                } finally {
+                                    isAnalyzingAttachment = false
+                                }
+                            }
+                        },
+                        enabled = !isAnalyzingAttachment,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("analyze_attachment_patterns_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SoltarAmber,
+                            disabledContainerColor = SoltarSurfaceElevated
+                        )
+                    ) {
+                        if (isAnalyzingAttachment) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = Color.Black,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Analizando patrones...",
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Insights,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Analizar mi proceso",
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    attachmentInsight?.let { insight ->
+                        Spacer(modifier = Modifier.height(14.dp))
+                        if (!insight.hasEnoughData) {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                color = SoltarSurfaceElevated,
+                                border = BorderStroke(1.dp, SoltarBorderSubtle)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = SoltarAmber,
+                                        modifier = Modifier.size(20.dp).padding(top = 1.dp)
+                                    )
+                                    Text(
+                                        text = insight.description,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = TextSecondary,
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                color = SoltarSurfaceElevated,
+                                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.4f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Psychology,
+                                            contentDescription = null,
+                                            tint = SoltarAmber,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Text(
+                                            text = insight.patternName,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = TextPrimary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    Text(
+                                        text = insight.description,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondary,
+                                        lineHeight = 18.sp
+                                    )
+
+                                    if (insight.evidenceExcerpt.isNotBlank()) {
+                                        Surface(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = SoltarSurfaceHighlight,
+                                            border = BorderStroke(1.dp, SoltarBorderSubtle)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(10.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.Top
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.FormatQuote,
+                                                    contentDescription = null,
+                                                    tint = SoltarAmber.copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(16.dp).padding(top = 2.dp)
+                                                )
+                                                Text(
+                                                    text = "“${insight.evidenceExcerpt.trim().removeSurrounding("\"").removeSurrounding("“").removeSurrounding("”")}”",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    fontStyle = FontStyle.Italic,
+                                                    color = TextPrimary,
+                                                    lineHeight = 16.sp
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    if (insight.gentleSuggestion.isNotBlank()) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.Top
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Spa,
+                                                contentDescription = null,
+                                                tint = SoltarSage,
+                                                modifier = Modifier.size(18.dp).padding(top = 2.dp)
+                                            )
+                                            Text(
+                                                text = insight.gentleSuggestion,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = SoltarSage,
+                                                lineHeight = 16.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Privacidad & Seguridad (Derecho al Olvido)
         item {
             Card(
@@ -2596,6 +3031,65 @@ fun ProfileScreen(
                         Icon(Icons.Default.Download, contentDescription = null, tint = SoltarAmber)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Importar mis datos", color = TextPrimary, fontSize = 13.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val journalCount = journalEntries.size
+                    val letterCount = letters.size
+                    val isKintsugiEligible = journalCount >= 5 || letterCount >= 3
+                    val neededJournals = (5 - journalCount).coerceAtLeast(0)
+                    val neededLetters = (3 - letterCount).coerceAtLeast(0)
+
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                isGeneratingKintsugi = true
+                                try {
+                                    val report = viewModel.generateKintsugiDocument()
+                                    kintsugiReportText = report
+                                    showKintsugiDialog = true
+                                } catch (e: Exception) {
+                                    viewModel.showNotification("Error al generar: ${e.localizedMessage}")
+                                } finally {
+                                    isGeneratingKintsugi = false
+                                }
+                            }
+                        },
+                        enabled = isKintsugiEligible && !isGeneratingKintsugi,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("generate_kintsugi_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SoltarAmber,
+                            disabledContainerColor = SoltarSurfaceElevated
+                        )
+                    ) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = if (isKintsugiEligible) Color.Black else TextMuted
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Generar Documento Kintsugi",
+                            color = if (isKintsugiEligible) Color.Black else TextMuted,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    if (!isKintsugiEligible) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Para tejer tu Documento Kintsugi necesitas al menos 5 entradas de diario (tienes $journalCount) o 3 cartas no enviadas (tienes $letterCount). Te faltan $neededJournals entrada(s) de diario o $neededLetters carta(s).",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
                     }
                 }
             }
