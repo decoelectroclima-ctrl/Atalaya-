@@ -71,9 +71,9 @@ Si esa persona quisiera comunicarse de forma honesta y responsable, usaría un c
                 ClinicalVariant(
                     headerGreeting = "**Desactiva la lectura de mente en entornos virtuales.**",
                     bodyText = """
-La mente humana aborrece la incertidumbre y tiende a rellenar los vacíos de información con sus peores miedos o sus mayores anhelos. Ver una foto o una frase y asumir que va dirigida a ti es una distorsión cognitiva clásica de personalización.
+En redes sociales y entornos digitales, la mente humana aborrece la incertidumbre y tiende a rellenar los vacíos de información con sus peores miedos o sus mayores anhelos. Ver una foto o una frase en pantalla y asumir que va dirigida a ti es una distorsión cognitiva clásica de personalización.
 
-Aplica defusión cognitiva: nota cómo tu mente dice 'eso es por mí' y elige no fusionarte con ese pensamiento. Vuelve al mundo físico y a tus sensaciones presentes.
+Aplica defusión cognitiva: nota cómo tu mente dice 'eso es por mí' y elige no fusionarte con ese pensamiento virtual. Vuelve al mundo físico y a tus sensaciones presentes.
                     """.trimIndent()
                 )
             )

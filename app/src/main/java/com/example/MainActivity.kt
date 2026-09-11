@@ -325,7 +325,7 @@ class MainActivity : ComponentActivity() {
                     if (uiState.isOnboardingVisible) {
                         OnboardingScreen(
                             viewModel = viewModel,
-                            onComplete = { viewModel.setOnboardingCompleted(true) }
+                            onComplete = { /* Completado y persistido con éxito en completeOnboardingFlow */ }
                         )
                     }
 

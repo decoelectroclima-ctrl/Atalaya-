@@ -563,11 +563,16 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                             currentSettings.pinHash.isNotBlank() && 
                             currentSettings.biometricLockEnabled
 
+                    if (currentSettings.onboardingCompleted && !currentSettings.isLoggedIn && currentSettings.pinHash.isBlank()) {
+                        repository.saveSettings(currentSettings.copy(isLoggedIn = true))
+                    }
+
                     _uiState.update {
                         it.copy(
                             isSoundEnabled = currentSettings.soundEnabled,
                             themeMode = currentSettings.themeMode,
                             isOnboardingVisible = !currentSettings.onboardingCompleted,
+                            isAuthDialogVisible = shouldShowAuth,
                             preferredFramework = framework,
                             currentWisdomCard = newCard,
                             reminderHourInput = currentSettings.reminderHour,
@@ -805,7 +810,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setOnboardingCompleted(completed: Boolean) {
         viewModelScope.launch {
-            val current = settings.value ?: SoltarSettingsEntity()
+            val current = repository.getSettingsOnce() ?: settings.value ?: SoltarSettingsEntity()
             repository.saveSettings(current.copy(onboardingCompleted = completed))
             _uiState.update { it.copy(isOnboardingVisible = !completed) }
         }
@@ -852,7 +857,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         previousBreakupsCount: Int
     ) {
         viewModelScope.launch {
-            val current = settings.value ?: SoltarSettingsEntity()
+            val current = repository.getSettingsOnce() ?: settings.value ?: SoltarSettingsEntity()
             val recentList = current.recentCardIds.split(",").filter { it.isNotBlank() }
             val frameworkCards = WisdomBank.cards.filter { it.framework == framework }
             val newCard = com.example.ai.OnDeviceLlmEngine.selectOptimalWisdomCard(
@@ -874,7 +879,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 current.copy(
                     userName = if (userName.isNotBlank()) userName else "Viajero",
                     userEmail = userEmail,
-                    isLoggedIn = userEmail.isNotBlank() || pinHash.isNotBlank(),
+                    isLoggedIn = true,
                     pinHash = pinHash,
                     biometricLockEnabled = pinHash.isNotBlank(),
                     relDuration = relDuration,

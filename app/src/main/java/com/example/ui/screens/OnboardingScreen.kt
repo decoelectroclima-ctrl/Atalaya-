@@ -1097,12 +1097,22 @@ fun OnboardingScreen(
                 Button(
                     onClick = {
                         if (currentStepIndex == 1) {
+                            val cleanName = userNameInput.trim()
+                            val cleanEmail = userEmailInput.trim()
+                            if (cleanName.isBlank()) {
+                                registrationError = "Por favor, introduce tu nombre o pseudónimo para registrarte."
+                                return@Button
+                            }
+                            if (cleanEmail.isBlank() || !cleanEmail.contains("@") || !cleanEmail.contains(".")) {
+                                registrationError = "Por favor, introduce un correo electrónico válido para tu cuenta."
+                                return@Button
+                            }
                             if (userPinInput.length != 4 || !userPinInput.all { it.isDigit() }) {
                                 registrationError = "El PIN debe tener exactamente 4 dígitos numéricos."
                                 return@Button
                             }
                             if (userPinInput != userConfirmPinInput) {
-                                registrationError = "Los PINs no coinciden."
+                                registrationError = "Los PINs de seguridad no coinciden."
                                 return@Button
                             }
                             registrationError = null
@@ -1114,8 +1124,8 @@ fun OnboardingScreen(
                         } else {
                             viewModel.playSound(SoltarSoundManager.SoundType.WARM_CHIME)
                             viewModel.completeOnboardingFlow(
-                                userName = userNameInput,
-                                userEmail = userEmailInput,
+                                userName = userNameInput.trim(),
+                                userEmail = userEmailInput.trim(),
                                 pinInput = userPinInput,
                                 relDuration = selectedRelDuration,
                                 timeSinceBreakup = selectedTimeSinceBreakup,

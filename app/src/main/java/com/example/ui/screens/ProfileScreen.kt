@@ -1055,11 +1055,18 @@ fun ProfileScreen(
                                 shape = RoundedCornerShape(6.dp),
                                 color = if (settings?.isLoggedIn == true) SoltarSage.copy(alpha = 0.15f) else SoltarBorderSubtle
                             ) {
+                                val hasPin = !settings?.pinHash.isNullOrBlank()
+                                val isLogged = settings?.isLoggedIn == true || (settings?.onboardingCompleted == true && (settings?.userEmail?.isNotBlank() == true || settings?.userName?.isNotBlank() == true))
+                                val statusText = when {
+                                    isLogged && hasPin -> "● Sesión Protegida con PIN"
+                                    isLogged -> "● Sesión Activa"
+                                    else -> "○ Modo Local Invitado"
+                                }
                                 Text(
-                                    text = if (settings?.isLoggedIn == true) "● Cuenta Verificada" else "○ Modo Local Invitado",
+                                    text = statusText,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = if (settings?.isLoggedIn == true) SoltarSage else TextMuted,
+                                    color = if (isLogged) SoltarSage else TextMuted,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -1069,20 +1076,36 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    val hasPin = !settings?.pinHash.isNullOrBlank()
+                    val isLogged = settings?.isLoggedIn == true || (settings?.onboardingCompleted == true && (settings?.userEmail?.isNotBlank() == true || settings?.userName?.isNotBlank() == true))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (settings?.isLoggedIn == true) {
-                            OutlinedButton(
-                                onClick = { authViewModel.logout() },
-                                modifier = Modifier.weight(1f).height(42.dp),
-                                shape = RoundedCornerShape(10.dp),
-                                border = BorderStroke(1.dp, SoltarBorder)
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Cerrar Sesión", color = TextSecondary, fontSize = 12.sp)
+                        if (isLogged) {
+                            if (hasPin) {
+                                OutlinedButton(
+                                    onClick = { authViewModel.logout() },
+                                    modifier = Modifier.weight(1f).height(42.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, SoltarBorder)
+                                ) {
+                                    Icon(Icons.Default.Lock, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Bloquear App", color = TextSecondary, fontSize = 12.sp)
+                                }
+                            } else {
+                                OutlinedButton(
+                                    onClick = { authViewModel.openAuthDialog("REGISTER") },
+                                    modifier = Modifier.weight(1f).height(42.dp).testTag("profile_protect_pin_button"),
+                                    shape = RoundedCornerShape(10.dp),
+                                    border = BorderStroke(1.dp, SoltarAmber)
+                                ) {
+                                    Icon(Icons.Default.Lock, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Proteger con PIN", color = SoltarAmber, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
 
                             OutlinedButton(

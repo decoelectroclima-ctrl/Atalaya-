@@ -19,8 +19,8 @@ android {
     applicationId = "com.aistudio.atalaya.kxmpzq"
     minSdk = 24
     targetSdk = 36
-    versionCode = 226
-    versionName = "226.0"
+    versionCode = 229
+    versionName = "229.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

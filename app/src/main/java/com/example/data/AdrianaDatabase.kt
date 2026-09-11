@@ -93,6 +93,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                     id = 1,
                     memoryEnabled = true,
                     userName = "",
+                    userEmail = "",
                     pinHash = "",
                     isLoggedIn = false,
                     breakupDateTimestamp = System.currentTimeMillis(),
