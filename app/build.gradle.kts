@@ -19,8 +19,8 @@ android {
     applicationId = "com.aistudio.atalaya.kxmpzq"
     minSdk = 24
     targetSdk = 36
-    versionCode = 235
-    versionName = "235.0"
+    versionCode = 241
+    versionName = "241.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -97,6 +97,7 @@ dependencies {
   implementation(libs.androidx.navigation.compose)
   implementation("androidx.compose.ui:ui-text-google-fonts:1.7.0")
   implementation("androidx.biometric:biometric:1.1.0")
+  implementation("androidx.fragment:fragment-ktx:1.8.6")
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   // implementation(libs.coil.compose)

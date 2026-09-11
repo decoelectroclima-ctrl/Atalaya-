@@ -101,7 +101,7 @@ fun AiCompanionDialog(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = 9.sp,
+                                fontSize = 11.sp,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }

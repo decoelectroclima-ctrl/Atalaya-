@@ -722,7 +722,7 @@ fun ProcessScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = SoltarAmber,
                                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
@@ -1121,7 +1121,7 @@ private fun StatCard(
             Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.height(6.dp))
             Text(value, style = MaterialTheme.typography.titleLarge, color = TextPrimary, fontWeight = FontWeight.Bold)
-            Text(title, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontSize = 10.sp, maxLines = 1)
+            Text(title, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontSize = 10.sp, maxLines = 2)
             if (subtitle != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted, fontSize = 10.sp, lineHeight = 13.sp)
@@ -1286,7 +1286,7 @@ private fun EvolutionLineChart(
                         style = MaterialTheme.typography.labelSmall,
                         color = if (idx == safeIndex) SoltarAmber else TextSecondary,
                         fontWeight = if (idx == safeIndex) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = 9.sp
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -1334,7 +1334,7 @@ private fun EvolutionLineChart(
                             text = if (selectedPoint.isRealEntry) "Registro Activo" else "Estimado neurobiológico",
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             color = if (selectedPoint.isRealEntry) SoltarAmber else TextSecondary,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -1435,7 +1435,7 @@ private fun EvolutionLineChart(
 @Composable
 private fun MetricMiniBadge(label: String, value: Float, color: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = label, fontSize = 9.sp, color = TextSecondary)
+        Text(text = label, fontSize = 11.sp, color = TextSecondary)
         Text(
             text = String.format(java.util.Locale.US, "%.1f", value),
             fontSize = 11.sp,

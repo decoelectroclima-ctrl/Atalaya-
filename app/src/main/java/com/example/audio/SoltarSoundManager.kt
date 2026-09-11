@@ -261,4 +261,66 @@ object SoltarSoundManager {
             override fun onPeriodicNotification(track: AudioTrack?) {}
         })
     }
+
+    /**
+     * Alternating bilateral stereo tone for EMDR stimulation.
+     * True sends the harmonic chime purely to the Left ear, False purely to the Right ear.
+     */
+    fun playBilateralPannedTone(isLeft: Boolean, freq: Double = 432.0, durationMs: Int = 110) {
+        if (!isSoundEnabled) return
+        scope.launch {
+            try {
+                val sampleRate = 44100
+                val numFrames = (sampleRate * durationMs) / 1000
+                val buffer = ShortArray(numFrames * 2)
+
+                for (i in 0 until numFrames) {
+                    val t = i.toDouble() / sampleRate
+                    // Soft bell-like decay with gentle overtone
+                    val decay = exp(-32.0 * t)
+                    val s = (sin(2.0 * PI * freq * t) * 0.75 + sin(2.0 * PI * (freq * 1.5) * t) * 0.25) * decay * 22000.0
+                    val sample = s.coerceIn(-32767.0, 32767.0).toInt().toShort()
+
+                    if (isLeft) {
+                        buffer[2 * i] = sample
+                        buffer[2 * i + 1] = 0
+                    } else {
+                        buffer[2 * i] = 0
+                        buffer[2 * i + 1] = sample
+                    }
+                }
+
+                val audioTrack = AudioTrack.Builder()
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    .setAudioFormat(
+                        AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sampleRate)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                            .build()
+                    )
+                    .setBufferSizeInBytes(buffer.size * 2)
+                    .setTransferMode(AudioTrack.MODE_STATIC)
+                    .build()
+
+                audioTrack.write(buffer, 0, buffer.size)
+                audioTrack.play()
+                audioTrack.setNotificationMarkerPosition(numFrames)
+                audioTrack.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
+                    override fun onMarkerReached(track: AudioTrack?) {
+                        try {
+                            track?.stop()
+                            track?.release()
+                        } catch (_: Exception) {}
+                    }
+                    override fun onPeriodicNotification(track: AudioTrack?) {}
+                })
+            } catch (_: Exception) {}
+        }
+    }
 }

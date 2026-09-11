@@ -1995,6 +1995,15 @@ fun TodayScreen(
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
                             viewModel.toggleTimeCapsuleModal(true)
                         }
+                    ),
+                    ToolItem(
+                        title = "Estimulación Bilateral EMDR",
+                        subtitle = "Saturación cognitiva y desensibilización visual",
+                        icon = Icons.Default.Visibility,
+                        onClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.openEmdrSession()
+                        }
                     )
                 )
             )
@@ -2246,7 +2255,8 @@ fun TodayScreen(
                     com.example.ui.components.ToolItem("support_contacts", "Contactos de apoyo", Icons.Default.ContactPhone) { viewModel.openSupportContactDialog(1) },
                     com.example.ui.components.ToolItem("encounter_simulator", "Simulador de encuentro", Icons.Default.TheaterComedy) { viewModel.toggleEncounterSimulator(true) },
                     com.example.ui.components.ToolItem("identity_goals", "Metas de identidad", Icons.Default.Flag) { viewModel.toggleIdentityGoalModal(true) },
-                    com.example.ui.components.ToolItem("conversation_analyzer", "Analizar conversación", Icons.Default.Forum) { viewModel.toggleConversationAnalyzer(true) }
+                    com.example.ui.components.ToolItem("conversation_analyzer", "Analizar conversación", Icons.Default.Forum) { viewModel.toggleConversationAnalyzer(true) },
+                    com.example.ui.components.ToolItem("emdr_visual", "EMDR Visual", Icons.Default.Visibility) { viewModel.toggleToolsShelfSheetVisible(false); viewModel.openEmdrSession() }
                 ),
                 pinnedIds = pinnedIdsSheet,
                 expanded = true, // dentro de la hoja modal, mostrar todo desplegado - ya no hace falta colapsar, el usuario abrio la hoja a proposito

@@ -23,8 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,7 +65,13 @@ class MainActivity : FragmentActivity() {
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             SoltarTheme(themeMode = uiState.themeMode) {
-                val context = LocalContext.current
+                val currentDensity = LocalDensity.current
+                val scaledDensity = Density(
+                    density = currentDensity.density,
+                    fontScale = currentDensity.fontScale * 1.15f
+                )
+                CompositionLocalProvider(LocalDensity provides scaledDensity) {
+                    val context = LocalContext.current
                 val snackbarHostState = remember { SnackbarHostState() }
                 var showExitDialog by remember { mutableStateOf(false) }
 
@@ -79,7 +87,11 @@ class MainActivity : FragmentActivity() {
                 LaunchedEffect(Unit) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                         if (!com.example.notifications.SoltarNotificationHelper.hasNotificationPermission(context)) {
-                            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            try {
+                                permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                            } catch (e: Exception) {
+                                android.util.Log.e("MainActivity", "Error launching notification permission request", e)
+                            }
                         }
                     }
                 }
@@ -104,6 +116,7 @@ class MainActivity : FragmentActivity() {
                         uiState.isPaywallVisible ||
                         uiState.isSupportContactDialogVisible ||
                         uiState.isOnboardingVisible ||
+                        uiState.isEmdrDialogVisible ||
                         uiState.isAppLockPending
 
                 // Root Exit Confirmation BackHandler
@@ -512,6 +525,16 @@ class MainActivity : FragmentActivity() {
                             onDismiss = { viewModel.toggleBeginnerLetterModal(false) }
                         )
                     }
+
+                    if (uiState.isEmdrDialogVisible) {
+                        com.example.ui.screens.EmdrVisualDialog(
+                            viewModel = viewModel,
+                            textoBase = uiState.emdrSessionText,
+                            nombreEx = uiState.emdrSessionExName,
+                            onDismiss = { viewModel.closeEmdrSession() }
+                        )
+                    }
+                }
                 }
                 }
             }

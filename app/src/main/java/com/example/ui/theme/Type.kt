@@ -12,6 +12,6 @@ val Typography = Typography(
     titleLarge = TextStyle(fontFamily = SoltarDisplayFontFamily, fontWeight = FontWeight.Medium, fontSize = 20.sp, lineHeight = 26.sp),
     titleMedium = TextStyle(fontFamily = SoltarBodyFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 22.sp, letterSpacing = 0.15.sp),
     bodyLarge = TextStyle(fontFamily = SoltarBodyFontFamily, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.5.sp),
-    bodyMedium = TextStyle(fontFamily = SoltarBodyFontFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 21.sp, letterSpacing = 0.25.sp),
-    labelSmall = TextStyle(fontFamily = SoltarBodyFontFamily, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp)
+    bodyMedium = TextStyle(fontFamily = SoltarBodyFontFamily, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 22.sp, letterSpacing = 0.25.sp),
+    labelSmall = TextStyle(fontFamily = SoltarBodyFontFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 17.sp, letterSpacing = 0.5.sp)
 )

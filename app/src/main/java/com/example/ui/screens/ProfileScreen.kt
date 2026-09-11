@@ -1429,7 +1429,7 @@ fun ProfileScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarSage,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp
+                                fontSize = 11.sp
                             )
                         }
                     }
@@ -1824,7 +1824,7 @@ fun ProfileScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp
+                                fontSize = 11.sp
                             )
                         }
                     }
@@ -2148,7 +2148,7 @@ fun ProfileScreen(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SoltarAmber,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 9.sp
+                                fontSize = 11.sp
                             )
                         }
                     }
@@ -2306,7 +2306,7 @@ fun ProfileScreen(
                                                             Text(
                                                                 text = "${uiState.customNotifications.count { it.enabled }} activos",
                                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                                fontSize = 9.sp,
+                                                                fontSize = 11.sp,
                                                                 fontWeight = FontWeight.Bold,
                                                                 color = SoltarAmber
                                                             )
@@ -2397,7 +2397,7 @@ fun ProfileScreen(
                                                                         style = MaterialTheme.typography.bodySmall,
                                                                         fontWeight = FontWeight.Bold,
                                                                         color = if (item.enabled) TextPrimary else TextMuted,
-                                                                        maxLines = 1
+                                                                        maxLines = 2
                                                                     )
                                                                 }
 

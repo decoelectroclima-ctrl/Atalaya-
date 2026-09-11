@@ -100,6 +100,9 @@ data class SoltarUiState(
     val isTemporalMirrorModalVisible: Boolean = false,
     val isBeginnerLetterModalVisible: Boolean = false,
     val isToolsShelfSheetVisible: Boolean = false,
+    val isEmdrDialogVisible: Boolean = false,
+    val emdrSessionText: String = "",
+    val emdrSessionExName: String = "",
     val checkinStateInput: String = "Neutral",
     val checkinFirstThoughtsInput: String = "",
     val checkinUrgeInput: Float = 2f,
@@ -538,6 +541,18 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleToolsShelfSheetVisible(visible: Boolean) = _uiState.update { it.copy(isToolsShelfSheetVisible = visible) }
     fun openNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = true) }
     fun closeNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = false) }
+
+    fun openEmdrSession(textoBase: String = "", nombreEx: String = "") = _uiState.update {
+        it.copy(
+            isEmdrDialogVisible = true,
+            emdrSessionText = textoBase,
+            emdrSessionExName = nombreEx
+        )
+    }
+    fun closeEmdrSession() = _uiState.update { it.copy(isEmdrDialogVisible = false) }
+    fun scopeLaunch(block: suspend () -> Unit) {
+        viewModelScope.launch { block() }
+    }
 
     private fun observeSettings() {
         viewModelScope.launch {

@@ -32,6 +32,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
+import com.example.contactocero.ContactoCeroConfig
+import com.example.contactocero.ContactoCeroViewModel
+import com.example.contactocero.ModuloAnclaje
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -405,6 +408,141 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
                         }
                     }
                 }
+            }
+        }
+
+        // Tarjeta Anclaje de Contacto Cero (Modo Emergencia)
+        val isContactoCeroEnabled = remember { ContactoCeroConfig.isEnabled(context) }
+        var showAnclajeSheet by remember { mutableStateOf(false) }
+
+        if (isContactoCeroEnabled) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showAnclajeSheet = true }
+                    .testTag("anclaje_contacto_cero_entry_card"),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurfaceElevated),
+                border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = SoltarAmber,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column {
+                            Text(
+                                "Anclaje de Contacto Cero",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Oración y meditación firme para no romper el silencio",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = SoltarAmber
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Estimulación Bilateral EMDR Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .clickable {
+                        viewModel.openEmdrSession(
+                            textoBase = "La urgencia de escribir a [Nombre] es solo el síndrome de abstinencia de mi cerebro. Dejo que la ola de ansiedad baje.",
+                            nombreEx = ""
+                        )
+                    }
+                    .testTag("open_emdr_from_urge_button"),
+                shape = RoundedCornerShape(14.dp),
+                color = SoltarSurfaceElevated,
+                border = BorderStroke(1.dp, SoltarBlue.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.Visibility,
+                            contentDescription = null,
+                            tint = SoltarBlue,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Column {
+                            Text(
+                                "Estimulación Bilateral EMDR",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = SoltarBlue,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Desensibilización visual rápida para frenar el impulso",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = SoltarBlue
+                    )
+                }
+            }
+
+            if (showAnclajeSheet) {
+                val currentFramework = settings?.preferredFramework
+                val marco = remember(currentFramework) {
+                    ContactoCeroViewModel.mapFrameworkToMarco(currentFramework)
+                }
+                AnclajeContactoCeroSheet(
+                    onDismiss = { showAnclajeSheet = false },
+                    initialMarco = marco,
+                    initialModulo = ModuloAnclaje.EMERGENCIA,
+                    onOpenEmdr = { texto ->
+                        showAnclajeSheet = false
+                        viewModel.openEmdrSession(
+                            textoBase = texto,
+                            nombreEx = ""
+                        )
+                    }
+                )
             }
         }
     }

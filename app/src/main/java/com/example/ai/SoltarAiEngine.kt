@@ -945,4 +945,226 @@ Responde ÚNICAMENTE con el objeto JSON válido.
         // 3. Robust Structured Fallback Analysis
         return@withContext "El análisis detallado de esta conversación requiere el asistente de IA, que aún no está listo en tu dispositivo. Vuelve a intentarlo en unos minutos, o revisa en Ajustes el estado de la descarga."
     }
+
+    val SYSTEM_INSTRUCTIONS_EMDR = """
+# SYSTEM INSTRUCTIONS: EMDR VISUAL INTEGRATION ENGINE
+
+## 👤 ROL DEL SISTEMA
+Eres el microservicio encargado de transformar textos estáticos en experiencias visuales interactivas de estimulación bilateral (EMDR). Tu tarea es recibir el payload de la app, inyectar el nombre de la expareja en el marcador `[Nombre]` y calcular los parámetros de animación, cromatismo (colores HEX) y guion de UI para que el frontend renderice una pantalla estética y efectiva.
+---
+## 🎨 MATRIZ DE DISEÑO VISUAL Y LÓGICA EMDR
+Calcula los parámetros estéticos y técnicos basándote estrictamente en el perfil que envíe la app:
+1. **Perfil CATÓLICO:**
+   - *Frecuencia:* `LENTO` (0.8 Hz) - Ritmo respiratorio y contemplativo.
+   - *Color de Esfera:* `#D4AF37` (Oro suave/celestial) o `#9370DB` (Morado luto/conversión).
+   - *Fondo:* `#111116` (Azul noche místico de baja luminancia).
+   - *Estilo:* Desvanecimiento suave (*fade*) en los extremos.
+2. **Perfil ESTOICO:**
+   - *Frecuencia:* `MEDIO` (1.0 Hz) - Ritmo constante, racional y analítico.
+   - *Color de Esfera:* `#8E9290` (Gris piedra/mármol) o `#4A5D4E` (Verde oliva profundo).
+   - *Fondo:* `#0D0D0D` (Negro absoluto, enfoque minimalista).
+   - *Estilo:* Movimiento lineal puro, sin adornos visuales.
+3. **Perfil PSICOLOGÍA MODERNA / URGENCIAS:**
+   - *Frecuencia:* `RAPIDO` (1.5 Hz) - Saturación cognitiva para frenar crisis de ansiedad.
+   - *Color de Esfera:* `#4A90E2` (Azul clínico/calmante) o `#00FFFF` (Cian de alta atención).
+   - *Fondo:* `#0A0E17` (Azul marino profundo para contraste de fatiga visual).
+   - *Estilo:* Pulso sutil (*glow*) al tocar los bordes de la pantalla.
+---
+## 🚫 RESTRICCIONES DE FORMATO (JSON ESTRICTO)
+Devuelve **únicamente** un objeto JSON plano. Está estrictamente prohibido incluir introducciones, saludos, comentarios o bloques de código Markdown (no uses ```json ni ```). La salida debe ser parseable directamente por el backend de la app.
+### ESQUEMA REQUERIDO DE SALIDA (UI & UX COMPACTO):
+{
+  "animacion": {
+    "frecuencia_hz": 0.0,
+    "velocidad_comercial": "RAPIDO/MEDIO/LENTO",
+    "estilo_esfera": "GLOW / LINEAL / FADE"
+  },
+  "paleta_colores": {
+    "color_esfera_hex": "#HEX",
+    "color_fondo_hex": "#HEX",
+    "opacidad_texto": 0.85
+  },
+  "instrucciones": {
+    "guia_visual": "Texto corto superior de instrucción para los ojos",
+    "alerta_audio": "Instrucción corta si usa auriculares (panning izquierdo/derecho)"
+  },
+  "contenido": {
+    "texto_procesado": "[Comando EMDR inicial] Texto original con el nombre de la expareja ya inyectado"
+  }
+}
+    """.trimIndent()
+
+    suspend fun generateEmdrVisualSession(
+        textoBase: String,
+        framework: SoltarFramework,
+        nombreEx: String = ""
+    ): EmdrVisualConfig = withContext(Dispatchers.IO) {
+        val perfilName = when (framework) {
+            SoltarFramework.CATOLICO -> "CATÓLICO"
+            SoltarFramework.ESTOICO -> "ESTOICO"
+            SoltarFramework.PSICOLOGIA_MODERNA -> "PSICOLOGÍA MODERNA"
+        }
+
+        val cleanTextoBase = if (textoBase.isNotBlank()) {
+            textoBase.trim()
+        } else {
+            when (framework) {
+                SoltarFramework.CATOLICO -> "Entrego en oración el apego a [Nombre]. Mi corazón descansa en paz y custodia su dignidad."
+                SoltarFramework.ESTOICO -> "Lo que [Nombre] haga o decida está fuera de mi control. Mi tranquilidad y mi ciudadela interior dependen solo de mí."
+                SoltarFramework.PSICOLOGIA_MODERNA -> "La urgencia de escribir a [Nombre] es solo el síndrome de abstinencia de mi cerebro. Dejo que la ola de ansiedad baje."
+            }
+        }
+
+        val cleanNombreEx = if (nombreEx.isNotBlank()) nombreEx.trim() else "esa persona"
+
+        val apiKey = try {
+            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+
+        val isRobolectric = try {
+            android.os.Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
+        } catch (_: Exception) {
+            false
+        }
+
+        if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
+            try {
+                val inputPayload = JSONObject().apply {
+                    put("perfil", perfilName)
+                    put("texto_base", cleanTextoBase)
+                    put("nombre_ex", cleanNombreEx)
+                }
+
+                val userPrompt = """
+$SYSTEM_INSTRUCTIONS_EMDR
+
+Entrada recibida del Backend:
+${inputPayload.toString(2)}
+
+Devuelve ÚNICAMENTE el objeto JSON plano según el esquema requerido sin markdown ni explicaciones adicionales:
+                """.trimIndent()
+
+                val jsonBody = JSONObject().apply {
+                    val contents = JSONArray().apply {
+                        val userPart = JSONObject().apply {
+                            val parts = JSONArray().apply {
+                                put(JSONObject().apply { put("text", userPrompt) })
+                            }
+                            put("parts", parts)
+                        }
+                        put(userPart)
+                    }
+                    put("contents", contents)
+                }
+
+                val request = Request.Builder()
+                    .url(API_URL + "?key=$apiKey")
+                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
+                    .build()
+
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val bodyString = response.body?.string() ?: ""
+                    val root = JSONObject(bodyString)
+                    val candidates = root.optJSONArray("candidates")
+                    if (candidates != null && candidates.length() > 0) {
+                        val replyText = candidates.getJSONObject(0)
+                            .getJSONObject("content")
+                            .getJSONArray("parts")
+                            .getJSONObject(0)
+                            .getString("text")
+
+                        val parsedConfig = EmdrVisualConfig.fromJsonString(replyText)
+                        if (parsedConfig != null) {
+                            return@withContext parsedConfig
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Gemini EMDR visual session generation failed, using local design matrix", e)
+            }
+        }
+
+        return@withContext calculateLocalEmdrVisualConfig(cleanTextoBase, framework, cleanNombreEx)
+    }
+
+    fun calculateLocalEmdrVisualConfig(
+        textoBase: String,
+        framework: SoltarFramework,
+        nombreEx: String = ""
+    ): EmdrVisualConfig {
+        val cleanName = if (nombreEx.isNotBlank()) nombreEx.trim() else "esa persona"
+        val replaced = textoBase
+            .replace("[Nombre]", cleanName, ignoreCase = true)
+            .replace("{{ex_name}}", cleanName, ignoreCase = true)
+            .replace("[nombre_ex]", cleanName, ignoreCase = true)
+
+        return when (framework) {
+            SoltarFramework.CATOLICO -> {
+                EmdrVisualConfig(
+                    animacion = EmdrAnimacionConfig(
+                        frecuencia_hz = 0.8f,
+                        velocidad_comercial = "LENTO",
+                        estilo_esfera = "FADE"
+                    ),
+                    paleta_colores = EmdrPaletaColoresConfig(
+                        color_esfera_hex = "#D4AF37",
+                        color_fondo_hex = "#111116",
+                        opacidad_texto = 0.85f
+                    ),
+                    instrucciones = EmdrInstruccionesConfig(
+                        guia_visual = "Siga la esfera dorada con los ojos a ritmo contemplativo. Mantenga la cabeza completamente quieta.",
+                        alerta_audio = "Respire hondo y sincronice el sonido alterno en sus oídos izquierdo y derecho."
+                    ),
+                    contenido = EmdrContenidoConfig(
+                        texto_procesado = "[Respira en paz. Sostén el ritmo contemplativo] $replaced"
+                    )
+                )
+            }
+            SoltarFramework.ESTOICO -> {
+                EmdrVisualConfig(
+                    animacion = EmdrAnimacionConfig(
+                        frecuencia_hz = 1.0f,
+                        velocidad_comercial = "MEDIO",
+                        estilo_esfera = "LINEAL"
+                    ),
+                    paleta_colores = EmdrPaletaColoresConfig(
+                        color_esfera_hex = "#8E9290",
+                        color_fondo_hex = "#0D0D0D",
+                        opacidad_texto = 0.85f
+                    ),
+                    instrucciones = EmdrInstruccionesConfig(
+                        guia_visual = "Fije la mirada en la esfera a ritmo constante y racional. Cabeza inmóvil, soberanía interior.",
+                        alerta_audio = "Escuche la cadencia alterna en sus oídos izquierdo y derecho."
+                    ),
+                    contenido = EmdrContenidoConfig(
+                        texto_procesado = "[Firmeza interior. Movimiento constante de izquierda a derecha] $replaced"
+                    )
+                )
+            }
+            SoltarFramework.PSICOLOGIA_MODERNA -> {
+                EmdrVisualConfig(
+                    animacion = EmdrAnimacionConfig(
+                        frecuencia_hz = 1.5f,
+                        velocidad_comercial = "RAPIDO",
+                        estilo_esfera = "GLOW"
+                    ),
+                    paleta_colores = EmdrPaletaColoresConfig(
+                        color_esfera_hex = "#4A90E2",
+                        color_fondo_hex = "#0A0E17",
+                        opacidad_texto = 0.90f
+                    ),
+                    instrucciones = EmdrInstruccionesConfig(
+                        guia_visual = "Siga la esfera azul rápidamente con los ojos. Mantenga la cabeza completamente quieta.",
+                        alerta_audio = "Sincronice el sonido alterno en sus oídos izquierdo y derecho."
+                    ),
+                    contenido = EmdrContenidoConfig(
+                        texto_procesado = "[Fije la mirada. Sostenga el ritmo de izquierda a derecha] $replaced"
+                    )
+                )
+            }
+        }
+    }
 }
