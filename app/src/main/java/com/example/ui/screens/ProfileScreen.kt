@@ -3044,6 +3044,35 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                            Text("Bloqueo de la app", fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Text(
+                                "Pide tu huella, rostro o PIN del teléfono al reabrir Recuerda.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                        Switch(
+                            checked = settings?.biometricLockEnabled == true,
+                            onCheckedChange = { viewModel.setBiometricLockEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = SoltarAmber,
+                                checkedTrackColor = SoltarAmber.copy(alpha = 0.3f),
+                                uncheckedThumbColor = TextMuted,
+                                uncheckedTrackColor = SoltarSurfaceElevated
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    HorizontalDivider(color = SoltarBorderSubtle)
+                    Spacer(modifier = Modifier.height(14.dp))
+
                     OutlinedButton(
                         onClick = { viewModel.clearAiMemory() },
                         modifier = Modifier.fillMaxWidth().height(44.dp),

@@ -3,7 +3,7 @@ package com.example
 import android.app.Activity
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -42,7 +42,7 @@ sealed class SoltarNavItem(val tab: SoltarTab, val label: String, val icon: Imag
     object Perfil : SoltarNavItem(SoltarTab.PERFIL, "Perfil", Icons.Default.Person)
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val viewModel: SoltarViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
@@ -103,7 +103,8 @@ class MainActivity : ComponentActivity() {
                         authUiState.isAuthDialogVisible ||
                         uiState.isPaywallVisible ||
                         uiState.isSupportContactDialogVisible ||
-                        uiState.isOnboardingVisible
+                        uiState.isOnboardingVisible ||
+                        uiState.isAppLockPending
 
                 // Root Exit Confirmation BackHandler
                 BackHandler(enabled = !isAnyModalOpen) {
@@ -174,11 +175,14 @@ class MainActivity : ComponentActivity() {
                     SoltarNavItem.Perfil
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(SoltarBackground)
-                ) {
+                if (uiState.isAppLockPending) {
+                    com.example.ui.screens.AppLockScreen(onUnlocked = { viewModel.clearAppLock() })
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(SoltarBackground)
+                    ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = SoltarBackground,
@@ -509,8 +513,14 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+                }
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.triggerAppLockIfNeeded()
     }
 
     override fun onNewIntent(intent: android.content.Intent) {

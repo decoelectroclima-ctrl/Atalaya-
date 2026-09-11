@@ -171,22 +171,29 @@ fun AuthDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
 
-                if (!uiState.hasConfiguredPin && !isLockdown) {
+                if (!uiState.hasConfiguredPin) {
                     TextButton(
                         onClick = {
                             showMessage = null
-                            if (uiState.authDialogMode == "LOGIN") {
-                                viewModel.setAuthDialogMode("REGISTER")
-                            } else {
-                                viewModel.setAuthDialogMode("LOGIN")
-                            }
+                            viewModel.setAuthDialogMode(if (uiState.authDialogMode == "LOGIN") "REGISTER" else "LOGIN")
                         }
                     ) {
                         Text(
-                            text = if (uiState.authDialogMode == "LOGIN")
-                                "¿No tienes PIN? Crear nuevo PIN / Registrarse"
-                            else
-                                "¿Ya tienes un PIN configurado? Iniciar Sesión",
+                            text = if (uiState.authDialogMode == "LOGIN") "¿No tienes cuenta? Regístrate" else "¿Ya tienes cuenta? Inicia sesión",
+                            color = SoltarAmber,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else if (uiState.authDialogMode == "LOGIN") {
+                    TextButton(
+                        onClick = {
+                            showMessage = null
+                            viewModel.setAuthDialogMode("REGISTER")
+                        }
+                    ) {
+                        Text(
+                            text = "¿Olvidaste tu PIN? Configura uno nuevo",
                             color = SoltarAmber,
                             fontSize = 13.sp,
                             textAlign = TextAlign.Center

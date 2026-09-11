@@ -235,7 +235,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             val current = repository.getSettingsOnce() ?: SoltarSettingsEntity()
             repository.saveSettings(
                 current.copy(
-                    isLoggedIn = true,
+                    isLoggedIn = false,
                     userName = "Viajero",
                     contact1Name = "",
                     contact1Phone = "",

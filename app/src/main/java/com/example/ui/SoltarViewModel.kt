@@ -173,6 +173,7 @@ data class SoltarUiState(
 
     // Authentication & Account Management
     val isAuthDialogVisible: Boolean = false,
+    val isAppLockPending: Boolean = false,
 
     // Paywall & Monetization
     val isPaywallVisible: Boolean = false,
@@ -2710,6 +2711,24 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             letters = letters.value,
             relapses = relapses.value
         )
+    }
+
+    fun setAppLockPending(pending: Boolean) = _uiState.update { it.copy(isAppLockPending = pending) }
+
+    fun triggerAppLockIfNeeded() {
+        val s = settings.value ?: return
+        if (s.onboardingCompleted && s.biometricLockEnabled) {
+            _uiState.update { it.copy(isAppLockPending = true) }
+        }
+    }
+
+    fun clearAppLock() = _uiState.update { it.copy(isAppLockPending = false) }
+
+    fun setBiometricLockEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value ?: return@launch
+            repository.saveSettings(current.copy(biometricLockEnabled = enabled))
+        }
     }
 
     companion object {
