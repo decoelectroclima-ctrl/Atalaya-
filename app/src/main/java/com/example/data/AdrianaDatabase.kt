@@ -32,7 +32,7 @@ import androidx.room.migration.Migration
         BeginnerLetterEntity::class,
         FavoriteWisdomCardEntity::class
     ],
-    version = 29,
+    version = 30,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {

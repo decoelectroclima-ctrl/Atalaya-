@@ -2098,7 +2098,13 @@ fun TodayScreen(
                         value = uiState.focusBodyInput,
                         onValueChange = { viewModel.setFocusBodyInput(it) },
                         placeholder = "Ej. Caminar 20 min sin mirar el móvil",
-                        accent = SoltarAmber
+                        accent = SoltarAmber,
+                        isDone = uiState.focusBodyDoneInput,
+                        onDoneChange = { viewModel.setFocusBodyDone(it) },
+                        onSuggestClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.suggestExerciseFor(com.example.data.ExerciseCategory.CUERPO)
+                        }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     FocusActionRow(
@@ -2106,7 +2112,13 @@ fun TodayScreen(
                         value = uiState.focusSelfInput,
                         onValueChange = { viewModel.setFocusSelfInput(it) },
                         placeholder = "Ej. Avanzar 30 min en mi estudio o trabajo",
-                        accent = SoltarSage
+                        accent = SoltarSage,
+                        isDone = uiState.focusSelfDoneInput,
+                        onDoneChange = { viewModel.setFocusSelfDone(it) },
+                        onSuggestClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.suggestExerciseFor(com.example.data.ExerciseCategory.PROYECTO_PROPIO)
+                        }
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     FocusActionRow(
@@ -2114,7 +2126,13 @@ fun TodayScreen(
                         value = uiState.focusSocialInput,
                         onValueChange = { viewModel.setFocusSocialInput(it) },
                         placeholder = "Ej. Enviar un audio a un amigo de confianza",
-                        accent = SoltarBlue
+                        accent = SoltarBlue,
+                        isDone = uiState.focusSocialDoneInput,
+                        onDoneChange = { viewModel.setFocusSocialDone(it) },
+                        onSuggestClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.suggestExerciseFor(com.example.data.ExerciseCategory.RED_SOCIAL)
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -2405,25 +2423,47 @@ private fun FocusActionRow(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    accent: Color
+    accent: Color,
+    isDone: Boolean,
+    onDoneChange: (Boolean) -> Unit,
+    onSuggestClick: () -> Unit
 ) {
     Column {
-        Text(title, style = MaterialTheme.typography.labelSmall, color = accent, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(placeholder, color = TextMuted, fontSize = 12.sp) },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = accent,
-                unfocusedBorderColor = SoltarBorderSubtle,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
-            ),
-            shape = RoundedCornerShape(8.dp),
-            singleLine = true
-        )
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(title, style = MaterialTheme.typography.labelSmall, color = accent, fontWeight = FontWeight.Bold)
+            TextButton(onClick = onSuggestClick, contentPadding = PaddingValues(horizontal = 4.dp)) {
+                Icon(Icons.Default.AutoAwesome, contentDescription = "Sugerir ejercicio", tint = accent, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Sugerir", color = accent, fontSize = 11.sp)
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f),
+                placeholder = { Text(placeholder, color = TextMuted, fontSize = 12.sp) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = accent,
+                    unfocusedBorderColor = SoltarBorderSubtle,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary
+                ),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Checkbox(
+                checked = isDone,
+                onCheckedChange = onDoneChange,
+                colors = CheckboxDefaults.colors(checkedColor = accent)
+            )
+        }
     }
 }
 

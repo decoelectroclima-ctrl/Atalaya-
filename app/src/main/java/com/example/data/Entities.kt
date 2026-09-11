@@ -258,6 +258,7 @@ data class SoltarSettingsEntity(
     val onboardingCompleted: Boolean = false,
     val preferredFramework: String = "PSICOLOGIA_MODERNA",
     val recentCardIds: String = "",
+    val recentExerciseIds: String = "",
     // Support Network (Red de Apoyo - up to 3 contacts)
     val contact1Name: String = "",
     val contact1Phone: String = "",

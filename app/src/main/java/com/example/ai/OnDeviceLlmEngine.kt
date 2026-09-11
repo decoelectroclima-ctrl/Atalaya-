@@ -920,4 +920,29 @@ object OnDeviceLlmEngine {
             emptyList()
         }
     }
+
+    fun personalizeExercisePresentation(
+        exercise: com.example.data.PracticalExercise,
+        recentContextNote: String
+    ): String {
+        val fallback = "${exercise.title}\n\n${exercise.instructions}\n\n💡 ${exercise.whyItHelps}"
+        if (!isReady() || recentContextNote.isBlank()) return fallback
+        val prompt = """
+            Vas a presentar un ejercicio ya definido a alguien procesando el duelo de una ruptura.
+            NO cambies el ejercicio en sí ni inventes uno nuevo, solo escribe 1-2 frases de
+            introducción que conecten este ejercicio concreto con lo que la persona mencionó
+            recientemente, de forma cálida y breve.
+
+            Ejercicio: "${exercise.title}" - ${exercise.instructions}
+            Contexto reciente de la persona: "$recentContextNote"
+
+            Responde solo con las 1-2 frases de introducción, sin repetir el ejercicio ni firmarlas.
+        """.trimIndent()
+        return try {
+            val intro = generate(prompt).trim()
+            if (intro.isBlank()) fallback else "$intro\n\n${exercise.title}\n\n${exercise.instructions}\n\n💡 ${exercise.whyItHelps}"
+        } catch (_: Exception) {
+            fallback
+        }
+    }
 }

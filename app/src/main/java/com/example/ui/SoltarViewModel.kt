@@ -12,6 +12,8 @@ import com.example.ai.SoltarUserContext
 import com.example.billing.BillingManager
 import com.example.data.*
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.SharingStarted
@@ -61,8 +63,11 @@ data class SoltarUiState(
     val todayUrgeToContact: Float = 2f,
     val todayAutonomy: Float = 7f,
     val focusBodyInput: String = "Caminar 20 minutos al aire libre",
+    val focusBodyDoneInput: Boolean = false,
     val focusSelfInput: String = "Avanzar en mi proyecto personal",
+    val focusSelfDoneInput: Boolean = false,
     val focusSocialInput: String = "Conversar con un buen amigo",
+    val focusSocialDoneInput: Boolean = false,
     val checkinNoteInput: String = "",
     
     // Contextual State Selection ("¿Cómo estás ahora?")
@@ -963,8 +968,11 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                             todayUrgeToContact = existing.urgeToContact,
                             todayAutonomy = existing.autonomy,
                             focusBodyInput = existing.focusBodyAction,
+                            focusBodyDoneInput = existing.focusBodyDone,
                             focusSelfInput = existing.focusSelfAction,
+                            focusSelfDoneInput = existing.focusSelfDone,
                             focusSocialInput = existing.focusSocialAction,
+                            focusSocialDoneInput = existing.focusSocialDone,
                             checkinNoteInput = existing.note
                         )
                     }
@@ -1088,6 +1096,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             )
             closeUrgeSheet()
             showNotification("Impulso regulado y guardado en tu historial.")
+            suggestExerciseFor(com.example.data.ExerciseCategory.RED_SOCIAL)
         }
     }
 
@@ -1107,13 +1116,53 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun setFocusSocialInput(t: String) = _uiState.update { it.copy(focusSocialInput = t) }
     fun setCheckinNote(t: String) = _uiState.update { it.copy(checkinNoteInput = t) }
 
+    fun suggestExerciseFor(category: com.example.data.ExerciseCategory) {
+        val currentSettings = settings.value ?: return
+        val framework = com.example.data.SoltarFramework.fromKey(currentSettings.preferredFramework)
+        val vulnScore = vulnerabilityScore.value
+        val maxIntensity = when {
+            vulnScore >= 70 -> com.example.data.ExerciseIntensity.SUAVE
+            vulnScore >= 40 -> com.example.data.ExerciseIntensity.MODERADO
+            else -> com.example.data.ExerciseIntensity.AMBICIOSO
+        }
+        val recentIds = currentSettings.recentExerciseIds.split(",").filter { it.isNotBlank() }
+        val exercise = com.example.data.ExerciseBank.suggest(category, framework, maxIntensity, recentIds) ?: return
+
+        val recentText = "${_uiState.value.checkinNoteInput} ${_uiState.value.checkinFirstThoughtsInput}".trim()
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val presented = com.example.ai.OnDeviceLlmEngine.personalizeExercisePresentation(exercise, recentText)
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                when (category) {
+                    com.example.data.ExerciseCategory.CUERPO -> setFocusBodyInput(exercise.instructions)
+                    com.example.data.ExerciseCategory.PROYECTO_PROPIO -> setFocusSelfInput(exercise.instructions)
+                    com.example.data.ExerciseCategory.RED_SOCIAL -> setFocusSocialInput(exercise.instructions)
+                }
+                showNotification(presented.take(180))
+            }
+            val updatedRecent = (recentIds + exercise.id).takeLast(8).joinToString(",")
+            repository.saveSettings(currentSettings.copy(recentExerciseIds = updatedRecent))
+        }
+    }
+
+    fun setFocusBodyDone(done: Boolean) = _uiState.update { it.copy(focusBodyDoneInput = done) }
+    fun setFocusSelfDone(done: Boolean) = _uiState.update { it.copy(focusSelfDoneInput = done) }
+    fun setFocusSocialDone(done: Boolean) = _uiState.update { it.copy(focusSocialDoneInput = done) }
+
     fun saveTodayCheckin() {
         val s = _uiState.value
         val todayKey = getTodayDateKey()
         val checkinFreeText = "${s.checkinNoteInput} ${s.checkinFirstThoughtsInput}".trim()
-        if (checkinFreeText.isNotBlank() && SoltarAiEngine.checkSelfHarmTrigger(checkinFreeText)) {
+        val isSelfHarm = checkinFreeText.isNotBlank() && SoltarAiEngine.checkSelfHarmTrigger(checkinFreeText)
+        if (isSelfHarm) {
             openNeedHelpSheet()
             showNotification("⚠️ Detectamos que este texto refleja mucho dolor. Te mostramos ayuda inmediata.")
+        }
+        val isHardDay = s.todayPain >= 7f || s.todayAnxiety >= 7f || s.todayRumination >= 7f
+        val hasNoFocusPlanned = s.focusBodyInput.isBlank() && s.focusSelfInput.isBlank() && s.focusSocialInput.isBlank()
+        if (isHardDay && hasNoFocusPlanned && !isSelfHarm) {
+            // Un día duro sin ningún plan de acción: sugerir proactivamente un ejercicio suave de cuerpo,
+            // la categoría con más evidencia de ayudar a regular el sistema nervioso a corto plazo.
+            suggestExerciseFor(com.example.data.ExerciseCategory.CUERPO)
         }
         viewModelScope.launch {
             repository.saveCheckin(
@@ -1129,8 +1178,11 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     autonomy = s.todayAutonomy,
                     firstThoughts = s.checkinFirstThoughtsInput,
                     focusBodyAction = s.focusBodyInput,
+                    focusBodyDone = s.focusBodyDoneInput,
                     focusSelfAction = s.focusSelfInput,
+                    focusSelfDone = s.focusSelfDoneInput,
                     focusSocialAction = s.focusSocialInput,
+                    focusSocialDone = s.focusSocialDoneInput,
                     note = s.checkinNoteInput
                 )
             )

@@ -72,6 +72,16 @@ fun ProcessScreen(
     val totalRelapses = relapses.size
     val totalJournalEntries = journalEntries.size
 
+    val focusCompletionRate = remember(checkins) {
+        if (checkins.isEmpty()) 0 else {
+            val totalPossible = checkins.size * 3
+            val totalDone = checkins.sumOf {
+                (if (it.focusBodyDone) 1 else 0) + (if (it.focusSelfDone) 1 else 0) + (if (it.focusSocialDone) 1 else 0)
+            }
+            ((totalDone.toFloat() / totalPossible) * 100).toInt()
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -142,30 +152,40 @@ fun ProcessScreen(
 
         // Summary Metric Cards
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Impulsos Contenidos",
+                        value = "$totalUrgesContained",
+                        icon = Icons.Default.Bolt,
+                        accentColor = UrgeAlertRed
+                    )
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Bucles Cerrados",
+                        value = "$totalThoughtsRestructured",
+                        icon = Icons.Default.Psychology,
+                        accentColor = SoltarAmber
+                    )
+                    StatCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Auditorías Reales",
+                        value = "$totalAuditsSaved",
+                        icon = Icons.Default.Balance,
+                        accentColor = SoltarSage
+                    )
+                }
                 StatCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Impulsos Contenidos",
-                    value = "$totalUrgesContained",
-                    icon = Icons.Default.Bolt,
-                    accentColor = UrgeAlertRed
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Bucles Cerrados",
-                    value = "$totalThoughtsRestructured",
-                    icon = Icons.Default.Psychology,
-                    accentColor = SoltarAmber
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Auditorías Reales",
-                    value = "$totalAuditsSaved",
-                    icon = Icons.Default.Balance,
-                    accentColor = SoltarSage
+                    modifier = Modifier.fillMaxWidth(),
+                    title = "Consistencia en Acción",
+                    value = "$focusCompletionRate%",
+                    icon = Icons.Default.CheckCircle,
+                    accentColor = SoltarSage,
+                    subtitle = "De tus 3 focos diarios completados de verdad, no solo planeados."
                 )
             }
         }
@@ -1088,7 +1108,8 @@ private fun StatCard(
     title: String,
     value: String,
     icon: ImageVector,
-    accentColor: Color
+    accentColor: Color,
+    subtitle: String? = null
 ) {
     Card(
         modifier = modifier,
@@ -1101,6 +1122,10 @@ private fun StatCard(
             Spacer(modifier = Modifier.height(6.dp))
             Text(value, style = MaterialTheme.typography.titleLarge, color = TextPrimary, fontWeight = FontWeight.Bold)
             Text(title, style = MaterialTheme.typography.labelSmall, color = TextSecondary, fontSize = 10.sp, maxLines = 1)
+            if (subtitle != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = TextMuted, fontSize = 10.sp, lineHeight = 13.sp)
+            }
         }
     }
 }
