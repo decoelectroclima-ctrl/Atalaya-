@@ -380,4 +380,19 @@ class SoltarRepository(private val database: AdrianaDatabase) {
     suspend fun deleteBeginnerLetter(id: Long) {
         database.beginnerLetterDao().deleteBeginnerLetter(id)
     }
+
+    // Favorite Wisdom Cards
+    val allFavoriteWisdomCards: Flow<List<FavoriteWisdomCardEntity>> = database.favoriteWisdomCardDao().getAllFavorites()
+
+    suspend fun isFavoriteWisdomCard(cardId: String): Boolean {
+        return database.favoriteWisdomCardDao().isFavorite(cardId)
+    }
+
+    suspend fun addFavoriteWisdomCard(cardId: String) {
+        database.favoriteWisdomCardDao().addFavorite(FavoriteWisdomCardEntity(cardId = cardId))
+    }
+
+    suspend fun removeFavoriteWisdomCard(cardId: String) {
+        database.favoriteWisdomCardDao().removeFavorite(cardId)
+    }
 }

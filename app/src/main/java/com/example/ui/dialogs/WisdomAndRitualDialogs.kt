@@ -13,6 +13,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,6 +48,7 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
     var successMsg by remember { mutableStateOf<String?>(null) }
 
     val savedContributions by viewModel.wisdomContributions.collectAsState()
+    val favoriteWisdomCardIds by viewModel.favoriteWisdomCardIds.collectAsState()
 
     val framework = uiState.preferredFramework
     val cards = WisdomBank.cards.filter { it.framework == framework }
@@ -153,7 +156,12 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                             author = item.author,
                             reflection = item.reflection
                         )
-                        WisdomCardItem(card = card, context = context)
+                        WisdomCardItem(
+                            card = card,
+                            context = context,
+                            isFavorite = favoriteWisdomCardIds.contains(card.id),
+                            onToggleFavorite = { viewModel.toggleFavoriteWisdomCard(card.id) }
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     Spacer(modifier = Modifier.height(16.dp))
@@ -163,7 +171,12 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 cards.forEach { card ->
-                    WisdomCardItem(card = card, context = context)
+                    WisdomCardItem(
+                        card = card,
+                        context = context,
+                        isFavorite = favoriteWisdomCardIds.contains(card.id),
+                        onToggleFavorite = { viewModel.toggleFavoriteWisdomCard(card.id) }
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
@@ -174,7 +187,12 @@ fun WisdomLibraryDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
 }
 
 @Composable
-fun WisdomCardItem(card: WisdomCard, context: android.content.Context) {
+fun WisdomCardItem(
+    card: WisdomCard,
+    context: android.content.Context,
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -184,17 +202,31 @@ fun WisdomCardItem(card: WisdomCard, context: android.content.Context) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(card.title, style = MaterialTheme.typography.labelSmall, color = SoltarAmber, fontWeight = FontWeight.Bold)
-                IconButton(
-                    onClick = {
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "«${card.quote}» — ${card.author} (Recuerda App)")
-                        }
-                        context.startActivity(Intent.createChooser(shareIntent, "Compartir sabiduría"))
-                    },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(Icons.Default.Share, contentDescription = "Compartir tarjeta", tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onToggleFavorite,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Quitar de favoritos" else "Guardar en favoritos",
+                            tint = if (isFavorite) SoltarAmber else TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = {
+                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "«${card.quote}» — ${card.author} (Recuerda App)")
+                            }
+                            context.startActivity(Intent.createChooser(shareIntent, "Compartir sabiduría"))
+                        },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "Compartir tarjeta", tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(6.dp))
@@ -203,6 +235,114 @@ fun WisdomCardItem(card: WisdomCard, context: android.content.Context) {
             Text("- ${card.author}", style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.align(Alignment.End))
             Spacer(modifier = Modifier.height(4.dp))
             Text(card.reflection, style = MaterialTheme.typography.bodySmall, color = TextSecondary, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+fun FavoriteWisdomCardsDialog(viewModel: SoltarViewModel, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val favoriteCardIds by viewModel.favoriteWisdomCardIds.collectAsState()
+    val savedContributions by viewModel.wisdomContributions.collectAsState()
+
+    val favoriteCards = remember(favoriteCardIds, savedContributions) {
+        val bankCards = WisdomBank.cards.filter { favoriteCardIds.contains(it.id) }
+        val customCards = savedContributions
+            .map { item ->
+                WisdomCard(
+                    id = "saved_${item.id}",
+                    framework = SoltarFramework.fromKey(item.framework),
+                    title = "Mi Banco Personal",
+                    quote = item.quote,
+                    author = item.author,
+                    reflection = item.reflection
+                )
+            }
+            .filter { favoriteCardIds.contains(it.id) }
+        (bankCards + customCards)
+    }
+
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SoltarBackground)
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = TextSecondary)
+                    }
+                    Text(
+                        text = "MIS FRASES FAVORITAS",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = SoltarAmber,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    )
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (favoriteCards.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp, horizontal = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                tint = SoltarAmber.copy(alpha = 0.6f),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Text(
+                                text = "Aún no has guardado ninguna frase.",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Text(
+                                text = "Toca el corazón en cualquier tarjeta de sabiduría para guardarla aquí.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                } else {
+                    favoriteCards.forEach { card ->
+                        WisdomCardItem(
+                            card = card,
+                            context = context,
+                            isFavorite = true,
+                            onToggleFavorite = { viewModel.toggleFavoriteWisdomCard(card.id) }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }

@@ -312,6 +312,21 @@ interface BeginnerLetterDao {
     suspend fun deleteBeginnerLetter(id: Long)
 }
 
+@Dao
+interface FavoriteWisdomCardDao {
+    @Query("SELECT * FROM favorite_wisdom_cards ORDER BY savedAt DESC")
+    fun getAllFavorites(): Flow<List<FavoriteWisdomCardEntity>>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM favorite_wisdom_cards WHERE cardId = :cardId)")
+    suspend fun isFavorite(cardId: String): Boolean
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addFavorite(favorite: FavoriteWisdomCardEntity)
+
+    @Query("DELETE FROM favorite_wisdom_cards WHERE cardId = :cardId")
+    suspend fun removeFavorite(cardId: String)
+}
+
 
 
 

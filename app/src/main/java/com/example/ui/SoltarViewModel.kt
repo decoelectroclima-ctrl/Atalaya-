@@ -303,6 +303,10 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val timeCapsules: StateFlow<List<TimeCapsuleEntity>> = repository.allTimeCapsules
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val favoriteWisdomCardIds: StateFlow<Set<String>> = repository.allFavoriteWisdomCards
+        .map { list -> list.map { it.cardId }.toSet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     // 100% Real, multi-variable vulnerability assessment engine
     val realVulnerabilityAssessment: StateFlow<com.example.ai.RealVulnerabilityAssessment> = combine(
         listOf(
@@ -482,12 +486,38 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             AdrianaDatabase.populateInitialDataIfEmpty(AdrianaDatabase.getDatabase(application))
         }
+        observeBillingSync()
         loadTodayCheckin()
         observeSettings()
         observeJournalEntriesForLinguisticAnalysis()
         evaluateJourneyStage()
         refreshTodayGriefPatterns()
         observeDailySummaryForWidgetSync()
+    }
+
+    private fun observeBillingSync() {
+        viewModelScope.launch {
+            combine(
+                billingManager.isPremium,
+                billingManager.activePlanKey,
+                settings.filterNotNull()
+            ) { isPrem, planKey, currentSettings -> Triple(isPrem, planKey, currentSettings) }
+                .collect { (isPrem, planKey, currentSettings) ->
+                    val correctTier = if (isPrem) (planKey ?: currentSettings.subscriptionTier.takeIf { it != "FREE" } ?: "atalaya_pro_monthly") else "FREE"
+                    if (currentSettings.subscriptionTier != correctTier) {
+                        repository.saveSettings(currentSettings.copy(subscriptionTier = correctTier, isTrialActive = false))
+                    }
+                }
+        }
+    }
+
+    private fun openPremiumGated(hasAccess: Boolean, openAction: () -> Unit) {
+        if (hasAccess) {
+            openAction()
+        } else {
+            _uiState.update { it.copy(isPaywallVisible = true) }
+            playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
+        }
     }
 
     private fun observeDailySummaryForWidgetSync() {
@@ -1443,11 +1473,50 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     }
     
     fun toggleMemoryModal(visible: Boolean) = _uiState.update { it.copy(isMemoryModalVisible = visible) }
-    fun toggleTimeCapsuleModal(visible: Boolean) = _uiState.update { it.copy(isTimeCapsuleModalVisible = visible) }
-    fun toggleEncounterSimulator(visible: Boolean) = _uiState.update { it.copy(isEncounterSimulatorVisible = visible) }
-    fun toggleWisdomLibraryDialog(visible: Boolean) = _uiState.update { it.copy(isWisdomLibraryVisible = visible) }
-    fun toggleClosingRitualDialog(visible: Boolean) = _uiState.update { it.copy(isClosingRitualVisible = visible) }
+
+    fun toggleTimeCapsuleModal(visible: Boolean) {
+        if (!visible) { _uiState.update { it.copy(isTimeCapsuleModalVisible = false) }; return }
+        val entitlements = UserEntitlements.fromSettings(settings.value)
+        openPremiumGated(entitlements.canAccessTimeCapsule) {
+            _uiState.update { it.copy(isTimeCapsuleModalVisible = true) }
+        }
+    }
+
+    fun toggleEncounterSimulator(visible: Boolean) {
+        if (!visible) { _uiState.update { it.copy(isEncounterSimulatorVisible = false) }; return }
+        val entitlements = UserEntitlements.fromSettings(settings.value)
+        openPremiumGated(entitlements.canAccessEncounterSimulator) {
+            _uiState.update { it.copy(isEncounterSimulatorVisible = true) }
+        }
+    }
+
+    fun toggleWisdomLibraryDialog(visible: Boolean) {
+        if (!visible) { _uiState.update { it.copy(isWisdomLibraryVisible = false) }; return }
+        val entitlements = UserEntitlements.fromSettings(settings.value)
+        openPremiumGated(entitlements.canAccessFullWisdomLibrary) {
+            _uiState.update { it.copy(isWisdomLibraryVisible = true) }
+        }
+    }
+
+    fun toggleClosingRitualDialog(visible: Boolean) {
+        if (!visible) { _uiState.update { it.copy(isClosingRitualVisible = false) }; return }
+        val entitlements = UserEntitlements.fromSettings(settings.value)
+        openPremiumGated(entitlements.canAccessClosingRitual) {
+            _uiState.update { it.copy(isClosingRitualVisible = true) }
+        }
+    }
+
     fun toggleVoluntaryExitDialog(visible: Boolean) = _uiState.update { it.copy(isVoluntaryExitVisible = visible) }
+
+    fun toggleFavoriteWisdomCard(cardId: String) {
+        viewModelScope.launch {
+            if (favoriteWisdomCardIds.value.contains(cardId)) {
+                repository.removeFavoriteWisdomCard(cardId)
+            } else {
+                repository.addFavoriteWisdomCard(cardId)
+            }
+        }
+    }
     
     fun saveTimeCapsule(title: String, content: String, unlockAt: Long) {
         if (SoltarAiEngine.checkSelfHarmTrigger(content)) {
@@ -1586,18 +1655,6 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 showNotification("Líneas de ayuda y apoyo activadas en tu chat")
             }
             return
-        }
-
-        // Daily limit check for normal conversational coaching
-        val entitlements = UserEntitlements.fromSettings(settings.value)
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val messagesToday = aiMessages.value.filter { 
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timestamp)) == today 
-        }.size
-        
-        if (!entitlements.isPremium && messagesToday >= entitlements.maxDailyCoachMessages) {
-             _uiState.update { it.copy(isPaywallVisible = true, isAiTyping = false) }
-             return
         }
 
         viewModelScope.launch {
@@ -1930,44 +1987,6 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         playSound(com.example.audio.SoltarSoundManager.SoundType.TAP)
     }
 
-    fun purchaseSubscription(plan: SubscriptionPlan) {
-        _uiState.update { it.copy(isProcessingPayment = true) }
-        viewModelScope.launch {
-            delay(1200) // Realistic secure billing transaction handshake
-            val current = settings.value ?: SoltarSettingsEntity()
-            val expiry = 0L
-            repository.saveSettings(
-                current.copy(
-                    subscriptionTier = plan.tierKey,
-                    isTrialActive = false,
-                    subscriptionExpiryTimestamp = expiry
-                )
-            )
-            _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("💎 ¡Bienvenido/a a Recuerda Premium! Tu acceso completo está activo.")
-        }
-    }
-
-    fun startFreeTrial() {
-        _uiState.update { it.copy(isProcessingPayment = true) }
-        viewModelScope.launch {
-            delay(1000)
-            val current = settings.value ?: SoltarSettingsEntity()
-            val expiry = System.currentTimeMillis() + (7L * 24 * 3600 * 1000)
-            repository.saveSettings(
-                current.copy(
-                    subscriptionTier = "atalaya_pro_monthly",
-                    isTrialActive = true,
-                    subscriptionExpiryTimestamp = expiry
-                )
-            )
-            _uiState.update { it.copy(isProcessingPayment = false, isPaywallVisible = false) }
-            playSound(com.example.audio.SoltarSoundManager.SoundType.WARM_CHIME)
-            showNotification("Has iniciado tus 7 días de prueba gratis en Recuerda Premium.")
-        }
-    }
-
     fun cancelSubscription() {
         viewModelScope.launch {
             val current = settings.value ?: SoltarSettingsEntity()
@@ -2189,8 +2208,14 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun toggleConversationAnalyzer(visible: Boolean) = _uiState.update { it.copy(isConversationAnalyzerVisible = visible) }
-    fun openConversationAnalyzer() = _uiState.update { it.copy(isConversationAnalyzerVisible = true) }
+    fun toggleConversationAnalyzer(visible: Boolean) {
+        if (!visible) { _uiState.update { it.copy(isConversationAnalyzerVisible = false) }; return }
+        val entitlements = UserEntitlements.fromSettings(settings.value)
+        openPremiumGated(entitlements.canAccessConversationAnalyzer) {
+            _uiState.update { it.copy(isConversationAnalyzerVisible = true) }
+        }
+    }
+    fun openConversationAnalyzer() = toggleConversationAnalyzer(true)
     fun closeConversationAnalyzer() = _uiState.update { it.copy(isConversationAnalyzerVisible = false) }
     // --------------------------
 
@@ -2550,7 +2575,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     fun openPriorityTool(title: String) {
         when {
             title.contains("Impulso", true) -> openUrgeSheet()
-            title.contains("Simulacro", true) -> _uiState.update { it.copy(isEncounterSimulatorVisible = true) }
+            title.contains("Simulacro", true) -> toggleEncounterSimulator(true)
             title.contains("Auditoría", true) -> _uiState.update { it.copy(isAuditModalVisible = true) }
             title.contains("Idealización", true) -> _uiState.update { it.copy(isIdealizationModalVisible = true) }
             title.contains("Diario", true) -> openJournalModal()

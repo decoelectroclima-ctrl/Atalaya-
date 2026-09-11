@@ -54,6 +54,8 @@ fun ProcessScreen(
     val relapses by viewModel.relapses.collectAsState()
     val triggerEvents by viewModel.triggerEvents.collectAsState()
     val journalEntries by viewModel.journalEntries.collectAsState()
+    val settings by viewModel.settings.collectAsState()
+    val entitlements = remember(settings) { com.example.data.UserEntitlements.fromSettings(settings) }
 
     var selectedLetterForTimeCapsule by remember { mutableStateOf<UnsentLetterEntity?>(null) }
 
@@ -311,82 +313,156 @@ fun ProcessScreen(
 
         // Emotional Evolution Chart (Interactive Line Graph)
         item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("evolution_chart_card"),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
-                border = BorderStroke(1.dp, SoltarBorder)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "EVOLUCIÓN EMOCIONAL REAL",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = SoltarAmber,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-                            Text(
-                                text = "Métricas reales calculadas de tus días y registros",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-                        }
+            if (entitlements.canAccessAdvancedCharts) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("evolution_chart_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, SoltarBorder)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "EVOLUCIÓN EMOCIONAL REAL",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = SoltarAmber,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                                Text(
+                                    text = "Métricas reales calculadas de tus días y registros",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
 
-                        // Day range selector
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            listOf(7, 14, 30).forEach { days ->
-                                val isSelected = selectedMetricDays == days
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = if (isSelected) SoltarAmber else SoltarSurfaceElevated,
-                                    border = BorderStroke(1.dp, if (isSelected) SoltarAmber else SoltarBorderSubtle),
-                                    modifier = Modifier.clickable {
-                                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                                        selectedMetricDays = days
-                                        viewModel.setEvolutionRangeDays(days)
+                            // Day range selector
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                listOf(7, 14, 30).forEach { days ->
+                                    val isSelected = selectedMetricDays == days
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = if (isSelected) SoltarAmber else SoltarSurfaceElevated,
+                                        border = BorderStroke(1.dp, if (isSelected) SoltarAmber else SoltarBorderSubtle),
+                                        modifier = Modifier.clickable {
+                                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                                            selectedMetricDays = days
+                                            viewModel.setEvolutionRangeDays(days)
+                                        }
+                                    ) {
+                                        Text(
+                                            text = "${days}d",
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                            color = if (isSelected) SoltarBackground else TextSecondary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
-                                ) {
-                                    Text(
-                                        text = "${days}d",
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                        color = if (isSelected) SoltarBackground else TextSecondary,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Multi-line Canvas Chart connected to real entries
+                        EvolutionLineChart(
+                            timeline = realTimeline,
+                            onOpenCheckin = { viewModel.openEmotionalCheckin() },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Legend
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            ChartLegendItem(label = "Dolor", color = UrgeAlertRed)
+                            ChartLegendItem(label = "Ansiedad", color = SoltarTerracotta)
+                            ChartLegendItem(label = "Nostalgia", color = SoltarAmber)
+                            ChartLegendItem(label = "Impulso", color = UrgeAlertRed.copy(alpha = 0.6f))
+                            ChartLegendItem(label = "Autonomía", color = SoltarSage)
+                        }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Multi-line Canvas Chart connected to real entries
-                    EvolutionLineChart(
-                        timeline = realTimeline,
-                        onOpenCheckin = { viewModel.openEmotionalCheckin() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Legend
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceAround
+                }
+            } else {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("evolution_chart_locked_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                    border = BorderStroke(1.dp, SoltarBorder)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        ChartLegendItem(label = "Dolor", color = UrgeAlertRed)
-                        ChartLegendItem(label = "Ansiedad", color = SoltarTerracotta)
-                        ChartLegendItem(label = "Nostalgia", color = SoltarAmber)
-                        ChartLegendItem(label = "Impulso", color = UrgeAlertRed.copy(alpha = 0.6f))
-                        ChartLegendItem(label = "Autonomía", color = SoltarSage)
+                        Surface(
+                            shape = CircleShape,
+                            color = SoltarAmber.copy(alpha = 0.15f),
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = "Función Premium bloqueada",
+                                    tint = SoltarAmber,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "EVOLUCIÓN EMOCIONAL AVANZADA",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = SoltarAmber,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Los gráficos de evolución avanzados son parte de Recuerda Premium",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Visualiza la trayectoria de dolor, autonomía y regulación somática a lo largo de semanas.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.openPaywall(com.example.data.SubscriptionPlan.MONTHLY) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .testTag("view_plans_chart_button"),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber)
+                        ) {
+                            Text(
+                                text = "Ver planes",
+                                color = SoltarBackground,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
             }

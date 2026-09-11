@@ -392,5 +392,12 @@ data class BeginnerLetterEntity(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+@Serializable
+@Entity(tableName = "favorite_wisdom_cards")
+data class FavoriteWisdomCardEntity(
+    @PrimaryKey val cardId: String,
+    val savedAt: Long = System.currentTimeMillis()
+)
+
 
 

@@ -75,6 +75,7 @@ fun ProfileScreen(
     var showMandatoryJournalTimeDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
+    var showFavoriteWisdomDialog by remember { mutableStateOf(false) }
     var exportPin by remember { mutableStateOf("1234") }
     var importPin by remember { mutableStateOf("1234") }
 
@@ -151,6 +152,13 @@ fun ProfileScreen(
             }
         }
     }
+    if (showFavoriteWisdomDialog) {
+        com.example.ui.dialogs.FavoriteWisdomCardsDialog(
+            viewModel = viewModel,
+            onDismiss = { showFavoriteWisdomDialog = false }
+        )
+    }
+
     if (showExportDialog) {
         AlertDialog(
             onDismissRequest = { showExportDialog = false },
@@ -335,6 +343,10 @@ fun ProfileScreen(
 
                     Button(
                         onClick = {
+                            if (!entitlements.canExportClinicalReport) {
+                                viewModel.openPaywall(SubscriptionPlan.MONTHLY)
+                                return@Button
+                            }
                             showKintsugiExportPinDialog = true
                         },
                         shape = RoundedCornerShape(8.dp),
@@ -1301,9 +1313,7 @@ fun ProfileScreen(
                             border = BorderStroke(1.dp, if (entitlements.isPremium) SoltarAmber else SoltarBorderSubtle)
                         ) {
                             Text(
-                                text = if (entitlements.isPremium) {
-                                    if (entitlements.isTrial) "PREMIUM (7 DÍAS PRUEBA)" else "PREMIUM ACTIVO"
-                                } else "ADRIANA FREE",
+                                text = if (entitlements.isPremium) "PREMIUM ACTIVO" else "ADRIANA FREE",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = if (entitlements.isPremium) SoltarAmber else TextSecondary,
                                 fontWeight = FontWeight.Bold,
@@ -1688,6 +1698,18 @@ fun ProfileScreen(
                         Icon(Icons.Default.MenuBook, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Biblioteca de Sabiduría Viva (C4)", color = TextPrimary)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = { showFavoriteWisdomDialog = true },
+                        modifier = Modifier.fillMaxWidth().testTag("open_favorite_wisdom_button"),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Favorite, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Mis Frases Favoritas", color = TextPrimary)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -3043,6 +3065,10 @@ fun ProfileScreen(
 
                     Button(
                         onClick = {
+                            if (!entitlements.canExportClinicalReport) {
+                                viewModel.openPaywall(SubscriptionPlan.MONTHLY)
+                                return@Button
+                            }
                             coroutineScope.launch {
                                 isGeneratingKintsugi = true
                                 try {

@@ -26,6 +26,9 @@ class BillingManager(
     private val _isPremium = MutableStateFlow(false)
     val isPremium = _isPremium.asStateFlow()
 
+    private val _activePlanKey = MutableStateFlow<String?>(null)
+    val activePlanKey = _activePlanKey.asStateFlow()
+
     private val _premiumProductDetails = MutableStateFlow<ProductDetails?>(null)
     val premiumProductDetails = _premiumProductDetails.asStateFlow()
 
@@ -94,6 +97,7 @@ class BillingManager(
     }
 
     fun queryExistingPurchases() {
+        var detectedPlanKey: String? = null
         // Query subscriptions
         val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
@@ -105,6 +109,7 @@ class BillingManager(
                 for (purchase in purchasesList) {
                     if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
                         hasActive = true
+                        detectedPlanKey = purchase.products.firstOrNull() ?: detectedPlanKey
                         if (!purchase.isAcknowledged) {
                             acknowledgePurchase(purchase)
                         }
@@ -122,6 +127,7 @@ class BillingManager(
                     for (purchase in inappPurchasesList) {
                         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
                             hasActive = true
+                            detectedPlanKey = purchase.products.firstOrNull() ?: detectedPlanKey
                             if (!purchase.isAcknowledged) {
                                 acknowledgePurchase(purchase)
                             }
@@ -129,7 +135,8 @@ class BillingManager(
                     }
                 }
                 _isPremium.update { hasActive }
-                Log.d(TAG, "Active purchases query: hasActive=$hasActive")
+                _activePlanKey.update { if (hasActive) detectedPlanKey else null }
+                Log.d(TAG, "Active purchases query: hasActive=$hasActive, plan=$detectedPlanKey")
             }
         }
     }
@@ -154,6 +161,7 @@ class BillingManager(
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
                 Log.d(TAG, "Item already owned, granting access")
                 _isPremium.update { true }
+                queryExistingPurchases()
             }
             else -> {
                 Log.w(TAG, "Purchase failed with code: ${billingResult.responseCode} - ${billingResult.debugMessage}")
@@ -164,6 +172,7 @@ class BillingManager(
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
             _isPremium.update { true }
+            _activePlanKey.update { purchase.products.firstOrNull() ?: _activePlanKey.value }
             if (!purchase.isAcknowledged) {
                 acknowledgePurchase(purchase)
             }
@@ -235,14 +244,17 @@ class BillingManager(
                 }
 
                 if (activePurchases.isNotEmpty()) {
+                    val detectedPlanKey = activePurchases.firstOrNull()?.products?.firstOrNull()
                     for (purchase in activePurchases) {
                         if (!purchase.isAcknowledged) {
                             acknowledgePurchase(purchase)
                         }
                     }
                     _isPremium.update { true }
+                    _activePlanKey.update { detectedPlanKey }
                     onComplete(true, "¡Compras/Suscripciones restauradas con éxito!")
                 } else {
+                    _activePlanKey.update { null }
                     onComplete(false, "No se encontraron compras o suscripciones activas vinculadas a tu cuenta de Google Play.")
                 }
             }

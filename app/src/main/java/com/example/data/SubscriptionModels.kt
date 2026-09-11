@@ -58,40 +58,38 @@ enum class SubscriptionPlan(
 data class UserEntitlements(
     val isPremium: Boolean,
     val tier: SubscriptionPlan,
-    val isTrial: Boolean,
-    val maxDailyCoachMessages: Int, // e.g. 5 for free, Int.MAX_VALUE for premium
-    val canAccessAllLabs: Boolean,
-    val canAccessDeepMemory: Boolean,
-    val canExportDataReport: Boolean,
-    val canAccessEmergencySpeedDial: Boolean,
-    val canUseCustomSoundscapes: Boolean
+    val canAccessConversationAnalyzer: Boolean,
+    val canExportClinicalReport: Boolean,
+    val canAccessFullWisdomLibrary: Boolean,
+    val canAccessTimeCapsule: Boolean,
+    val canAccessEncounterSimulator: Boolean,
+    val canAccessClosingRitual: Boolean,
+    val canAccessAdvancedCharts: Boolean,
+    val canAccessEmergencySpeedDial: Boolean // SIEMPRE true, nunca depende de isPrem
 ) {
     companion object {
         fun fromSettings(settings: SoltarSettingsEntity?): UserEntitlements {
             val tierKey = settings?.subscriptionTier ?: "FREE"
-            val isTrial = settings?.isTrialActive == true
-
-            val isPrem = tierKey != "FREE" || isTrial
-
+            val isPrem = tierKey != "FREE"
             val plan = when (tierKey) {
                 "premium_weekly" -> SubscriptionPlan.WEEKLY
                 "atalaya_pro_monthly" -> SubscriptionPlan.MONTHLY
                 "premium_annual" -> SubscriptionPlan.ANNUAL
                 "program_6_months" -> SubscriptionPlan.PROGRAM_6_MONTHS
                 "lifetime_access" -> SubscriptionPlan.LIFETIME
-                else -> if (isPrem) SubscriptionPlan.MONTHLY else SubscriptionPlan.FREE
+                else -> SubscriptionPlan.FREE
             }
-
             return UserEntitlements(
                 isPremium = isPrem,
                 tier = plan,
-                isTrial = isTrial,
-                maxDailyCoachMessages = Int.MAX_VALUE, // AI coach is free and unlimited for all users
-                canAccessAllLabs = isPrem,
-                canAccessDeepMemory = isPrem,
-                canExportDataReport = isPrem,
-                canAccessEmergencySpeedDial = true, // Emergency safety is always open for human dignity
-                canUseCustomSoundscapes = true
+                canAccessConversationAnalyzer = isPrem,
+                canExportClinicalReport = isPrem,
+                canAccessFullWisdomLibrary = isPrem,
+                canAccessTimeCapsule = isPrem,
+                canAccessEncounterSimulator = isPrem,
+                canAccessClosingRitual = isPrem,
+                canAccessAdvancedCharts = isPrem,
+                canAccessEmergencySpeedDial = true
             )
         }
     }
