@@ -249,6 +249,7 @@ data class SoltarSettingsEntity(
     @PrimaryKey val id: Int = 1,
     val memoryEnabled: Boolean = true,
     val userName: String = "",
+    val exName: String = "",
     val breakupDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Default 2 weeks ago
     val initialStartDateTimestamp: Long = System.currentTimeMillis() - (14L * 24 * 3600 * 1000), // Absolute start of journey
     val initialStartDateSet: Boolean = false,

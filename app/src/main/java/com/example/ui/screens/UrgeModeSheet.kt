@@ -527,6 +527,7 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
             }
 
             if (showAnclajeSheet) {
+                val settings by viewModel.settings.collectAsState()
                 val currentFramework = settings?.preferredFramework
                 val marco = remember(currentFramework) {
                     ContactoCeroViewModel.mapFrameworkToMarco(currentFramework)
@@ -539,7 +540,7 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
                         showAnclajeSheet = false
                         viewModel.openEmdrSession(
                             textoBase = texto,
-                            nombreEx = ""
+                            nombreEx = settings?.exName ?: ""
                         )
                     }
                 )
