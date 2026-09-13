@@ -1135,6 +1135,21 @@ fun TodayScreen(
                 )
             }
         }
+
+        item {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Tu Espacio de Duelo",
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            com.example.ui.components.GriefSpaceVisualization(
+                progressRatio = ProgressManager.getProgressRatio(days.toInt(), vulnerabilityScore),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         
         item {
             Card(
