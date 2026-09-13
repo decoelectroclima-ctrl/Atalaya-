@@ -65,6 +65,7 @@ fun OnboardingScreen(
     var userConfirmPinInput by remember { mutableStateOf("") }
     var registrationError by remember { mutableStateOf<String?>(null) }
     var selectedBreakupSituation by remember { mutableStateOf("RUPTURA_RECIENTE") }
+    var exPartnerNameInput by remember { mutableStateOf("") }
     var selectedRelDuration by remember { mutableStateOf("6_12_MESES") }
     var selectedTimeSinceBreakup by remember { mutableStateOf("1_3_meses") }
     var selectedBreakupReason by remember { mutableStateOf("desgaste") }
@@ -764,6 +765,17 @@ fun OnboardingScreen(
                                             }
                                         }
                                     }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    OutlinedTextField(
+                                        value = exPartnerNameInput,
+                                        onValueChange = { exPartnerNameInput = it },
+                                        label = { Text("Nombre de tu expareja (opcional)") },
+                                        placeholder = { Text("Puedes dejarlo en blanco si prefieres") },
+                                        supportingText = { Text("Solo se usa dentro de la app, en tu dispositivo, para hacer más personales algunos ejercicios. Nunca sale de tu teléfono.") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true
+                                    )
                                 }
                             }
 
@@ -1127,6 +1139,7 @@ fun OnboardingScreen(
                                 userName = userNameInput.trim(),
                                 userEmail = userEmailInput.trim(),
                                 pinInput = userPinInput,
+                                exPartnerName = exPartnerNameInput.trim(),
                                 relDuration = selectedRelDuration,
                                 timeSinceBreakup = selectedTimeSinceBreakup,
                                 hasChildren = selectedHasChildren,

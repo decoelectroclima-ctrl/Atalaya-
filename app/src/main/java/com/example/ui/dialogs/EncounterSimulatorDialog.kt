@@ -42,7 +42,7 @@ fun EncounterSimulatorDialog(
     val listState = rememberLazyListState()
 
     val settings by viewModel.settings.collectAsState()
-    val exName = "Expareja"
+    val exName = settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName?.takeIf { it.isNotBlank() } ?: "Expareja"
 
     Dialog(
         onDismissRequest = onDismiss,

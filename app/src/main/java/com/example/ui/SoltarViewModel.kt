@@ -862,6 +862,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         userName: String,
         userEmail: String,
         pinInput: String,
+        exPartnerName: String = "",
         relDuration: String,
         timeSinceBreakup: String,
         hasChildren: Boolean,
@@ -903,6 +904,8 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                     isLoggedIn = true,
                     pinHash = pinHash,
                     biometricLockEnabled = pinHash.isNotBlank(),
+                    exPartnerName = exPartnerName,
+                    exName = exPartnerName,
                     relDuration = relDuration,
                     timeSinceBreakup = timeSinceBreakup,
                     hasChildren = hasChildren,
@@ -1175,10 +1178,22 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
         val isHardDay = s.todayPain >= 7f || s.todayAnxiety >= 7f || s.todayRumination >= 7f
         val hasNoFocusPlanned = s.focusBodyInput.isBlank() && s.focusSelfInput.isBlank() && s.focusSocialInput.isBlank()
-        if (isHardDay && hasNoFocusPlanned && !isSelfHarm) {
-            // Un día duro sin ningún plan de acción: sugerir proactivamente un ejercicio suave de cuerpo,
-            // la categoría con más evidencia de ayudar a regular el sistema nervioso a corto plazo.
-            suggestExerciseFor(com.example.data.ExerciseCategory.CUERPO)
+        if (isHardDay && !isSelfHarm) {
+            when {
+                s.todayUrgeToContact >= 7f -> {
+                    // Impulso fuerte de contactar: la herramienta mas directa es un anclaje de
+                    // Contacto Cero, no un ejercicio generico.
+                    showNotification("Notamos que hoy el impulso de contactar es fuerte. Abre 'Modo Impulso' para un anclaje inmediato.")
+                }
+                s.todayRumination >= 8f -> {
+                    // Rumiacion muy alta y sostenida: EMDR visual puede ayudar a interrumpir el bucle
+                    // de pensamiento mejor que un ejercicio de accion.
+                    showNotification("Tu mente está dando muchas vueltas hoy. Prueba el ejercicio EMDR Visual desde el menú de herramientas para ayudar a interrumpir el bucle.")
+                }
+                hasNoFocusPlanned -> {
+                    suggestExerciseFor(com.example.data.ExerciseCategory.CUERPO)
+                }
+            }
         }
         viewModelScope.launch {
             repository.saveCheckin(
@@ -1530,7 +1545,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         scenario: String,
         tone: com.example.ai.EncounterTone = com.example.ai.EncounterTone.COLD
     ): SoltarAiResponse {
-        val exName = "tu expareja"
+        val exName = settings.value?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings.value?.exName?.takeIf { it.isNotBlank() } ?: "tu expareja"
         val onDeviceReply = com.example.ai.OnDeviceLlmEngine.generateEncounterExResponse(
             userMessage = message,
             tone = tone,

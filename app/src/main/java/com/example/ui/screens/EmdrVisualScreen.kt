@@ -65,7 +65,7 @@ fun EmdrVisualDialog(
             initialConfig ?: com.example.ai.SoltarAiEngine.calculateLocalEmdrVisualConfig(
                 textoBase = textoBase,
                 framework = resolvedFramework,
-                nombreEx = nombreEx.ifBlank { settings?.userName ?: "" }
+                nombreEx = nombreEx.ifBlank { settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: "" }
             )
         )
     }
@@ -80,7 +80,7 @@ fun EmdrVisualDialog(
                 val aiConfig = com.example.ai.SoltarAiEngine.generateEmdrVisualSession(
                     textoBase = textoBase,
                     framework = resolvedFramework,
-                    nombreEx = nombreEx.ifBlank { settings?.userName ?: "" }
+                    nombreEx = nombreEx.ifBlank { settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: "" }
                 )
                 currentConfig = aiConfig
             } catch (_: Exception) {
@@ -91,38 +91,95 @@ fun EmdrVisualDialog(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
-    ) {
-        EmdrVisualContent(
-            config = currentConfig,
-            isGeneratingAi = isGeneratingAi,
-            onClose = onDismiss,
-            onUpdateSpeed = { newHz, newLabel ->
-                currentConfig = currentConfig.copy(
-                    animacion = currentConfig.animacion.copy(
-                        frecuencia_hz = newHz,
-                        velocidad_comercial = newLabel
-                    )
+    var hasAcceptedConsent by remember { mutableStateOf(false) }
+
+    if (!hasAcceptedConsent) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Text(
+                    text = "Antes de empezar",
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
             },
-            onRegenerateWithText = { newText, newName ->
-                viewModel.scopeLaunch {
-                    isGeneratingAi = true
-                    try {
-                        val aiConfig = com.example.ai.SoltarAiEngine.generateEmdrVisualSession(
-                            textoBase = newText,
-                            framework = resolvedFramework,
-                            nombreEx = newName
+            text = {
+                Text(
+                    text = "Este ejercicio usa estimulación visual bilateral inspirada en EMDR, pero no sustituye una sesión de EMDR guiada por un psicólogo certificado. Está pensado para malestar leve o moderado del día a día, no para procesar traumas profundos. Si en cualquier momento sientes que te desborda, para y toca 'Necesito ayuda' abajo.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary,
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        hasAcceptedConsent = true
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SoltarAmber),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.testTag("emdr_consent_confirm_button")
+                ) {
+                    Text("Entiendo, continuar", color = SoltarBackground, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                        onDismiss()
+                    },
+                    border = BorderStroke(1.dp, SoltarBorder),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.testTag("emdr_consent_dismiss_button")
+                ) {
+                    Text("Ahora no", color = TextMuted)
+                }
+            },
+            containerColor = SoltarSurface,
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.testTag("emdr_safety_dialog")
+        )
+    } else {
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        ) {
+            EmdrVisualContent(
+                config = currentConfig,
+                isGeneratingAi = isGeneratingAi,
+                onClose = onDismiss,
+                onNeedHelp = {
+                    viewModel.playSound(SoltarSoundManager.SoundType.URGE_ALERT)
+                    viewModel.openNeedHelpSheet()
+                    onDismiss()
+                },
+                onUpdateSpeed = { newHz, newLabel ->
+                    currentConfig = currentConfig.copy(
+                        animacion = currentConfig.animacion.copy(
+                            frecuencia_hz = newHz,
+                            velocidad_comercial = newLabel
                         )
-                        currentConfig = aiConfig
-                    } finally {
-                        isGeneratingAi = false
+                    )
+                },
+                onRegenerateWithText = { newText, newName ->
+                    viewModel.scopeLaunch {
+                        isGeneratingAi = true
+                        try {
+                            val aiConfig = com.example.ai.SoltarAiEngine.generateEmdrVisualSession(
+                                textoBase = newText,
+                                framework = resolvedFramework,
+                                nombreEx = newName
+                            )
+                            currentConfig = aiConfig
+                        } finally {
+                            isGeneratingAi = false
+                        }
                     }
                 }
-            }
-        )
+            )
+        }
     }
 }
 
@@ -131,6 +188,7 @@ fun EmdrVisualContent(
     config: EmdrVisualConfig,
     isGeneratingAi: Boolean,
     onClose: () -> Unit,
+    onNeedHelp: () -> Unit = {},
     onUpdateSpeed: (Float, String) -> Unit,
     onRegenerateWithText: (String, String) -> Unit
 ) {
@@ -512,7 +570,30 @@ fun EmdrVisualContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Botón de salida clara y auxilio persistente durante la sesión
+            TextButton(
+                onClick = onNeedHelp,
+                modifier = Modifier
+                    .testTag("emdr_need_help_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Bolt,
+                    contentDescription = null,
+                    tint = UrgeAlertRed,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Necesito ayuda",
+                    color = UrgeAlertRed,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         // Dialog para editar frase o nombre

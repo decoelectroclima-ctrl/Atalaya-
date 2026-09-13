@@ -34,17 +34,21 @@ class ContactoCeroViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch {
             repository.settings.collect { settings ->
                 val marco = mapFrameworkToMarco(settings?.preferredFramework)
+                val storedExName = settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: ""
                 _uiState.update { current ->
+                    val resolvedExName = current.exName.ifBlank { storedExName }
                     val shouldReload = current.anclaje == null
-                    val updated = current.copy(marcoActual = marco)
+                    val updated = current.copy(marcoActual = marco, exName = resolvedExName)
                     if (shouldReload) {
                         val anclaje = ContactoCeroEngine.seleccionar(marco, current.moduloActual)
                         updated.copy(
                             anclaje = anclaje,
-                            textoRenderizado = ContactoCeroEngine.renderizar(anclaje, current.exName)
+                            textoRenderizado = ContactoCeroEngine.renderizar(anclaje, resolvedExName)
                         )
                     } else {
-                        updated
+                        updated.copy(
+                            textoRenderizado = ContactoCeroEngine.renderizar(current.anclaje, resolvedExName)
+                        )
                     }
                 }
             }

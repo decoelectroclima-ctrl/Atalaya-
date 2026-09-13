@@ -477,7 +477,7 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
                     .clickable {
                         viewModel.openEmdrSession(
                             textoBase = "La urgencia de escribir a [Nombre] es solo el síndrome de abstinencia de mi cerebro. Dejo que la ola de ansiedad baje.",
-                            nombreEx = ""
+                            nombreEx = settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: ""
                         )
                     }
                     .testTag("open_emdr_from_urge_button"),
@@ -532,15 +532,17 @@ fun PhaseOneTimer(viewModel: SoltarViewModel) {
                 val marco = remember(currentFramework) {
                     ContactoCeroViewModel.mapFrameworkToMarco(currentFramework)
                 }
+                val exPartnerName = settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: ""
                 AnclajeContactoCeroSheet(
                     onDismiss = { showAnclajeSheet = false },
                     initialMarco = marco,
                     initialModulo = ModuloAnclaje.EMERGENCIA,
+                    exName = exPartnerName,
                     onOpenEmdr = { texto ->
                         showAnclajeSheet = false
                         viewModel.openEmdrSession(
                             textoBase = texto,
-                            nombreEx = settings?.exName ?: ""
+                            nombreEx = exPartnerName
                         )
                     }
                 )

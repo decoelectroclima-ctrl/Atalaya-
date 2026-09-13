@@ -1,20 +1,13 @@
 package com.example.ai
 
 import android.util.Log
-import com.example.BuildConfig
 import com.example.data.ClinicalKnowledgeBase
 import com.example.data.JournalEntryEntity
-import com.example.data.KnowledgeCapsule
 import com.example.data.SoltarFramework
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 data class SoltarUserContext(
     val userName: String = "Viajero",
@@ -115,14 +108,6 @@ data class LinguisticAnalysisResult(
 object SoltarAiEngine {
 
     private const val TAG = "SoltarAiEngine"
-    private const val GEMINI_MODEL = "gemini-2.5-flash"
-    private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/$GEMINI_MODEL:generateContent"
-
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(25, TimeUnit.SECONDS)
-        .readTimeout(25, TimeUnit.SECONDS)
-        .writeTimeout(25, TimeUnit.SECONDS)
-        .build()
 
     private val SYSTEM_PROMPT_SOLTAR = """
 # SISTEMA DE IA DE ACOMPAÑAMIENTO Y COACHING CLÍNICO: ATALAYA (Recuerda)
@@ -348,113 +333,6 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
             }
         }
 
-        // 3. Intentar llamar a Gemini con el súper contexto si hay API Key disponible
-        val apiKey = try {
-            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-        } catch (_: Exception) {
-            ""
-        }
-
-        val isRobolectric = try {
-            android.os.Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
-        } catch (_: Exception) {
-            false
-        }
-
-        if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
-            try {
-                val capsule = if (intent == MessageIntent.CONTENIDO_EMOCIONAL) {
-                    ClinicalKnowledgeBase.findRelevantCapsule(cleanInput, framework)
-                } else null
-
-                val systemPrompt = buildString {
-                    append("${buildPromptWithFramework(framework, userContext)}\n")
-                    if (systemInstruction != null) {
-                        append("\n## INSTRUCCIÓN ADICIONAL PARA SIMULACRO:\n$systemInstruction\n")
-                    }
-
-                    if (intent == MessageIntent.SALUDO_O_CASUAL) {
-                        append("""
-## INSTRUCCIÓN PARA MENSAJE CASUAL / SALUDO:
-El usuario ha enviado un saludo o comentario casual ("$cleanInput").
-Responde de forma breve, cálida y natural (1 a 3 frases máximo), como en una conversación real con ${userContext.userName}.
-REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siempre al usuario por su nombre (${userContext.userName}).
-NO apliques ningún marco terapéutico, NO inyectes cápsulas clínicas, NO hagas preguntas de indagación profunda y NO ofrezcas acciones concretas. Es solo una conversación casual y ligera.
-                        """.trimIndent())
-                    } else if (intent == MessageIntent.PREGUNTA_META) {
-                        append("""
-## INSTRUCCIÓN PARA PREGUNTA META / SOBRE EL SISTEMA:
-El usuario está preguntando sobre el sistema, la IA o la aplicación en sí ("$cleanInput").
-Eres FOCO, el coach personal de ${userContext.userName} en Factor / Recuerda, un asistente de IA inteligente diseñado para acompañar en este proceso. Responde con transparencia, claridad y brevedad sobre quién eres y cómo funcionas (corres de forma segura, estás integrado en la app, etc.), sin inventar especificaciones técnicas falsas y sin desviar la respuesta hacia un duelo emocional que el usuario no ha planteado.
-REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siempre al usuario por su nombre (${userContext.userName}).
-                        """.trimIndent())
-                    } else if (capsule != null) {
-                        append("""
-## CÁPSULA DE CONOCIMIENTO RELEVANTE PARA ESTA INTERVENCIÓN:
-• Título: ${capsule.title}
-• Autor/Referente: ${capsule.author}
-• Cita/Principio: ${capsule.quoteOrSource}
-• Diagnóstico clínico de fondo: ${capsule.diagnosisPrinciple}
-• Guía de intervención: ${capsule.clinicalGuidance}
-• Pregunta socrática: ${capsule.socraticPrompt}
-• Micro-acción sugerida: ${capsule.concreteAction}
-
-## INSTRUCCIÓN DEL COACH (FOCO):
-Responde como FOCO, el coach y mentor personal de ${userContext.userName}.
-REGLA ABSOLUTA: NUNCA te presentes ni firmes como Adriana ni Atalaya. Llama siempre al usuario por su nombre (${userContext.userName}).
-Escribe un mensaje de chat breve, cálido y 100% conversacional (3 a 5 frases en total), como alguien que le conoce bien y lleva ${userContext.streakDays} días de proceso.
-PROHIBIDO USAR BLOQUES ESTRUCTURADOS, listas con viñetas, encabezados en negrita o emojis como "Principio Rector", "Pregunta de Autoindagación" o "Paso de Acción Inmediata".
-Integra de forma fluida y natural la reflexión central, una referencia sutil a la sabiduría de ${capsule.author} si aporta valor, una pregunta socrática y una micro-acción como parte del propio consejo conversacional.
-                        """.trimIndent())
-                    }
-                }
-
-                val jsonBody = JSONObject().apply {
-                    val contents = JSONArray().apply {
-                        // System / dev prompt as initial turn or instructions
-                        val userPart = JSONObject().apply {
-                            val parts = JSONArray().apply {
-                                put(JSONObject().apply { put("text", "$systemPrompt\n\nMENSAJE DEL USUARIO:\n$cleanInput") })
-                            }
-                            put("parts", parts)
-                        }
-                        put(userPart)
-                    }
-                    put("contents", contents)
-                }
-
-                val request = Request.Builder()
-                    .url(API_URL + "?key=$apiKey")
-                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
-                    val candidates = root.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val text = candidates.getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-
-                        if (text.isNotBlank()) {
-                            return@withContext SoltarAiResponse(
-                                replyText = text.trim(),
-                                isRuminationDetected = isRumination,
-                                stateDetected = if (isRumination) "DEJAR_DE_PERSEGUIR" else "COMPRENDER",
-                                suggestedAction = capsule?.concreteAction ?: ""
-                            )
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini online call failed, falling back to local expert clinical reasoning engine", e)
-            }
-        }
-
         // 3. Motor clínico y de razonamiento local de alta profundidad (Offline & Context-Aware)
         Log.d(TAG, "Executing advanced local clinical coach reasoning")
         return@withContext executeAdvancedLocalClinicalReasoning(cleanInput, isRumination, framework, userContext, intent, systemInstruction)
@@ -551,89 +429,7 @@ Integra de forma fluida y natural la reflexión central, una referencia sutil a 
                     )
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "OnDeviceLlmEngine journal mentorship failed, trying Gemini", e)
-            }
-        }
-
-        // 1. Intento con Gemini API
-        val apiKey = try {
-            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-        } catch (_: Exception) {
-            ""
-        }
-
-        if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
-            try {
-                val promptText = """
-Eres el mentor y coach reflexivo de Recuerda. Analiza la siguiente entrada de diario personal:
----
-EMOCIÓN: $moodTag
-MARCO FILOSÓFICO: ${framework.name} (${framework.title})
-CONTEXTO DEL USUARIO:
-${userContext.toClinicalSummary()}
-
-ENTRADA DEL DIARIO:
-$cleanInput
-
-CÁPSULA CLÍNICA DE REFERENCIA:
-- Referente: ${capsule.author}
-- Cita: ${capsule.quoteOrSource}
-- Diagnóstico: ${capsule.diagnosisPrinciple}
-- Guía: ${capsule.clinicalGuidance}
----
-
-Genera una mentoría filosófica profunda en JSON estricto con estas 4 claves:
-{
-  "feedback": "Análisis terapéutico y filosófico en 2 o 3 párrafos. Desmonta las distorsiones cognitivas o la idealización, valida la emoción sin alimentar la falsa esperanza y profundiza en los principios del marco ${framework.name}.",
-  "corePrinciple": "Cita o máxima de sabiduría atribuida al autor según el marco.",
-  "socraticQuestion": "Pregunta socrática profunda para autoindagación honesta.",
-  "concreteAction": "Una micro-acción práctica y alcanzable para hoy."
-}
-Responde ÚNICAMENTE con el objeto JSON válido.
-                """.trimIndent()
-
-                val jsonBody = JSONObject().apply {
-                    val contents = JSONArray().apply {
-                        val contentObj = JSONObject().apply {
-                            val parts = JSONArray().apply {
-                                put(JSONObject().apply { put("text", promptText) })
-                            }
-                            put("parts", parts)
-                        }
-                        put(contentObj)
-                    }
-                    put("contents", contents)
-                }
-
-                val request = Request.Builder()
-                    .url(API_URL + "?key=$apiKey")
-                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
-                    val candidates = root.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val firstCandidate = candidates.getJSONObject(0)
-                        val text = firstCandidate.getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-
-                        val cleanJson = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
-                        val parsed = JSONObject(cleanJson)
-                        return@withContext JournalMentorshipResult(
-                            feedback = parsed.optString("feedback", "Reflexión generada."),
-                            corePrinciple = parsed.optString("corePrinciple", capsule.quoteOrSource),
-                            socraticQuestion = parsed.optString("socraticQuestion", capsule.socraticPrompt),
-                            concreteAction = parsed.optString("concreteAction", capsule.concreteAction)
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini API journal mentorship failed, utilizing local knowledge engine", e)
+                Log.w(TAG, "OnDeviceLlmEngine journal mentorship failed", e)
             }
         }
 
@@ -733,18 +529,18 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
         if (OnDeviceLlmEngine.isReady()) {
             try {
                 val prompt = """
-Eres el sistema de análisis lingüístico y clínico de Recuerda. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
-Detecta con rigor clínico y devuelve un objeto JSON estricto con exactamente estas claves:
-- "nivelAutonomia" (entero de 0 a 10)
-- "lenguajeRumiativo" (entero de 0 a 10)
-- "distorsionesCognitivas" (lista de strings detectadas entre: "Catastrofismo", "Pensamiento blanco/negro", "Personalización", u otras si aparecen)
-- "cambioDesdeUltimaEntrada" (texto breve describiendo la evolución o contraste con la entrada previa).
-
-ÚLTIMA ENTRADA:
-$latest
-
-ENTRADA ANTERIOR (si existe):
-$previous
+                    Eres el sistema de análisis lingüístico y clínico de Recuerda. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
+                    Detecta con rigor clínico y devuelve un objeto JSON estricto con exactamente estas claves:
+                    - "nivelAutonomia" (entero de 0 a 10)
+                    - "lenguajeRumiativo" (entero de 0 a 10)
+                    - "distorsionesCognitivas" (lista de strings detectadas entre: "Catastrofismo", "Pensamiento blanco/negro", "Personalización", u otras si aparecen)
+                    - "cambioDesdeUltimaEntrada" (texto breve describiendo la evolución o contraste con la entrada previa).
+                    
+                    ÚLTIMA ENTRADA:
+                    $latest
+                    
+                    ENTRADA ANTERIOR (si existe):
+                    $previous
                 """.trimIndent()
                 val reply = OnDeviceLlmEngine.generate(prompt, userContext = userContext)
                 if (reply.isNotBlank()) {
@@ -760,7 +556,6 @@ $previous
                         }
                     }
                     val cambio = parsed.optString("cambioDesdeUltimaEntrada", "Evolución favorable.")
-
                     return@withContext LinguisticAnalysisResult(
                         nivelAutonomia = autonomia,
                         lenguajeRumiativo = rumiativo,
@@ -769,97 +564,7 @@ $previous
                     )
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "OnDeviceLlmEngine linguistic analysis failed, trying Gemini", e)
-            }
-        }
-
-        val apiKey = try {
-            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-        } catch (_: Exception) {
-            ""
-        }
-
-        val isRobolectric = try {
-            android.os.Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
-        } catch (_: Exception) {
-            false
-        }
-
-        if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
-            try {
-                val prompt = """
-Eres el sistema de análisis lingüístico y clínico de Recuerda. Analiza las siguientes entradas de diario de un usuario en proceso de superación de duelo y dependencia afectiva.
-Detecta con rigor clínico y devuelve un objeto JSON estricto con exactamente estas claves:
-- "nivelAutonomia" (entero de 0 a 10)
-- "lenguajeRumiativo" (entero de 0 a 10)
-- "distorsionesCognitivas" (lista de strings detectadas entre: "Catastrofismo", "Pensamiento blanco/negro", "Personalización", u otras si aparecen)
-- "cambioDesdeUltimaEntrada" (texto breve describiendo la evolución o contraste con la entrada previa).
-
-ÚLTIMA ENTRADA:
-$latest
-
-ENTRADA ANTERIOR (si existe):
-$previous
-
-Contexto del usuario:
-${userContext.toClinicalSummary()}
-
-Responde ÚNICAMENTE con el objeto JSON válido.
-                """.trimIndent()
-
-                val jsonBody = JSONObject().apply {
-                    val contents = JSONArray().apply {
-                        val partObj = JSONObject().apply {
-                            val parts = JSONArray().apply {
-                                put(JSONObject().apply { put("text", prompt) })
-                            }
-                            put("parts", parts)
-                        }
-                        put(partObj)
-                    }
-                    put("contents", contents)
-                }
-
-                val request = Request.Builder()
-                    .url(API_URL + "?key=$apiKey")
-                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
-                    val candidates = root.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val text = candidates.getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-
-                        val cleanJson = text.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
-                        val parsed = JSONObject(cleanJson)
-                        val autonomia = parsed.optInt("nivelAutonomia", 5)
-                        val rumiativo = parsed.optInt("lenguajeRumiativo", 5)
-                        val distortionsArray = parsed.optJSONArray("distorsionesCognitivas")
-                        val distortions = mutableListOf<String>()
-                        if (distortionsArray != null) {
-                            for (i in 0 until distortionsArray.length()) {
-                                distortions.add(distortionsArray.getString(i))
-                            }
-                        }
-                        val cambio = parsed.optString("cambioDesdeUltimaEntrada", "Evolución favorable.")
-
-                        return@withContext LinguisticAnalysisResult(
-                            nivelAutonomia = autonomia,
-                            lenguajeRumiativo = rumiativo,
-                            distorsionesCognitivas = distortions,
-                            cambioDesdeUltimaEntrada = cambio
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini linguistic analysis failed, falling back to local analyzer", e)
+                Log.w(TAG, "OnDeviceLlmEngine linguistic analysis failed", e)
             }
         }
 
@@ -868,82 +573,19 @@ Responde ÚNICAMENTE con el objeto JSON válido.
 
     suspend fun analyzeConversationText(text: String): String = withContext(Dispatchers.IO) {
         val cleanInput = text.trim().take(3000)
-        val prompt = """
-            Analiza el siguiente texto de conversación buscando patrones de manipulación, gaslighting, comportamiento hot-and-cold, control coercitivo, contradicciones e invalidación.
-            Diferencia claramente entre HECHOS OBSERVABLES e INTERPRETACIONES POSIBLES.
-            No diagnostiques a la persona ausente. Usa un lenguaje cauteloso y constructivo.
-            
-            Texto:
-            $cleanInput
-        """.trimIndent()
-
+        
         // 1. Try On-Device LLM if ready
         if (OnDeviceLlmEngine.isReady()) {
             try {
-                val reply = OnDeviceLlmEngine.generate(prompt)
+                val reply = OnDeviceLlmEngine.generate(cleanInput)
                 if (reply.isNotBlank()) return@withContext reply.trim()
             } catch (e: Exception) {
-                Log.w(TAG, "OnDeviceLlmEngine conversation analysis failed, trying online Gemini", e)
+                Log.w(TAG, "OnDeviceLlmEngine conversation analysis failed", e)
             }
         }
 
-        // 2. Try Online Gemini API if API key is available
-        val apiKey = try {
-            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-        } catch (_: Exception) {
-            ""
-        }
-
-        val isRobolectric = try {
-            android.os.Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
-        } catch (_: Exception) {
-            false
-        }
-
-        if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
-            try {
-                val jsonBody = JSONObject().apply {
-                    val contents = JSONArray().apply {
-                        val userPart = JSONObject().apply {
-                            val parts = JSONArray().apply {
-                                put(JSONObject().apply { put("text", prompt) })
-                            }
-                            put("parts", parts)
-                        }
-                        put(userPart)
-                    }
-                    put("contents", contents)
-                }
-
-                val request = Request.Builder()
-                    .url(API_URL + "?key=$apiKey")
-                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
-                    val candidates = root.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val analysisText = candidates.getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-
-                        if (analysisText.isNotBlank()) {
-                            return@withContext analysisText.trim()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini online conversation analysis failed, falling back to structured analysis", e)
-            }
-        }
-
-        // 3. Robust Structured Fallback Analysis
-        return@withContext "El análisis detallado de esta conversación requiere el asistente de IA, que aún no está listo en tu dispositivo. Vuelve a intentarlo en unos minutos, o revisa en Ajustes el estado de la descarga."
+        // 2. Structured Fallback Analysis
+        return@withContext "Para analizar este texto, por favor activa la IA local o intenta más tarde."
     }
 
     val SYSTEM_INSTRUCTIONS_EMDR = """
@@ -1017,74 +659,10 @@ Devuelve **únicamente** un objeto JSON plano. Está estrictamente prohibido inc
 
         val cleanNombreEx = if (nombreEx.isNotBlank()) nombreEx.trim() else "esa persona"
 
-        val apiKey = try {
-            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-        } catch (_: Exception) {
-            ""
-        }
-
         val isRobolectric = try {
             android.os.Build.FINGERPRINT.contains("robolectric", ignoreCase = true)
         } catch (_: Exception) {
             false
-        }
-
-        if (!isRobolectric && apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER", ignoreCase = true)) {
-            try {
-                val inputPayload = JSONObject().apply {
-                    put("perfil", perfilName)
-                    put("texto_base", cleanTextoBase)
-                    put("nombre_ex", cleanNombreEx)
-                }
-
-                val userPrompt = """
-$SYSTEM_INSTRUCTIONS_EMDR
-
-Entrada recibida del Backend:
-${inputPayload.toString(2)}
-
-Devuelve ÚNICAMENTE el objeto JSON plano según el esquema requerido sin markdown ni explicaciones adicionales:
-                """.trimIndent()
-
-                val jsonBody = JSONObject().apply {
-                    val contents = JSONArray().apply {
-                        val userPart = JSONObject().apply {
-                            val parts = JSONArray().apply {
-                                put(JSONObject().apply { put("text", userPrompt) })
-                            }
-                            put("parts", parts)
-                        }
-                        put(userPart)
-                    }
-                    put("contents", contents)
-                }
-
-                val request = Request.Builder()
-                    .url(API_URL + "?key=$apiKey")
-                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = client.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val bodyString = response.body?.string() ?: ""
-                    val root = JSONObject(bodyString)
-                    val candidates = root.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val replyText = candidates.getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-
-                        val parsedConfig = EmdrVisualConfig.fromJsonString(replyText)
-                        if (parsedConfig != null) {
-                            return@withContext parsedConfig
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini EMDR visual session generation failed, using local design matrix", e)
-            }
         }
 
         return@withContext calculateLocalEmdrVisualConfig(cleanTextoBase, framework, cleanNombreEx)

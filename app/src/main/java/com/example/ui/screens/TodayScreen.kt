@@ -2002,7 +2002,7 @@ fun TodayScreen(
                         icon = Icons.Default.Visibility,
                         onClick = {
                             viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                            viewModel.openEmdrSession()
+                            viewModel.openEmdrSession(nombreEx = settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: "")
                         }
                     )
                 )
@@ -2256,7 +2256,7 @@ fun TodayScreen(
                     com.example.ui.components.ToolItem("encounter_simulator", "Simulador de encuentro", Icons.Default.TheaterComedy) { viewModel.toggleEncounterSimulator(true) },
                     com.example.ui.components.ToolItem("identity_goals", "Metas de identidad", Icons.Default.Flag) { viewModel.toggleIdentityGoalModal(true) },
                     com.example.ui.components.ToolItem("conversation_analyzer", "Analizar conversación", Icons.Default.Forum) { viewModel.toggleConversationAnalyzer(true) },
-                    com.example.ui.components.ToolItem("emdr_visual", "EMDR Visual", Icons.Default.Visibility) { viewModel.toggleToolsShelfSheetVisible(false); viewModel.openEmdrSession() }
+                    com.example.ui.components.ToolItem("emdr_visual", "EMDR Visual", Icons.Default.Visibility) { viewModel.toggleToolsShelfSheetVisible(false); viewModel.openEmdrSession(nombreEx = settings?.exPartnerName?.takeIf { it.isNotBlank() } ?: settings?.exName ?: "") }
                 ),
                 pinnedIds = pinnedIdsSheet,
                 expanded = true, // dentro de la hoja modal, mostrar todo desplegado - ya no hace falta colapsar, el usuario abrio la hoja a proposito

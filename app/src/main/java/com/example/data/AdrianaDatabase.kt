@@ -32,7 +32,7 @@ import androidx.room.migration.Migration
         BeginnerLetterEntity::class,
         FavoriteWisdomCardEntity::class
     ],
-    version = 30,
+    version = 31,
     exportSchema = false
 )
 abstract class AdrianaDatabase : RoomDatabase() {
@@ -60,6 +60,12 @@ abstract class AdrianaDatabase : RoomDatabase() {
     abstract fun favoriteWisdomCardDao(): FavoriteWisdomCardDao
 
     companion object {
+        val MIGRATION_30_31 = object : Migration(30, 31) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE soltar_settings ADD COLUMN exPartnerName TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         @Volatile
         private var INSTANCE: AdrianaDatabase? = null
 
@@ -70,6 +76,7 @@ abstract class AdrianaDatabase : RoomDatabase() {
                     AdrianaDatabase::class.java,
                     "adriana_database"
                 )
+                .addMigrations(MIGRATION_30_31)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

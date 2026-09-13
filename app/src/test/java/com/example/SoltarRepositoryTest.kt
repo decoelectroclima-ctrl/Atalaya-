@@ -117,4 +117,11 @@ class SoltarRepositoryTest {
         assertEquals(1, episodes.size)
         assertEquals("Foto en redes", episodes[0].trigger)
     }
+
+    @Test
+    fun testMigration30To31DefinesProperAlterTable() {
+        assertNotNull(AdrianaDatabase.MIGRATION_30_31)
+        assertEquals(30, AdrianaDatabase.MIGRATION_30_31.startVersion)
+        assertEquals(31, AdrianaDatabase.MIGRATION_30_31.endVersion)
+    }
 }
