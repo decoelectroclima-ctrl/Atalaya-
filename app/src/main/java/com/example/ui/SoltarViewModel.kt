@@ -2761,6 +2761,138 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // ==========================================
+    // ADAPTIVE CLOSING RITUAL INTERVIEW
+    // ==========================================
+    @kotlinx.serialization.Serializable
+    data class RitualInterviewState(
+        val history: List<com.example.ai.OnDeviceLlmEngine.RitualQAPair> = emptyList(),
+        val categoryCounts: Map<String, Int> = emptyMap(),
+        val currentQuestion: com.example.ai.OnDeviceLlmEngine.RitualQuestion? = null,
+        val isComplete: Boolean = false,
+        val finalLetter: String = "",
+        val isLoadingNextQuestion: Boolean = false
+    )
+
+    private val _ritualInterview = MutableStateFlow(RitualInterviewState())
+    val ritualInterview: StateFlow<RitualInterviewState> = _ritualInterview.asStateFlow()
+
+    fun openRitualInterview() {
+        viewModelScope.launch {
+            val current = settings.value ?: SoltarSettingsEntity()
+            if (current.ritualInterviewStateJson.isNotBlank()) {
+                try {
+                    val saved = json.decodeFromString<RitualInterviewState>(current.ritualInterviewStateJson)
+                    _ritualInterview.value = saved
+                    if (saved.currentQuestion == null && !saved.isComplete) {
+                        _ritualInterview.update { it.copy(isLoadingNextQuestion = true) }
+                        fetchNextRitualQuestion()
+                    }
+                    return@launch
+                } catch (e: Exception) {
+                    // JSON corrupto o de una version anterior - empieza de cero en vez de fallar
+                }
+            }
+            _ritualInterview.value = RitualInterviewState(isLoadingNextQuestion = true)
+            fetchNextRitualQuestion()
+        }
+    }
+
+    fun pauseRitualInterview() {
+        viewModelScope.launch {
+            val current = settings.value ?: return@launch
+            val state = _ritualInterview.value
+            if (state.isComplete) return@launch // ya termino, no hace falta guardar progreso a medias
+            val stateJson = json.encodeToString(RitualInterviewState.serializer(), state)
+            repository.saveSettings(current.copy(ritualInterviewStateJson = stateJson))
+        }
+    }
+
+    fun discardRitualInterviewProgress() {
+        viewModelScope.launch {
+            val current = settings.value ?: return@launch
+            repository.saveSettings(current.copy(ritualInterviewStateJson = ""))
+            _ritualInterview.value = RitualInterviewState()
+        }
+    }
+
+    private suspend fun fetchNextRitualQuestion() {
+        val current = settings.value ?: SoltarSettingsEntity()
+        val state = _ritualInterview.value
+        val question = com.example.ai.OnDeviceLlmEngine.generateNextRitualQuestion(
+            conversationHistory = state.history,
+            categoryCounts = state.categoryCounts,
+            userName = current.userName,
+            breakupDays = ((System.currentTimeMillis() - current.breakupDateTimestamp) / (24 * 3600 * 1000)).toInt(),
+            relDuration = current.relDuration,
+            breakupReason = current.breakupReason,
+            framework = SoltarFramework.fromKey(current.preferredFramework),
+            questionNumber = state.history.size
+        )
+        _ritualInterview.update { it.copy(currentQuestion = question, isLoadingNextQuestion = false) }
+        pauseRitualInterview() // guarda automaticamente tras cada pregunta generada
+    }
+
+    fun answerRitualQuestion(answer: String) {
+        viewModelScope.launch {
+            val state = _ritualInterview.value
+            val question = state.currentQuestion ?: return@launch
+            val updatedHistory = state.history + com.example.ai.OnDeviceLlmEngine.RitualQAPair(question.questionText, answer)
+            val updatedCounts = state.categoryCounts.toMutableMap()
+            if (question.category.isNotBlank()) {
+                updatedCounts[question.category] = (updatedCounts[question.category] ?: 0) + 1
+            }
+            _ritualInterview.update { it.copy(history = updatedHistory, categoryCounts = updatedCounts, isLoadingNextQuestion = true, currentQuestion = null) }
+            pauseRitualInterview() // guarda el progreso INMEDIATAMENTE tras cada respuesta
+
+            val current = settings.value ?: SoltarSettingsEntity()
+            val nextQuestion = com.example.ai.OnDeviceLlmEngine.generateNextRitualQuestion(
+                conversationHistory = updatedHistory,
+                categoryCounts = updatedCounts,
+                userName = current.userName,
+                breakupDays = ((System.currentTimeMillis() - current.breakupDateTimestamp) / (24 * 3600 * 1000)).toInt(),
+                relDuration = current.relDuration,
+                breakupReason = current.breakupReason,
+                framework = SoltarFramework.fromKey(current.preferredFramework),
+                questionNumber = updatedHistory.size
+            )
+
+            if (nextQuestion.isInterviewComplete) {
+                val exPartner = current.exPartnerName.ifBlank { current.exName }
+                val letter = com.example.ai.OnDeviceLlmEngine.synthesizeFinalClosingLetter(
+                    conversationHistory = updatedHistory,
+                    userName = current.userName,
+                    exPartnerName = exPartner,
+                    framework = SoltarFramework.fromKey(current.preferredFramework)
+                )
+                _ritualInterview.update { it.copy(isComplete = true, finalLetter = letter, isLoadingNextQuestion = false, currentQuestion = null) }
+                pauseRitualInterview() // guarda tambien el estado final con la carta generada
+            } else {
+                _ritualInterview.update { it.copy(currentQuestion = nextQuestion, isLoadingNextQuestion = false) }
+                pauseRitualInterview()
+            }
+        }
+    }
+
+    fun saveFinalLetterAsClosedLetter(editedLetter: String? = null) {
+        viewModelScope.launch {
+            val state = _ritualInterview.value
+            val contentToSave = (editedLetter?.takeIf { it.isNotBlank() } ?: state.finalLetter).trim()
+            if (contentToSave.isBlank()) return@launch
+            repository.saveUnsentLetter(
+                UnsentLetterEntity(
+                    title = "Carta Final de Cierre",
+                    category = "Despedida",
+                    content = contentToSave,
+                    isClosed = true,
+                    closedAtTimestamp = System.currentTimeMillis()
+                )
+            )
+            discardRitualInterviewProgress() // ya se guardo como carta, se limpia el progreso temporal
+            showNotification("Carta final de cierre guardada con éxito.")
+        }
+    }
+
     companion object {
         val DEFAULT_PRESET_REMINDERS = listOf(
             CustomNotificationItem(

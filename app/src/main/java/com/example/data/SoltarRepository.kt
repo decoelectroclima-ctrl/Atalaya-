@@ -98,6 +98,10 @@ class SoltarRepository(private val database: AdrianaDatabase) {
         return database.unsentLetterDao().insertLetter(letter)
     }
 
+    suspend fun saveUnsentLetter(letter: UnsentLetterEntity): Long {
+        return database.unsentLetterDao().insertLetter(letter)
+    }
+
     suspend fun performClosingCeremony(id: Long) {
         database.unsentLetterDao().performClosingCeremony(id)
     }

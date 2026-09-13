@@ -215,6 +215,145 @@ object OnDeviceLlmEngine {
     // =========================================================================
     // 1.3 RITUAL DE CIERRE
     // =========================================================================
+    @kotlinx.serialization.Serializable
+    data class RitualQAPair(val question: String, val answer: String)
+
+    @kotlinx.serialization.Serializable
+    data class RitualQuestion(
+        val questionText: String,
+        val questionType: String, // "SI_NO" o "ABIERTA"
+        val category: String = "", // ver categorias abajo
+        val isInterviewComplete: Boolean = false
+    )
+
+    private val RITUAL_CATEGORY_MINIMUMS = mapOf(
+        "REALIDAD_DE_LOS_HECHOS" to 4,
+        "DOLOR_Y_EMOCION" to 3,
+        "ASUNTOS_PENDIENTES" to 4,
+        "APRENDIZAJE_Y_LIMITES" to 3,
+        "IDENTIDAD_FUTURA" to 3
+    )
+
+    fun generateNextRitualQuestion(
+        conversationHistory: List<RitualQAPair>, // preguntas y respuestas previas
+        categoryCounts: Map<String, Int>, // cuantas preguntas ya se hicieron de cada categoria
+        userName: String,
+        breakupDays: Int,
+        relDuration: String,
+        breakupReason: String,
+        framework: SoltarFramework,
+        questionNumber: Int
+    ): RitualQuestion {
+        if (!isReady()) {
+            return RitualQuestion("¿Sientes que ya puedes nombrar con claridad qué fue esta relación para ti?", "ABIERTA", "REALIDAD_DE_LOS_HECHOS")
+        }
+
+        val MAX_QUESTIONS = 30 // limite de seguridad superior, evita una entrevista interminable
+        val minimumsMet = RITUAL_CATEGORY_MINIMUMS.all { (cat, min) -> (categoryCounts[cat] ?: 0) >= min }
+
+        if (questionNumber >= MAX_QUESTIONS) {
+            return RitualQuestion("", "ABIERTA", "", isInterviewComplete = true)
+        }
+
+        val historyText = conversationHistory.joinToString("\n") { "P: ${it.question}\nR: ${it.answer}" }
+        val countsText = RITUAL_CATEGORY_MINIMUMS.entries.joinToString("; ") { (cat, min) ->
+            "$cat: ${categoryCounts[cat] ?: 0}/${min} mínimo"
+        }
+
+        val prompt = """
+            Eres un guia de cierre emocional para $userName, tras $breakupDays dias de
+            una relacion de duracion '$relDuration', terminada por '$breakupReason'.
+            Marco: ${framework.name}.
+
+            Trabajas con las Cuatro Tareas del Duelo de Worden (aceptar la realidad,
+            procesar el dolor, adaptarte a la ausencia, encontrarle un lugar al
+            vinculo mientras sigues adelante), mas evaluacion equilibrada (hechos
+            concretos buenos Y dificiles reales, para contrarrestar idealizacion o
+            vision completamente negativa) y asuntos pendientes (lo que quedo sin
+            decir). NO reveles esta terminologia clinica al usuario, solo aplica el
+            criterio al elegir la pregunta.
+
+            Progreso minimo por categoria (no puedes marcar COMPLETO si falta algun
+            minimo): $countsText
+
+            Historial de preguntas y respuestas hasta ahora:
+            $historyText
+
+            Elige UNA categoria de esta lista que aun no cumpla su minimo:
+            REALIDAD_DE_LOS_HECHOS, DOLOR_Y_EMOCION, ASUNTOS_PENDIENTES,
+            APRENDIZAJE_Y_LIMITES, IDENTIDAD_FUTURA
+            Si TODAS ya cumplen su minimo Y consideras que ya hay suficiente
+            profundidad real (no solo el minimo tecnico) para escribir una carta
+            final honesta, responde UNICAMENTE con: COMPLETO
+
+            Si no, responde con la SIGUIENTE pregunta unica, en este formato exacto,
+            una sola linea, sin texto adicional:
+            CATEGORIA|TIPO|Pregunta
+
+            Donde TIPO es SI_NO o ABIERTA. No repitas temas ya cubiertos. Evita
+            preguntas genericas de plantilla - que cada pregunta se sienta como si
+            realmente hubiera leido las respuestas anteriores.
+        """.trimIndent()
+
+        return try {
+            val raw = generate(prompt, framework).trim()
+            if (raw.contains("COMPLETO", ignoreCase = true) && minimumsMet) {
+                RitualQuestion("", "ABIERTA", "", isInterviewComplete = true)
+            } else {
+                val parts = raw.split("|", limit = 3)
+                if (parts.size == 3) {
+                    val category = parts[0].trim().uppercase()
+                    val type = if (parts[1].trim().uppercase().contains("SI_NO")) "SI_NO" else "ABIERTA"
+                    RitualQuestion(parts[2].trim(), type, category)
+                } else {
+                    // Formato inesperado: pide la categoria con menos progreso en vez de fallar
+                    val neededCategory = RITUAL_CATEGORY_MINIMUMS.entries
+                        .firstOrNull { (cat, min) -> (categoryCounts[cat] ?: 0) < min }
+                        ?.key ?: "IDENTIDAD_FUTURA"
+                    RitualQuestion(raw, "ABIERTA", neededCategory)
+                }
+            }
+        } catch (e: Exception) {
+            RitualQuestion("", "ABIERTA", "", isInterviewComplete = true)
+        }
+    }
+
+    fun synthesizeFinalClosingLetter(
+        conversationHistory: List<RitualQAPair>,
+        userName: String,
+        exPartnerName: String,
+        framework: SoltarFramework
+    ): String {
+        if (!isReady() || conversationHistory.isEmpty()) {
+            return "Querido/a ${exPartnerName.ifBlank { "tú" }}:\n\nHoy cierro esta historia con paz. Gracias por lo vivido, y por lo aprendido. Te suelto sin rencor y sigo mi camino.\n\n$userName"
+        }
+
+        val historyText = conversationHistory.joinToString("\n\n") { "${it.question}\n→ ${it.answer}" }
+
+        val prompt = """
+            Eres un escritor empatico que redacta cartas de cierre emocional.
+            A partir de ESTAS respuestas reales de $userName sobre su relacion con
+            ${exPartnerName.ifBlank { "su ex pareja" }}, escribe una carta final de
+            cierre, en primera persona, usando el contenido real de sus respuestas
+            (no inventes hechos que no esten en las respuestas). La carta debe sonar
+            genuinamente suya, no generica. Marco: ${framework.name}. Extension
+            media (unas 200-350 palabras). Termina con una despedida en paz, sin
+            rencor forzado si las respuestas reflejan dolor real - la carta puede
+            reconocer dolor real y aun asi cerrar con dignidad.
+
+            Respuestas de la entrevista:
+            $historyText
+
+            Escribe SOLO la carta, sin explicaciones antes o despues.
+        """.trimIndent()
+
+        return try {
+            generate(prompt, framework).trim()
+        } catch (e: Exception) {
+            "No fue posible generar la carta automaticamente. Tus respuestas quedan guardadas para que puedas escribirla tu mismo/a cuando quieras."
+        }
+    }
+
     fun generateClosingRitualSteps(
         checkins: List<CheckinEntity>,
         journals: List<JournalEntryEntity>,

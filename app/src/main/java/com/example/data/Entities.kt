@@ -318,7 +318,8 @@ data class SoltarSettingsEntity(
     val journeyStage: String = "RECOVERY",
     val lifeCoachFocus: String = "autoestima, confianza personal, hábitos",
     val pinnedToolIds: String = "", // ids de herramientas fijadas por el usuario, separados por coma
-    val toolsShelfExpanded: Boolean = false // si el usuario dejo la seccion "Mas herramientas" desplegada
+    val toolsShelfExpanded: Boolean = false, // si el usuario dejo la seccion "Mas herramientas" desplegada
+    val ritualInterviewStateJson: String = "" // progreso guardado de la entrevista de cierre, vacio si no hay ninguna en curso
 ) {
     fun toClinicalContextSummary(): String {
         return """
