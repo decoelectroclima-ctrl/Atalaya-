@@ -1102,49 +1102,7 @@ fun TodayScreen(
             }
         }
 
-        // 1. Dynamic Wisdom Card (Rotates per framework, with interactive refresh)
         item {
-            val todayCheckin = checkins.firstOrNull {
-                val cal1 = java.util.Calendar.getInstance().apply { timeInMillis = it.timestamp }
-                val cal2 = java.util.Calendar.getInstance()
-                cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR) &&
-                cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR)
-            }
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                KintsugiHeart(progressStage = progressStage, vulnerabilityScore = vulnerabilityScore)
-                ProgressiveLandscape(
-                    progressStage = progressStage,
-                    vulnerabilityScore = vulnerabilityScore,
-                    todayRuminationLevel = todayCheckin?.rumination,
-                    onTapSun = {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        // Abrir Diario
-                        viewModel.openJournalModal()
-                    },
-                    onTapTree = {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        // Abrir Red Flags (RelationshipAuditDialog)
-                        viewModel.toggleAuditModal(true)
-                    },
-                    onTapMountain = {
-                        viewModel.playSound(SoltarSoundManager.SoundType.TAP)
-                        // Abrir Biblioteca de Sabiduría
-                        viewModel.rotateWisdomCard(uiState.preferredFramework)
-                    }
-                )
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Tu Espacio de Duelo",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
             com.example.ui.components.GriefSpaceVisualization(
                 progressRatio = ProgressManager.getProgressRatio(days.toInt(), vulnerabilityScore),
                 modifier = Modifier.fillMaxWidth()

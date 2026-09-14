@@ -272,10 +272,18 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val settings: StateFlow<SoltarSettingsEntity?> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    private val minuteTicker = kotlinx.coroutines.flow.flow {
+        while (true) {
+            emit(Unit)
+            kotlinx.coroutines.delay(60_000L)
+        }
+    }
+
     val isMandatoryJournalPending: StateFlow<Boolean> = combine(
         settings,
-        journalEntries
-    ) { currentSettings, entries ->
+        journalEntries,
+        minuteTicker
+    ) { currentSettings, entries, _ ->
         if (currentSettings == null) return@combine false
         val hour = currentSettings.mandatoryJournalHour
         val minute = currentSettings.mandatoryJournalMinute

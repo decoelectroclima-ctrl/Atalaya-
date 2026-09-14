@@ -73,6 +73,7 @@ class MainActivity : FragmentActivity() {
                 CompositionLocalProvider(LocalDensity provides scaledDensity) {
                     val context = LocalContext.current
                 val snackbarHostState = remember { SnackbarHostState() }
+                var showIntroAnimation by remember { mutableStateOf(true) }
                 var showExitDialog by remember { mutableStateOf(false) }
 
                 // Notification runtime permission launcher for Android 13+
@@ -188,14 +189,21 @@ class MainActivity : FragmentActivity() {
                     SoltarNavItem.Perfil
                 )
 
-                if (uiState.isAppLockPending) {
-                    com.example.ui.screens.AppLockScreen(onUnlocked = { viewModel.clearAppLock() })
+                if (showIntroAnimation) {
+                    com.example.ui.components.AdrianaIntroScreen(
+                        onAnimationFinished = { showIntroAnimation = false },
+                        onInteract = { showIntroAnimation = false },
+                        modifier = Modifier.fillMaxSize()
+                    )
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(SoltarBackground)
-                    ) {
+                    if (uiState.isAppLockPending) {
+                        com.example.ui.screens.AppLockScreen(onUnlocked = { viewModel.clearAppLock() })
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(SoltarBackground)
+                        ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
                         containerColor = SoltarBackground,
@@ -534,6 +542,7 @@ class MainActivity : FragmentActivity() {
                             onDismiss = { viewModel.closeEmdrSession() }
                         )
                     }
+                }
                 }
                 }
                 }

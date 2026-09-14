@@ -40,11 +40,11 @@ fun GriefSpaceVisualization(
 
     // La caja crece de un tamaño minimo a uno maximo segun el progreso real
     val boxWidthDp by animateFloatAsState(
-        targetValue = 100f + (280f * progressRatio.coerceIn(0f, 1f)),
+        targetValue = 140f + (340f * progressRatio.coerceIn(0f, 1f)),
         animationSpec = tween(durationMillis = 800, easing = LinearEasing),
         label = "boxWidth"
     )
-    val boxHeightDp = 140f // altura fija, solo el ancho representa "espacio ganado"
+    val boxHeightDp = 170f // altura fija, solo el ancho representa "espacio ganado"
 
     var ballPos by remember { mutableStateOf(Offset(20f, 70f)) }
     var ballVelocity by remember { mutableStateOf(Offset(2.2f, 1.7f)) }
