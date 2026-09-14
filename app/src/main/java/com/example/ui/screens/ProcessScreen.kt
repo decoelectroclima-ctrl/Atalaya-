@@ -123,7 +123,7 @@ fun ProcessScreen(
                     onClick = {
                         val uri = generateShareableCardBitmap(
                             context = context,
-                            title = "Proceso Recuerda",
+                            title = "Proceso ADRIANA",
                             subtitle = "Día $days de Reconstrucción",
                             quote = "“La soberanía interior se construye un día a la vez.”",
                             streakText = "Racha activa • $days días"
@@ -134,7 +134,7 @@ fun ProcessScreen(
                                 putExtra(Intent.EXTRA_STREAM, uri)
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Compartir Tarjeta de Hito Recuerda"))
+                            context.startActivity(Intent.createChooser(shareIntent, "Compartir Tarjeta de Hito ADRIANA"))
                         } else {
                             Toast.makeText(context, "No se pudo generar la tarjeta", Toast.LENGTH_SHORT).show()
                         }

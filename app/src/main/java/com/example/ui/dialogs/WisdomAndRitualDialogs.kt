@@ -217,11 +217,27 @@ fun WisdomCardItem(
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = {
-                            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "«${card.quote}» — ${card.author} (Recuerda App)")
+                            val uri = com.example.ui.screens.generateShareableCardBitmap(
+                                context = context,
+                                title = "Sabiduría ADRIANA",
+                                subtitle = card.title,
+                                quote = "«${card.quote}»\n— ${card.author}",
+                                streakText = "ADRIANA • ${card.framework.title}"
+                            )
+                            if (uri != null) {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "image/png"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Compartir sabiduría ADRIANA"))
+                            } else {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "«${card.quote}» — ${card.author} (ADRIANA App)")
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Compartir sabiduría"))
                             }
-                            context.startActivity(Intent.createChooser(shareIntent, "Compartir sabiduría"))
                         },
                         modifier = Modifier.size(28.dp)
                     ) {

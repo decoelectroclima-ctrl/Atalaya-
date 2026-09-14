@@ -1323,11 +1323,27 @@ fun TodayScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(
                                 onClick = {
-                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(android.content.Intent.EXTRA_TEXT, "${wisdomCard.quote} — ${wisdomCard.author}")
+                                    val uri = generateShareableCardBitmap(
+                                        context = context,
+                                        title = "Sabiduría ADRIANA",
+                                        subtitle = wisdomCard.title,
+                                        quote = "«${wisdomCard.quote}»\n— ${wisdomCard.author}",
+                                        streakText = "ADRIANA • Enfoque ${uiState.preferredFramework.title}"
+                                    )
+                                    if (uri != null) {
+                                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "image/png"
+                                            putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                        context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir sabiduría ADRIANA"))
+                                    } else {
+                                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(android.content.Intent.EXTRA_TEXT, "«${wisdomCard.quote}» — ${wisdomCard.author} (ADRIANA App)")
+                                        }
+                                        context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir sabiduría"))
                                     }
-                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir sabiduría"))
                                 },
                                 modifier = Modifier.size(28.dp)
                             ) {

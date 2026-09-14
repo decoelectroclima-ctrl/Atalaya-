@@ -84,8 +84,12 @@ object OnDeviceModelManager {
                 _modelState.value = ModelState.Disconnected(modelFile)
                 OnDeviceLlmEngine.setModelReady(false)
             } else {
-                _modelState.value = ModelState.Ready(modelFile)
-                OnDeviceLlmEngine.setModelReady(false) // Desactivado por Bloque 1
+                val initialized = OnDeviceLlmEngine.initialize(context)
+                if (initialized) {
+                    _modelState.value = ModelState.Ready(modelFile)
+                } else {
+                    _modelState.value = ModelState.Error("No se pudo inicializar el motor de IA local pese a tener el modelo descargado.")
+                }
             }
         } else {
             // Por defecto no es opcional: se instala automáticamente si no se ha eliminado explícitamente
@@ -111,11 +115,15 @@ object OnDeviceModelManager {
             val isCorrupt = actualHash.isBlank() || !actualHash.equals(EXPECTED_SHA256, ignoreCase = true) || (actualSize != EXPECTED_SIZE_BYTES)
             if (!isCorrupt) {
                 if (isEnabled) {
-                    _modelState.value = ModelState.Ready(modelFile)
-                    OnDeviceLlmEngine.setModelReady(false) // Desactivado por Bloque 1
+                    val initialized = OnDeviceLlmEngine.initialize(context)
+                    if (initialized) {
+                        _modelState.value = ModelState.Ready(modelFile)
+                    } else {
+                        _modelState.value = ModelState.Error("No se pudo inicializar el motor de IA local pese a tener el modelo descargado.")
+                    }
                 } else {
-                    _modelState.value = ModelState.Disconnected(modelFile)
                     OnDeviceLlmEngine.setModelReady(false)
+                    _modelState.value = ModelState.Disconnected(modelFile)
                 }
                 return
             } else {
@@ -174,8 +182,12 @@ object OnDeviceModelManager {
                                     .putBoolean(KEY_MODEL_ENABLED, true)
                                     .apply()
 
-                                _modelState.value = ModelState.Ready(modelFile)
-                                OnDeviceLlmEngine.setModelReady(false) // Desactivado por Bloque 1
+                                val initialized = OnDeviceLlmEngine.initialize(context)
+                                if (initialized) {
+                                    _modelState.value = ModelState.Ready(modelFile)
+                                } else {
+                                    _modelState.value = ModelState.Error("No se pudo inicializar el motor de IA local tras la descarga.")
+                                }
                                 try {
                                     com.example.notifications.SoltarNotificationHelper.showAppReadyNotification(context)
                                 } catch (_: Exception) {}
@@ -236,8 +248,12 @@ object OnDeviceModelManager {
 
         val modelFile = File(context.filesDir, MODEL_FILE_NAME)
         if (modelFile.exists() && modelFile.length() > 1024 * 1024) {
-            _modelState.value = ModelState.Ready(modelFile)
-            OnDeviceLlmEngine.initialize(context)
+            val initialized = OnDeviceLlmEngine.initialize(context)
+            if (initialized) {
+                _modelState.value = ModelState.Ready(modelFile)
+            } else {
+                _modelState.value = ModelState.Error("No se pudo inicializar el motor de IA local.")
+            }
         } else {
             startDownloadInBackground(context)
         }

@@ -311,6 +311,25 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
     val aiMessages: StateFlow<List<AiMessageEntity>> = repository.allAiMessages
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val remainingCoachMessagesToday: StateFlow<Int> = combine(
+        settings,
+        aiMessages
+    ) { currentSettings, messages ->
+        val entitlements = UserEntitlements.fromSettings(currentSettings)
+        if (entitlements.isPremium) {
+            Int.MAX_VALUE
+        } else {
+            val startOfDay = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            val countToday = messages.count { it.sender == "user" && it.timestamp >= startOfDay }
+            (12 - countToday).coerceAtLeast(0)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 12)
+
     val wisdomContributions: StateFlow<List<WisdomContributionEntity>> = repository.allWisdomContributions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -1726,10 +1745,9 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
         val text = _uiState.value.aiInputMessage.trim()
         if (text.isBlank() || _uiState.value.isAiTyping) return
 
-        _uiState.update { it.copy(aiInputMessage = "", isAiTyping = true) }
-
         // Critical safety protocol: Crisis / Self-harm bypasses paywalls and responds immediately in chat
         if (SoltarAiEngine.checkSelfHarmTrigger(text)) {
+            _uiState.update { it.copy(aiInputMessage = "", isAiTyping = true) }
             openNeedHelpSheet()
             viewModelScope.launch {
                 repository.saveAiMessage(
@@ -1752,6 +1770,23 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
             }
             return
         }
+
+        // Daily coach messages limit for free tier (12 messages)
+        val currentEntitlements = UserEntitlements.fromSettings(settings.value)
+        val startOfDay = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        val countToday = aiMessages.value.count { it.sender == "user" && it.timestamp >= startOfDay }
+        if (!currentEntitlements.isPremium && countToday >= currentEntitlements.maxDailyCoachMessages) {
+            openPaywall(SubscriptionPlan.MONTHLY)
+            showNotification("Has alcanzado tu límite diario de 12 mensajes gratuitos. Desbloquea Atalaya Pro para chat ilimitado.")
+            return
+        }
+
+        _uiState.update { it.copy(aiInputMessage = "", isAiTyping = true) }
 
         viewModelScope.launch {
             try {

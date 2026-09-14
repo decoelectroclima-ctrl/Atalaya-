@@ -327,7 +327,7 @@ fun ProfileScreen(
                         onClick = {
                             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(Intent.EXTRA_SUBJECT, "Documento Kintsugi - Recuerda")
+                                putExtra(Intent.EXTRA_SUBJECT, "Documento Kintsugi - ADRIANA")
                                 putExtra(Intent.EXTRA_TEXT, report)
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Compartir Documento Kintsugi"))

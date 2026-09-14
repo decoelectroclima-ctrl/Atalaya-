@@ -58,6 +58,7 @@ enum class SubscriptionPlan(
 data class UserEntitlements(
     val isPremium: Boolean,
     val tier: SubscriptionPlan,
+    val maxDailyCoachMessages: Int,
     val canAccessConversationAnalyzer: Boolean,
     val canExportClinicalReport: Boolean,
     val canAccessFullWisdomLibrary: Boolean,
@@ -82,6 +83,7 @@ data class UserEntitlements(
             return UserEntitlements(
                 isPremium = isPrem,
                 tier = plan,
+                maxDailyCoachMessages = if (isPrem) Int.MAX_VALUE else 12,
                 canAccessConversationAnalyzer = isPrem,
                 canExportClinicalReport = isPrem,
                 canAccessFullWisdomLibrary = isPrem,

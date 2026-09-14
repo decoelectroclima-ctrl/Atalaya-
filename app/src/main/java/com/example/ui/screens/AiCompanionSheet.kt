@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.withStyle
+import com.example.data.SubscriptionPlan
+import com.example.data.UserEntitlements
 import com.example.ui.SoltarViewModel
 import com.example.ui.theme.*
 
@@ -42,6 +45,9 @@ fun AiCompanionDialog(
 
     val uiState by viewModel.uiState.collectAsState()
     val aiMessages by viewModel.aiMessages.collectAsState()
+    val settings by viewModel.settings.collectAsState()
+    val remainingMessages by viewModel.remainingCoachMessagesToday.collectAsState()
+    val entitlements = UserEntitlements.fromSettings(settings)
     val listState = rememberLazyListState()
 
     // Scroll to latest message whenever new messages arrive
@@ -183,6 +189,35 @@ fun AiCompanionDialog(
                         }
                     }
 
+                    // Free Tier Daily Message Counter
+                    if (!entitlements.isPremium) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Mensajes diarios: $remainingMessages / 12 restantes",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (remainingMessages <= 2) UrgeAlertRed else SoltarAmber,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                text = "Ilimitado con Pro ✨",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                modifier = Modifier.clickable {
+                                    viewModel.openPaywall(SubscriptionPlan.MONTHLY)
+                                }
+                            )
+                        }
+                    }
+
                     // Input Text Field and Send Button
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -304,7 +339,7 @@ fun AiCompanionDialog(
 
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Recuerda acompaña tu proceso desde el rigor y la compasión, sin validar falsas ilusiones ni alimentar rumiaciones.",
+                            text = "ADRIANA acompaña tu proceso desde el rigor y la compasión, sin validar falsas ilusiones ni alimentar rumiaciones.",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             lineHeight = 18.sp
@@ -318,7 +353,7 @@ fun AiCompanionDialog(
                                 border = BorderStroke(1.dp, SoltarBorder)
                             ) {
                                 Text(
-                                    text = "Aviso ético y clínico: Recuerda es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
+                                    text = "Aviso ético y clínico: ADRIANA es una herramienta de autorregulación reflexiva. No proporciona diagnósticos médicos ni sustituye la psicoterapia clínica o la atención de emergencias (024 / 112 / 988).",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = TextMuted,
                                     modifier = Modifier.padding(10.dp),
@@ -364,7 +399,7 @@ fun AiCompanionDialog(
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Text(
-                                        text = "Recuerda",
+                                        text = "ADRIANA",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = SoltarAmber,
                                         fontWeight = FontWeight.Bold
