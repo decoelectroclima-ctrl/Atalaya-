@@ -1802,7 +1802,13 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
                 val currentMessages = aiMessages.value.map { it.sender to it.content }
                 val framework = _uiState.value.preferredFramework
                 val userContext = buildUserPersonalizationContext()
-                val response = SoltarAiEngine.generateResponse(text, currentMessages, framework, userContext)
+                val response = SoltarAiEngine.generateResponse(
+                    userMessage = text,
+                    conversationHistory = currentMessages,
+                    framework = framework,
+                    userContext = userContext,
+                    context = getApplication()
+                )
 
                 repository.saveAiMessage(
                     AiMessageEntity(

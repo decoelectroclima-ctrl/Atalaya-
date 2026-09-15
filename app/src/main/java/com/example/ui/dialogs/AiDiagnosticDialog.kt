@@ -264,7 +264,8 @@ fun AiDiagnosticDialog(
                                                     userMessage = testInput,
                                                     conversationHistory = emptyList(),
                                                     framework = uiState.preferredFramework,
-                                                    userContext = userContext
+                                                    userContext = userContext,
+                                                    context = context
                                                 )
                                                 val end = System.currentTimeMillis()
                                                 testLatencyMs = end - start
@@ -427,6 +428,26 @@ fun AiDiagnosticDialog(
                                         Text("Reconectar", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    val log = OnDeviceLlmEngine.readDiagnosticLog(context)
+                                    val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, log)
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(shareIntent, "Compartir registro de diagnóstico"))
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                                border = BorderStroke(1.dp, SoltarBorder)
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp), tint = SoltarAmber)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Compartir registro de diagnóstico", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }

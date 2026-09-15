@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.data.*
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import com.google.mediapipe.tasks.genai.llminference.LlmInference.LlmInferenceOptions
+import java.io.File
 import java.util.Calendar
 import java.util.Locale
 
@@ -26,6 +27,27 @@ object OnDeviceLlmEngine {
     private const val PREFS_NAME = "adriana_ai_safety"
     private const val KEY_UNSAFE_EXIT = "unsafe_exit_pending"
 
+    private fun logDiagnostic(context: Context, message: String) {
+        try {
+            val logFile = File(context.filesDir, "ai_diagnostic_log.txt")
+            val timestamp = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(java.util.Date())
+            logFile.appendText("[$timestamp] $message\n")
+        } catch (_: Exception) {}
+    }
+
+    private fun getDeviceRamInfo(context: Context): String {
+        return try {
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+            val memInfo = android.app.ActivityManager.MemoryInfo()
+            activityManager.getMemoryInfo(memInfo)
+            val availMb = memInfo.availMem / (1024 * 1024)
+            val totalMb = memInfo.totalMem / (1024 * 1024)
+            "RAM disponible: ${availMb}MB de ${totalMb}MB total (lowMemory=${memInfo.lowMemory})"
+        } catch (e: Exception) {
+            "No se pudo leer info de RAM: ${e.message}"
+        }
+    }
+
     private fun markOperationStart(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit().putBoolean(KEY_UNSAFE_EXIT, true).apply()
@@ -46,6 +68,15 @@ object OnDeviceLlmEngine {
             .edit().putBoolean(KEY_UNSAFE_EXIT, false).apply()
     }
 
+    fun readDiagnosticLog(context: Context): String {
+        return try {
+            val logFile = File(context.filesDir, "ai_diagnostic_log.txt")
+            if (logFile.exists()) logFile.readText() else "Sin registros todavía."
+        } catch (e: Exception) {
+            "Error al leer el registro: ${e.message}"
+        }
+    }
+
     private var llmInference: LlmInference? = null
 
     fun initialize(context: Context): Boolean {
@@ -53,6 +84,7 @@ object OnDeviceLlmEngine {
         val modelFile = OnDeviceModelManager.getModelFile(context)
         if (!modelFile.exists() || modelFile.length() == 0L) return false
 
+        logDiagnostic(context, "INICIO initialize() - ${getDeviceRamInfo(context)} - Tamaño modelo: ${modelFile.length()} bytes - Backend: CPU")
         markOperationStart(context) // si el proceso muere aqui, la bandera queda en "true"
 
         return try {
@@ -62,9 +94,11 @@ object OnDeviceLlmEngine {
                 .setPreferredBackend(LlmInference.Backend.CPU) // forzar CPU: el backend GPU por defecto es una causa muy comun de fallos nativos no capturables en Android, especialmente en dispositivos de gama media/baja
                 .build()
             llmInference = LlmInference.createFromOptions(context, options)
+            logDiagnostic(context, "EXITO initialize() - motor cargado correctamente")
             markOperationSuccess(context) // solo llega aqui si NO hubo crash nativo
             true
         } catch (e: Exception) {
+            logDiagnostic(context, "FALLO initialize() (excepcion Kotlin, no nativo) - ${e.javaClass.simpleName}: ${e.message}")
             llmInference = null
             markOperationSuccess(context) // fallo controlado (excepcion Kotlin), no bloquear el proximo arranque
             false
@@ -96,9 +130,15 @@ object OnDeviceLlmEngine {
     ): String {
         val engine = llmInference ?: throw IllegalStateException("OnDeviceLlmEngine no inicializado")
         val fullPrompt = buildFullPrompt(prompt, framework, userContext, capsule, history, systemBlock)
-        safetyContext?.let { markOperationStart(it) }
+        safetyContext?.let {
+            logDiagnostic(it, "INICIO generate() - longitud del prompt: ${fullPrompt.length} caracteres - ${getDeviceRamInfo(it)}")
+            markOperationStart(it)
+        }
         val result = engine.generateResponse(fullPrompt)
-        safetyContext?.let { markOperationSuccess(it) }
+        safetyContext?.let {
+            logDiagnostic(it, "EXITO generate() - respuesta recibida, longitud: ${result.length} caracteres")
+            markOperationSuccess(it)
+        }
         return result
     }
 
