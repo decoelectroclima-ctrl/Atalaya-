@@ -1,5 +1,6 @@
 package com.example.ai
 
+import android.content.Context
 import android.util.Log
 import com.example.data.ClinicalKnowledgeBase
 import com.example.data.JournalEntryEntity
@@ -283,7 +284,8 @@ ${userContext.toClinicalSummary()}
         conversationHistory: List<Pair<String, String>> = emptyList(),
         framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
         userContext: SoltarUserContext = SoltarUserContext(),
-        systemInstruction: String? = null
+        systemInstruction: String? = null,
+        context: Context? = null
     ): SoltarAiResponse = withContext(Dispatchers.IO) {
         val cleanInput = userMessage.trim().take(1500)
 
@@ -351,7 +353,8 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
                     userContext = userContext,
                     capsule = capsule,
                     history = conversationHistory,
-                    systemBlock = systemBlock
+                    systemBlock = systemBlock,
+                    safetyContext = context
                 )
                 if (replyText.isNotBlank()) {
                     return@withContext SoltarAiResponse(

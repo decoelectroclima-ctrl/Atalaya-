@@ -68,6 +68,17 @@ object OnDeviceModelManager {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun init(context: Context) {
+        if (OnDeviceLlmEngine.hadUnsafeExitLastTime(context)) {
+            // La ultima vez el proceso murio durante una operacion de IA (muy
+            // probablemente un fallo nativo de MediaPipe, no detectable con
+            // try-catch). NO reintentar automaticamente - dejar que la app abra
+            // con normalidad. El usuario puede reintentar manualmente desde el
+            // panel de diagnostico si quiere.
+            _modelState.value = ModelState.Error("La IA se desactivo temporalmente tras un cierre inesperado. Puedes reintentarla manualmente desde el diagnóstico en Perfil.")
+            OnDeviceLlmEngine.clearUnsafeExitFlag(context) // se limpia para permitir el proximo intento manual
+            return
+        }
+
         val prefs = getPrefs(context)
         val isExplicitlyDeleted = prefs.getBoolean(KEY_EXPLICITLY_DELETED, false)
         val isEnabled = prefs.getBoolean(KEY_MODEL_ENABLED, true)

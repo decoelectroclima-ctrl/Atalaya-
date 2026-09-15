@@ -23,6 +23,29 @@ enum class EncounterTone(val label: String, val description: String) {
  */
 object OnDeviceLlmEngine {
 
+    private const val PREFS_NAME = "adriana_ai_safety"
+    private const val KEY_UNSAFE_EXIT = "unsafe_exit_pending"
+
+    private fun markOperationStart(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_UNSAFE_EXIT, true).apply()
+    }
+
+    private fun markOperationSuccess(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_UNSAFE_EXIT, false).apply()
+    }
+
+    fun hadUnsafeExitLastTime(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_UNSAFE_EXIT, false)
+    }
+
+    fun clearUnsafeExitFlag(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_UNSAFE_EXIT, false).apply()
+    }
+
     private var llmInference: LlmInference? = null
 
     fun initialize(context: Context): Boolean {
@@ -30,15 +53,20 @@ object OnDeviceLlmEngine {
         val modelFile = OnDeviceModelManager.getModelFile(context)
         if (!modelFile.exists() || modelFile.length() == 0L) return false
 
+        markOperationStart(context) // si el proceso muere aqui, la bandera queda en "true"
+
         return try {
             val options = LlmInferenceOptions.builder()
                 .setModelPath(modelFile.absolutePath)
-                .setMaxTokens(512)
+                .setMaxTokens(256) // reducido de 512 - menos memoria necesaria durante la generacion
+                .setPreferredBackend(LlmInference.Backend.CPU) // forzar CPU: el backend GPU por defecto es una causa muy comun de fallos nativos no capturables en Android, especialmente en dispositivos de gama media/baja
                 .build()
             llmInference = LlmInference.createFromOptions(context, options)
+            markOperationSuccess(context) // solo llega aqui si NO hubo crash nativo
             true
         } catch (e: Exception) {
             llmInference = null
+            markOperationSuccess(context) // fallo controlado (excepcion Kotlin), no bloquear el proximo arranque
             false
         }
     }
@@ -63,11 +91,15 @@ object OnDeviceLlmEngine {
         userContext: SoltarUserContext = SoltarUserContext(),
         capsule: KnowledgeCapsule? = null,
         history: List<Pair<String, String>> = emptyList(),
-        systemBlock: String? = null
+        systemBlock: String? = null,
+        safetyContext: Context? = null
     ): String {
         val engine = llmInference ?: throw IllegalStateException("OnDeviceLlmEngine no inicializado")
         val fullPrompt = buildFullPrompt(prompt, framework, userContext, capsule, history, systemBlock)
-        return engine.generateResponse(fullPrompt)
+        safetyContext?.let { markOperationStart(it) }
+        val result = engine.generateResponse(fullPrompt)
+        safetyContext?.let { markOperationSuccess(it) }
+        return result
     }
 
     fun buildFullPrompt(
