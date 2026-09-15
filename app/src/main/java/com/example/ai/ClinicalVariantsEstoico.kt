@@ -82,36 +82,25 @@ Practica la ataraxia: observa el impulso de investigar, reconócelo como una van
                 ClinicalVariant(
                     headerGreeting = "**Frenemos el bucle: Ya tienes suficiente información para comprender esto.**",
                     bodyText = """
-Seguir buscando explicaciones a sus silencios o contradicciones es alimentar un fuego con cenizas. La mente cree que pensando sin tregua hallará alivio, pero solo perpetúa la confusión.
-
-Distingamos los hechos de las conjeturas:
-• **El Hecho:** La relación terminó y hoy reina la distancia.
-• **La Conjetura:** Las mil historias que tu intelecto inventa para huir del dolor presente.
-• **Tu Deber:** Cuidar tu cuerpo, tu honra y tu quietud en este día.
+Seguir buscando explicaciones a sus silencios o contradicciones es alimentar un fuego con cenizas. La mente cree que pensando sin tregua hallará alivio, pero solo perpetúa la confusión. La relación terminó y hoy reina la distancia; cuidar tu cuerpo, tu honor y tu quietud es tu único deber en este día.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**La mente desbocada es el peor de los tiranos.**",
                     bodyText = """
-Séneca advertía que sufrimos mucho más a menudo por la imaginación que por la realidad. Los círculos concéntricos de preguntas sin respuesta no buscan la verdad, sino mantener viva la adicción al vínculo.
-
-No necesitas entender cada motivo oculto para decidir vivir con dignidad hoy. Acepta que hay enigmas ajenos que nunca te corresponderá descifrar; enfócate en tu propia virtud.
+Séneca advertía que sufrimos mucho más a menudo por la imaginación que por la realidad. Los círculos concéntricos de preguntas sin respuesta no buscan la verdad, sino mantener viva la adicción al vínculo. Acepta que hay enigmas ajenos que nunca te corresponderá descifrar y enfócate en tu propia virtud.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Corta el hilo de los 'por qué' y céntrate en el 'qué hago ahora'.**",
                     bodyText = """
-Preguntarse infinitamente por qué actuó como actuó es mirar hacia atrás mientras caminas al borde del abismo. No encontrarás paz examinando las razones de una conducta que no te perteneció.
-
-Sustituye la rumiación por la acción sobria. Deja que el pasado repose donde debe estar: en lo irrevocable. Lo único vivo y disponible es tu capacidad de elegir rectamente aquí y ahora.
+Preguntarse infinitamente por qué actuó como actuó es mirar hacia atrás mientras caminas al borde del abismo. No encontrarás paz examinando las razones de una conducta ajena. Deja que el pasado repose en lo irrevocable y elige rectamente aquí y ahora.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Acepta la incertidumbre como un hecho natural.**",
                     bodyText = """
-Pretender certezas absolutas sobre las intenciones de otra persona es una empresa absurda. Los seres humanos son mudables y a menudo incoherentes; fundar tu calma en comprenderlos es edificar sobre arena.
-
-Haz silencio voluntario. Cuando la mente empiece a encadenar sospechas y análisis, recuérdale: 'Esto no depende de mí, por tanto no perturba la fortaleza de mi carácter'.
+Pretender certezas absolutas sobre las intenciones de otra persona es una empresa absurda. Los seres humanos son mudables y a menudo incoherentes; fundar tu calma en comprenderlos es edificar sobre arena. Cuando la mente encadene sospechas, recuérdale que esto no depende de ti.
                     """.trimIndent()
                 )
             )
@@ -120,11 +109,7 @@ Haz silencio voluntario. Cuando la mente empiece a encadenar sospechas y anális
                 ClinicalVariant(
                     headerGreeting = "**El impulso es solo una ola; tú eres la roca firme que permanece.**",
                     bodyText = """
-La urgencia de escribir o llamar no es una llamada del destino, sino un espasmo de agitación en tu pecho. Las emociones intensas se asemejan a tempestades: si no les otorgas tu consentimiento, se extinguen solas.
-
-Antes de mover un solo dedo, sopesa con frialdad:
-1. ¿Qué pretendes obtener? Un fugaz apaciguamiento de la ansiedad a cambio de quebrantar tu propia palabra.
-2. ¿Qué depende de ti? Tu templanza, tu honor y tu capacidad de esperar a que la marea baje.
+La urgencia de escribir o llamar no es una llamada del destino, sino un espasmo de agitación en tu pecho. Las emociones intensas se asemejan a tempestades: si no les otorgas tu consentimiento, se extinguen solas. Tu templanza, tu honor y tu capacidad de esperar a que la marea baje protegen tu palabra.
                     """.trimIndent()
                 ),
                 ClinicalVariant(

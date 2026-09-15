@@ -215,7 +215,8 @@ ${userContext.toClinicalSummary()}
             "con quién habla", "le dio like", "publicó una foto", "puso una indirecta", "borró su foto"
         )
         val matchesKeyword = ruminationKeywords.any { lower.contains(it) }
-        return matchesKeyword || (messageCount >= 3 && (lower.contains("ex") || lower.contains("él") || lower.contains("ella")))
+        val exWordRegex = Regex("""\b(ex|él|ella|pareja)\b""", RegexOption.IGNORE_CASE)
+        return matchesKeyword || (messageCount >= 3 && exWordRegex.containsMatchIn(lower))
     }
 
     enum class MessageIntent {
@@ -227,6 +228,43 @@ ${userContext.toClinicalSummary()}
     fun classifyMessageIntent(input: String): MessageIntent {
         val lower = input.lowercase().trim()
         
+        // Emotional markers that override casual greetings
+        val emotionalKeywords = listOf(
+            "siento", "sentir", "duele", "dolor", "extraño", "extrano", "extrañar", "extranar",
+            "llorar", "lloro", "triste", "tristeza", "ansiedad", "angustia", "ex", "volver",
+            "escribir", "llamar", "contacto", "culpa", "miedo", "rabia", "pena", "vacio", "vacío",
+            "bloqueo", "bloquear", "falta", "amor", "ruptura", "separación", "separacion", "soledad",
+            "desesperado", "desesperada", "obsesion", "obsesión", "recuerdo", "recuerdos", "olvidar",
+            "superar", "duelo", "daño", "dano", "herida", "traición", "traicion", "recaída", "recaida",
+            "mal", "destrozado", "destrozada", "morir", "pánico", "panico", "no puedo más", "no puedo mas",
+            "desesperación", "desesperacion", "angustiado", "angustiada", "deprimido", "deprimida",
+            "roto", "rota", "sufro", "sufriendo", "sufrimiento", "agonía", "agonia"
+        )
+        val hasEmotionalMarker = emotionalKeywords.any { 
+            if (it.contains(" ")) lower.contains(it) else Regex("""\b$it\b""", RegexOption.IGNORE_CASE).containsMatchIn(lower)
+        }
+
+        val metaKeywords = listOf(
+            "qué ia", "que ia", "quién eres", "quien eres", "cómo funcionas", "como funcionas",
+            "qué modelo", "que modelo", "quién te programó", "quien te programo", "eres real",
+            "eres un robot", "eres inteligencia artificial", "qué eres", "que eres",
+            "cómo te llamas", "como te llamas", "quién te creó", "quien te creo",
+            "dónde corres", "donde corres", "tu base de datos",
+            "quién es adriana", "quien es adriana", "qué es atalaya", "que es atalaya",
+            "quién es foco", "quien es foco", "qué usas", "que usas"
+        )
+        val isMetaByContext = (lower.contains("código") || lower.contains("codigo") || lower.contains("privacidad") || lower.contains("servidor")) &&
+            (lower.contains("tu") || lower.contains("tú") || lower.contains("app") || lower.contains("sistema") || lower.contains("eres"))
+
+        if (metaKeywords.any { lower.contains(it) } || isMetaByContext) {
+            return MessageIntent.PREGUNTA_META
+        }
+
+        // If it contains clear emotional keywords or is longer than 25 chars with emotional expression, it's emotional content
+        if (hasEmotionalMarker || lower.length > 25) {
+            return MessageIntent.CONTENIDO_EMOCIONAL
+        }
+        
         val greetings = listOf(
             "hola", "buenas", "buenos días", "buenos dias", "buenas tardes", "buenas noches",
             "qué tal", "que tal", "cómo estás", "como estas", "hey", "saludos",
@@ -235,19 +273,6 @@ ${userContext.toClinicalSummary()}
         )
         if (greetings.any { lower == it || lower.startsWith("$it ") || lower.endsWith(" $it") || (lower.length <= 20 && greetings.contains(lower)) }) {
             return MessageIntent.SALUDO_O_CASUAL
-        }
-        
-        val metaKeywords = listOf(
-            "qué ia", "que ia", "quién eres", "quien eres", "cómo funcionas", "como funcionas",
-            "qué modelo", "que modelo", "quién te programó", "quien te programo", "eres real",
-            "eres un robot", "eres inteligencia artificial", "qué eres", "que eres",
-            "cómo te llamas", "como te llamas", "quién te creó", "quien te creo",
-            "dónde corres", "donde corres", "tu base de datos", "código", "privacidad",
-            "quién es adriana", "quien es adriana", "qué es atalaya", "que es atalaya",
-            "quién es foco", "quien es foco", "qué usas", "que usas"
-        )
-        if (metaKeywords.any { lower.contains(it) }) {
-            return MessageIntent.PREGUNTA_META
         }
         
         return MessageIntent.CONTENIDO_EMOCIONAL
@@ -312,14 +337,22 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
                         append("- Título: ${capsule.title}\n")
                         append("- Autor: ${capsule.author}\n")
                         append("- Principio: ${capsule.quoteOrSource}\n")
-                        append("- Diagnóstico: ${capsule.diagnosisPrinciple}\n")
+                        append("- Principio orientador: ${capsule.diagnosisPrinciple}\n")
                         append("- Guía: ${capsule.clinicalGuidance}\n")
                         append("- Pregunta socrática: ${capsule.socraticPrompt}\n")
                         append("- Micro-acción: ${capsule.concreteAction}\n")
                     }
                 }
 
-                val replyText = OnDeviceLlmEngine.generate(prompt, framework, userContext, capsule, conversationHistory)
+                val systemBlock = systemInstruction ?: buildPromptWithFramework(framework, userContext)
+                val replyText = OnDeviceLlmEngine.generate(
+                    prompt = prompt,
+                    framework = framework,
+                    userContext = userContext,
+                    capsule = capsule,
+                    history = conversationHistory,
+                    systemBlock = systemBlock
+                )
                 if (replyText.isNotBlank()) {
                     return@withContext SoltarAiResponse(
                         replyText = replyText.trim(),
@@ -335,7 +368,7 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
 
         // 3. Motor clínico y de razonamiento local de alta profundidad (Offline & Context-Aware)
         Log.d(TAG, "Executing advanced local clinical coach reasoning")
-        return@withContext executeAdvancedLocalClinicalReasoning(cleanInput, isRumination, framework, userContext, intent, systemInstruction)
+        return@withContext executeAdvancedLocalClinicalReasoning(cleanInput, isRumination, framework, userContext, intent, systemInstruction, conversationHistory)
     }
 
     fun executeAdvancedLocalClinicalReasoning(
@@ -344,14 +377,15 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
         framework: SoltarFramework,
         userContext: SoltarUserContext,
         intent: MessageIntent = MessageIntent.CONTENIDO_EMOCIONAL,
-        systemInstruction: String? = null
+        systemInstruction: String? = null,
+        conversationHistory: List<Pair<String, String>> = emptyList()
     ): SoltarAiResponse {
         val name = if (userContext.userName.isNotBlank() && userContext.userName != "Viajero") userContext.userName else "amigo/a"
         if (intent == MessageIntent.SALUDO_O_CASUAL) {
-            return SoltarAiResponse("Hola, $name. Aqui estoy si necesitas algo.", false, "CASUAL", "")
+            return SoltarAiResponse("Hola, $name. Aquí estoy para acompañarte si lo necesitas.", false, "CASUAL", "")
         }
         if (intent == MessageIntent.PREGUNTA_META) {
-            return SoltarAiResponse("Soy FOCO, tu coach dentro de la app. Funciono de forma segura y privada, integrado en tu dispositivo.", false, "META", "")
+            return SoltarAiResponse("Soy Recuerda, tu coach reflexivo dentro de la app. Funciono de forma segura y privada, integrado en tu dispositivo.", false, "META", "")
         }
         val capsule = ClinicalKnowledgeBase.findRelevantCapsule(input, framework)
 
@@ -363,29 +397,62 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
             userContext = userContext
         )
 
-        val cleanBody = coreText.replace("**", "").trim()
-        val quoteRef = if (capsule.quoteOrSource.isNotBlank()) " Como decía ${capsule.author}, «${capsule.quoteOrSource}»." else ""
-        val questionPart = if (capsule.socraticPrompt.isNotBlank()) " Pregúntate esto: ¿${capsule.socraticPrompt.removeSuffix("?")}?" else ""
-        val actionPart = if (capsule.concreteAction.isNotBlank()) " Para hoy, te sugiero ${capsule.concreteAction.replaceFirstChar { it.lowercase() }}." else ""
+        val cleanBody = coreText.replace("**", "").replace("*", "").trim()
+        val quoteRef = if (capsule.quoteOrSource.isNotBlank()) " Como recordaba ${capsule.author}, «${capsule.quoteOrSource}»." else ""
+        val questionPart = if (capsule.socraticPrompt.isNotBlank()) " ¿${capsule.socraticPrompt.removeSuffix("?")}?" else ""
+        val actionPart = if (capsule.concreteAction.isNotBlank()) " Para hoy: ${capsule.concreteAction.replaceFirstChar { it.lowercase() }}." else ""
+
+        // Rotate skeletons to avoid repetitive structures
+        val isFirstTurn = conversationHistory.isEmpty()
+        val skeletonVariant = Math.abs((input.hashCode() + conversationHistory.size)) % 5
 
         val reply = buildString {
-            append("Hola, $name. ")
-            if (cleanBody.isNotBlank()) {
-                append(cleanBody).append(" ")
+            if (isFirstTurn) {
+                append("Hola, $name. ")
             }
-            if (quoteRef.isNotBlank()) {
-                append(quoteRef.trim()).append(" ")
-            }
-            if (questionPart.isNotBlank()) {
-                append(questionPart.trim()).append(" ")
-            }
-            if (actionPart.isNotBlank()) {
-                append(actionPart.trim())
+            when (skeletonVariant) {
+                0 -> {
+                    // Refraction & Socratic question
+                    append(cleanBody).append(" ")
+                    if (questionPart.isNotBlank()) append(questionPart.trim())
+                }
+                1 -> {
+                    // Body + Action focus
+                    append(cleanBody).append(" ")
+                    if (actionPart.isNotBlank()) append(actionPart.trim())
+                }
+                2 -> {
+                    // Body + Quote + Question
+                    append(cleanBody)
+                    if (quoteRef.isNotBlank()) append(quoteRef)
+                    if (questionPart.isNotBlank()) append(" ").append(questionPart.trim())
+                }
+                3 -> {
+                    // Concise body reflection only
+                    append(cleanBody)
+                }
+                else -> {
+                    // Balanced
+                    append(cleanBody)
+                    if (questionPart.isNotBlank()) append(" ").append(questionPart.trim())
+                    if (actionPart.isNotBlank()) append(" ").append(actionPart.trim())
+                }
             }
         }.trim()
 
+        // Clean any stray markdown
+        val finalClean = reply.replace("**", "").replace("*", "").trim()
+
+        // Enforce max ~90 words
+        val words = finalClean.split(Regex("\\s+"))
+        val trimmedReply = if (words.size > 90) {
+            words.take(90).joinToString(" ") + "..."
+        } else {
+            finalClean
+        }
+
         return SoltarAiResponse(
-            replyText = reply,
+            replyText = trimmedReply,
             isRuminationDetected = isRumination,
             stateDetected = state,
             suggestedAction = capsule.concreteAction
@@ -433,7 +500,16 @@ Por favor, comunícate en este mismo instante con profesionales y servicios de a
             }
         }
 
-        // 2. Mentoría local de alta densidad conceptual
+        // 2. Mentoría local de alta densidad conceptual con rotación de cierre
+        val closings = listOf(
+            "Registrar tus vivencias con esta honestidad es la base para desarticular los sesgos de la memoria y recuperar el mando sobre tus decisiones diarias.",
+            "Poner en palabras lo que sientes reduce el impacto emocional y fortalece tu capacidad de actuar con templanza y claridad.",
+            "Mirar de frente lo que ocurre dentro de ti, sin juzgarlo ni maquillarlo, es el primer paso para consolidar tu paz y autonomía.",
+            "Cada registro honesto en tu diario debilita los bucles automáticos y te devuelve la soberanía sobre tu propia vida."
+        )
+        val closingIndex = Math.abs(cleanInput.hashCode()) % closings.size
+        val chosenClosing = closings[closingIndex]
+
         return@withContext JournalMentorshipResult(
             feedback = """
 Examinando tus líneas con rigor y compasión:
@@ -441,7 +517,7 @@ ${capsule.diagnosisPrinciple}
 
 ${capsule.clinicalGuidance}
 
-Recuerda que registrar tus vivencias con esta honestidad es la base para desarticular los sesgos de la memoria y recuperar el mando sobre tus decisiones diarias.
+$chosenClosing
             """.trimIndent(),
             corePrinciple = capsule.quoteOrSource + " — " + capsule.author,
             socraticQuestion = capsule.socraticPrompt,
@@ -461,14 +537,18 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
         val latest = entries.first().content.lowercase()
         val previous = if (entries.size > 1) entries[1].content.lowercase() else ""
 
-        // Semantic markers
-        val agencyWords = listOf("yo", "elijo", "decido", "puedo", "comprendo", "aprendo", "crezco", "paz", "avanzar", "presente", "responsabilidad", "propio")
-        val ruminationWords = listOf("por qué", "si hubiera", "otra vez", "contacto", "perfil", "extraño", "dependo", "esperando", "culpa", "nunca podré", "olvidar")
-        val otherFocusWords = listOf("él", "ella", "suyo", "decidió", "hizo", "dijo", "cambió", "mensajes", "visto")
+        val wordsInLatest = latest.split(Regex("[^\\p{L}\\p{Nd}]+")).filter { it.isNotBlank() }
 
-        val agencyCount = agencyWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
-        val ruminationCount = ruminationWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
-        val otherCount = otherFocusWords.sumOf { word -> latest.windowed(word.length).count { it == word } }
+        // Semantic markers - exact word matching to prevent substring false positives
+        val agencySingleWords = listOf("yo", "elijo", "decido", "puedo", "comprendo", "aprendo", "crezco", "paz", "avanzar", "presente", "responsabilidad", "propio")
+        val ruminationSingleWords = listOf("contacto", "perfil", "extraño", "extrano", "dependo", "esperando", "culpa", "olvidar")
+        val ruminationPhrases = listOf("por qué", "por que", "si hubiera", "otra vez", "nunca podré", "nunca podre")
+        val otherFocusSingleWords = listOf("él", "ella", "suyo", "suya", "decidió", "decidio", "hizo", "dijo", "cambió", "cambio", "mensajes", "visto")
+
+        val agencyCount = agencySingleWords.sumOf { word -> wordsInLatest.count { it == word } }
+        val ruminationCount = ruminationSingleWords.sumOf { word -> wordsInLatest.count { it == word } } +
+            ruminationPhrases.count { latest.contains(it) }
+        val otherCount = otherFocusSingleWords.sumOf { word -> wordsInLatest.count { it == word } }
 
         // Score calculation: autonomy increases with agency, decreases with other-focus and rumination
         val autonomia = (5 + agencyCount - otherCount - (ruminationCount / 2)).coerceIn(1, 10)
@@ -476,11 +556,11 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
 
         // Cognitive distortions detection
         val distortions = mutableListOf<String>()
-        val catastrofismoKw = listOf("terrible", "horrible", "catástrofe", "fin del mundo", "no lo soporto", "insoportable", "ruina", "destruido", "muero")
-        val bwKw = listOf("todo", "nada", "nunca", "siempre", "perfecto", "pésimo", "absolutamente", "jamás", "todos")
-        val personalizacionKw = listOf("por mi culpa", "lo hizo para", "me lo hizo", "es mi responsabilidad", "me odia", "provoqué")
-        val mindReadingKw = listOf("sé que piensa", "seguro que cree", "me está ignorando", "lo hace para fastidiar")
-        val emotionalReasoningKw = listOf("siento que es verdad", "sé que volverá", "tengo el pálpito", "mi intuición me dice que")
+        val catastrofismoKw = listOf("terrible", "horrible", "catástrofe", "catastrofe", "fin del mundo", "no lo soporto", "insoportable", "ruina", "destruido", "muero")
+        val bwKw = listOf("todo", "nada", "nunca", "siempre", "perfecto", "pésimo", "pesimo", "absolutamente", "jamás", "jamas", "todos")
+        val personalizacionKw = listOf("por mi culpa", "lo hizo para", "me lo hizo", "es mi responsabilidad", "me odia", "provoqué", "provoque")
+        val mindReadingKw = listOf("sé que piensa", "se que piensa", "seguro que cree", "me está ignorando", "me esta ignorando", "lo hace para fastidiar")
+        val emotionalReasoningKw = listOf("siento que es verdad", "sé que volverá", "se que volvera", "tengo el pálpito", "tengo el palpito", "mi intuición me dice", "mi intuicion me dice")
 
         if (catastrofismoKw.any { latest.contains(it) }) distortions.add("Catastrofismo")
         if (bwKw.any { latest.contains(it) }) distortions.add("Pensamiento Blanco/Negro")
@@ -489,9 +569,11 @@ Recuerda que registrar tus vivencias con esta honestidad es la base para desarti
         if (emotionalReasoningKw.any { latest.contains(it) }) distortions.add("Razonamiento Emocional")
 
         val cambio = if (previous.isNotBlank()) {
-            val prevAgency = agencyWords.sumOf { word -> previous.windowed(word.length).count { it == word } }
-            val prevRum = ruminationWords.sumOf { word -> previous.windowed(word.length).count { it == word } }
-            
+            val wordsInPrev = previous.split(Regex("[^\\p{L}\\p{Nd}]+")).filter { it.isNotBlank() }
+            val prevAgency = agencySingleWords.sumOf { word -> wordsInPrev.count { it == word } }
+            val prevRum = ruminationSingleWords.sumOf { word -> wordsInPrev.count { it == word } } +
+                ruminationPhrases.count { previous.contains(it) }
+
             when {
                 agencyCount > prevAgency && ruminationCount <= prevRum -> 
                     "Evolución notable: Tu discurso muestra mayor sentido de agencia personal y menor carga rumiativa respecto a tu registro anterior."

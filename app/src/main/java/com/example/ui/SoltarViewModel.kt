@@ -100,6 +100,7 @@ data class SoltarUiState(
     val isTemporalMirrorModalVisible: Boolean = false,
     val isBeginnerLetterModalVisible: Boolean = false,
     val isToolsShelfSheetVisible: Boolean = false,
+    val isAiDiagnosticDialogVisible: Boolean = false,
     val isEmdrDialogVisible: Boolean = false,
     val emdrSessionText: String = "",
     val emdrSessionExName: String = "",
@@ -566,6 +567,7 @@ class SoltarViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleNeedHelpSheet(visible: Boolean) = _uiState.update { it.copy(isNeedHelpSheetVisible = visible) }
     fun toggleToolsShelfSheetVisible(visible: Boolean) = _uiState.update { it.copy(isToolsShelfSheetVisible = visible) }
+    fun toggleAiDiagnosticDialog(visible: Boolean) = _uiState.update { it.copy(isAiDiagnosticDialogVisible = visible) }
     fun openNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = true) }
     fun closeNeedHelpSheet() = _uiState.update { it.copy(isNeedHelpSheetVisible = false) }
 

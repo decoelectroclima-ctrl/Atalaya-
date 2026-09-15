@@ -324,8 +324,8 @@ object ClinicalCategoryClassifier {
 
 object ClinicalVariantRegistry {
 
-    // Memoria en tiempo de ejecución para evitar repetir la misma variante dos veces consecutivas
-    private val lastUsedVariantIndex = ConcurrentHashMap<String, Int>()
+    // Memoria en tiempo de ejecución para evitar repetir las últimas 2 variantes usadas por categoría y marco
+    private val lastUsedVariants = ConcurrentHashMap<String, MutableList<Int>>()
 
     fun getResolvedVariant(
         input: String,
@@ -337,17 +337,24 @@ object ClinicalVariantRegistry {
         val variantList = getVariantsForCategoryAndFramework(category, framework)
 
         val memoryKey = "${category.name}_${framework.name}"
-        val lastIndex = lastUsedVariantIndex[memoryKey]
+        val historyList = lastUsedVariants.computeIfAbsent(memoryKey) { mutableListOf() }
 
-        // Excluir la última utilizada si hay más de 1 variante disponible
-        val eligibleIndices = if (variantList.size > 1 && lastIndex != null) {
-            variantList.indices.filter { it != lastIndex }
+        val eligibleIndices = if (variantList.size > 2) {
+            val nonRecent = variantList.indices.filter { it !in historyList }
+            if (nonRecent.isNotEmpty()) nonRecent else variantList.indices.filter { it != historyList.lastOrNull() }
+        } else if (variantList.size == 2 && historyList.isNotEmpty()) {
+            variantList.indices.filter { it != historyList.last() }
         } else {
             variantList.indices.toList()
         }
 
-        val chosenIndex = eligibleIndices.random()
-        lastUsedVariantIndex[memoryKey] = chosenIndex
+        val chosenIndex = (if (eligibleIndices.isNotEmpty()) eligibleIndices else variantList.indices.toList()).random()
+        synchronized(historyList) {
+            historyList.add(chosenIndex)
+            if (historyList.size > 2) {
+                historyList.removeAt(0)
+            }
+        }
 
         val chosenVariant = variantList[chosenIndex]
 
@@ -376,11 +383,11 @@ object ClinicalVariantRegistry {
         val notes = mutableListOf<String>()
 
         if (userContext.streakDays > 0 && (category == ClinicalCategory.IMPULSO_CONTACTAR || category == ClinicalCategory.CONTACTO_CERO_LIMITES || category == ClinicalCategory.SENALES_DIGITALES)) {
-            notes.add("🛡️ *Llevas ${userContext.streakDays} días sosteniendo este límite protector. No entregues ese territorio ganado por un momento de alivio pasajero.*")
+            notes.add("Llevas ${userContext.streakDays} días sosteniendo este límite protector; no entregues ese territorio ganado por un momento de alivio pasajero.")
         }
 
         if (userContext.hasChildren && (category == ClinicalCategory.COPARENTALIDAD_LOGISTICA || category == ClinicalCategory.CONTACTO_CERO_LIMITES)) {
-            notes.add("👨‍👧 *Tu brújula en este punto es el bienestar de tus hijos y la comunicación estrictamente funcional y desprovista de carga emocional.*")
+            notes.add("Tu brújula en este punto es el bienestar de tus hijos y una comunicación estrictamente funcional y desprovista de carga emocional.")
         }
 
         return if (notes.isNotEmpty()) {
@@ -403,6 +410,6 @@ object ClinicalVariantRegistry {
     }
 
     fun clearMemory() {
-        lastUsedVariantIndex.clear()
+        lastUsedVariants.clear()
     }
 }

@@ -45,6 +45,7 @@ import com.example.data.SubscriptionPlan
 import com.example.data.UserEntitlements
 import com.example.ui.SoltarViewModel
 import com.example.ui.auth.AuthViewModel
+import com.example.ui.dialogs.AiDiagnosticDialog
 import com.example.ui.theme.*
 import com.example.ui.components.RelationshipContextSection
 
@@ -232,6 +233,13 @@ fun ProfileScreen(
             },
             containerColor = SoltarSurfaceElevated,
             shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    if (uiState.isAiDiagnosticDialogVisible) {
+        AiDiagnosticDialog(
+            viewModel = viewModel,
+            onDismiss = { viewModel.toggleAiDiagnosticDialog(false) }
         )
     }
 
@@ -2705,6 +2713,88 @@ fun ProfileScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // Motor de IA Local & Diagnóstico Clínico
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("ai_engine_diagnostic_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = SoltarSurface),
+                border = BorderStroke(1.dp, SoltarBorder)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Psychology,
+                                contentDescription = null,
+                                tint = SoltarAmber,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Inteligencia Artificial Local",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        val modelState by com.example.ai.OnDeviceModelManager.modelState.collectAsState()
+                        val isReady = modelState is com.example.ai.OnDeviceModelManager.ModelState.Ready
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (isReady) SoltarSage.copy(alpha = 0.15f) else SoltarAmber.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = if (isReady) "INFERENCIA ON-DEVICE" else "REGLAS CLÍNICAS",
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isReady) SoltarSage else SoltarAmber,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Modelo LLM Gemma 3 en el dispositivo para acompañamiento clínico 100% privado y sin conexión a internet.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        lineHeight = 16.sp,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.playSound(SoltarSoundManager.SoundType.TAP)
+                            viewModel.toggleAiDiagnosticDialog(true)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .testTag("open_ai_diagnostic_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, SoltarAmber.copy(alpha = 0.5f))
+                    ) {
+                        Icon(Icons.Default.Speed, contentDescription = null, tint = SoltarAmber, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Panel de Diagnóstico y Pruebas Reales", color = SoltarAmber, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

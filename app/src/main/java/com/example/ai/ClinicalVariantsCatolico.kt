@@ -82,36 +82,25 @@ Decide hacer un ayuno voluntario de redes sociales. Verás cómo, al despejarse 
                 ClinicalVariant(
                     headerGreeting = "**Frenemos el bucle: Ya tienes suficiente información para comprender esto.**",
                     bodyText = """
-Seguir intentando descifrar las intenciones ocultas, silencios o contradicciones de la otra persona solo mantiene encendido el circuito de la rumiación y la inquietud interior.
-
-Distingamos los hechos de las suposiciones:
-• **El Hecho:** La relación concluyó y la distancia es la realidad presente.
-• **La Suposición:** Las mil dudas con las que tu mente intenta comprender lo incomprensible.
-• **Tu Deber:** Cuidar tu templo, orar y cumplir con rectitud tus compromisos cotidianos.
+Seguir intentando descifrar las intenciones ocultas, silencios o contradicciones de la otra persona solo mantiene encendido el circuito de la rumiación y la inquietud interior. La relación concluyó y la distancia es la realidad presente; cuidar tu templo interior, orar y cumplir con rectitud tus compromisos cotidianos te devolverá la paz.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Descansa en la certeza de que Dios conoce lo que tú ignoras.**",
                     bodyText = """
-San Pablo nos recuerda: 'Sabemos que a los que aman a Dios todas las cosas les ayudan a bien'. No necesitas desentrañar cada motivo secreto ni entender por qué la otra persona obró con ingratitud o incoherencia.
-
-Pretender saberlo todo es una forma de soberbia intelectual que te agota. Di con sencillez: 'Señor, en tus manos encomiendo este misterio que hoy no comprendo', y vuelve al sosiego.
+San Pablo nos recuerda: 'Sabemos que a los que aman a Dios todas las cosas les ayudan a bien'. No necesitas desentrañar cada motivo secreto ni entender por qué la otra persona obró con ingratitud o incoherencia. Encomienda este misterio a la Providencia y vuelve al sosiego.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Sustituye la rumiación estéril por la oración confiada.**",
                     bodyText = """
-Darle vueltas sin fin a las mismas preguntas del pasado es rezarle al dolor en vez de rezarle a Dios. Cada pensamiento obsesivo que se repite es una invitación a la entrega, no a la disección infinita.
-
-Cada vez que aparezca el torbellino de los 'por qués', conviértelo en una jaculatoria: 'Jesús, en ti confío'. Corta el bucle con la fuerza de la gracia y reanuda tus labores.
+Darle vueltas sin fin a las mismas preguntas del pasado es rezarle al dolor en vez de rezarle a Dios. Cada pensamiento obsesivo que se repite es una invitación a la entrega y a la confianza serena en que tu vida tiene un propósito mayor.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**La verdad ya te ha sido revelada a través de los frutos.**",
                     bodyText = """
-'Por sus frutos los conoceréis', dice el Evangelio. Los frutos del vínculo en su tramo final fueron el dolor, la inestabilidad o la ruptura: no requieres más confirmación teórica para aceptar que la etapa terminó.
-
-Deja de buscar excusas en la memoria. Acepta con paz la realidad de las cosas y pide a Dios fortaleza para sembrar semillas de santidad en tu presente.
+Por sus frutos los conoceréis, dice el Evangelio. Los frutos del vínculo en su tramo final fueron el dolor y la distancia: no requieres más confirmación teórica para aceptar que la etapa terminó y sembrar serenidad en tu presente.
                     """.trimIndent()
                 )
             )
@@ -120,12 +109,7 @@ Deja de buscar excusas en la memoria. Acepta con paz la realidad de las cosas y 
                 ClinicalVariant(
                     headerGreeting = "**El impulso es solo una ola neuroquímica; no es una orden que debas obedecer.**",
                     bodyText = """
-Lo que sientes arder en el pecho no es una llamada providencial a quebrar tu pacto de distancia, sino la angustia pasajera de la carne ante la pérdida del afecto que antes la calmaba.
-
-Antes de actuar precipitadamente, reflexiona en presencia de Dios:
-1. **¿Qué buscas realmente?** Un alivio momentáneo de diez minutos a costa de reiniciar semanas de sanación del alma.
-2. **¿Qué no depende de ti?** El corazón o las respuestas de la otra persona.
-3. **¿Qué sí te corresponde?** Tu fidelidad a ti mismo, tu templanza y tu pureza de juicio ante Dios.
+Lo que sientes arder en el pecho no es una llamada providencial a quebrar tu pacto de distancia, sino la angustia pasajera de la carne ante la pérdida del afecto. Tu fidelidad a ti mismo, tu templanza y tu pureza de juicio ante Dios son el verdadero refugio.
                     """.trimIndent()
                 ),
                 ClinicalVariant(

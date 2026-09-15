@@ -62,34 +62,45 @@ object OnDeviceLlmEngine {
         framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
         userContext: SoltarUserContext = SoltarUserContext(),
         capsule: KnowledgeCapsule? = null,
-        history: List<Pair<String, String>> = emptyList()
+        history: List<Pair<String, String>> = emptyList(),
+        systemBlock: String? = null
     ): String {
         val engine = llmInference ?: throw IllegalStateException("OnDeviceLlmEngine no inicializado")
-        val fullPrompt = buildFullPrompt(prompt, framework, userContext, capsule, history)
+        val fullPrompt = buildFullPrompt(prompt, framework, userContext, capsule, history, systemBlock)
         return engine.generateResponse(fullPrompt)
     }
 
-    private fun buildFullPrompt(
+    fun buildFullPrompt(
         prompt: String,
-        framework: SoltarFramework,
-        userContext: SoltarUserContext,
-        capsule: KnowledgeCapsule?,
-        history: List<Pair<String, String>>
+        framework: SoltarFramework = SoltarFramework.PSICOLOGIA_MODERNA,
+        userContext: SoltarUserContext = SoltarUserContext(),
+        capsule: KnowledgeCapsule? = null,
+        history: List<Pair<String, String>> = emptyList(),
+        systemBlock: String? = null
     ): String {
+        val systemPrompt = systemBlock ?: SoltarAiEngine.buildPromptWithFramework(framework, userContext)
         return buildString {
-            append("Sistema de acompañamiento emocional y clínico (${framework.name}: ${framework.title}).\n")
-            append("Contexto del usuario:\n${userContext.toClinicalSummary()}\n")
+            append("<start_of_turn>user\n")
+            append(systemPrompt)
+            append("\n\n")
             if (capsule != null) {
-                append("Cápsula de referencia:\n- Título: ${capsule.title}\n- Autor: ${capsule.author}\n- Principio: ${capsule.quoteOrSource}\n- Guía: ${capsule.clinicalGuidance}\n")
+                append("Cápsula clínica de referencia:\n")
+                append("- Título: ${capsule.title}\n")
+                append("- Autor: ${capsule.author}\n")
+                append("- Principio orientador: ${capsule.quoteOrSource}\n")
+                append("- Guía: ${capsule.clinicalGuidance}\n")
+                append("- Pregunta socrática: ${capsule.socraticPrompt}\n")
+                append("- Micro-acción: ${capsule.concreteAction}\n\n")
             }
             if (history.isNotEmpty()) {
-                append("Historial reciente de conversación:\n")
+                append("Historial reciente de la conversación:\n")
                 history.takeLast(5).forEach { (sender, msg) ->
                     append("- $sender: $msg\n")
                 }
+                append("\n")
             }
-            append("Mensaje o consulta actual: $prompt\n")
-            append("Genera una respuesta empática, profunda, sobria y orientada a la autonomía y soberanía personal del usuario.")
+            append("Consulta actual del usuario: $prompt\n")
+            append("Instrucción: Si el usuario escribe algo breve o casual, responde en 1-2 frases. Nunca superes 120 palabras salvo que se pida desarrollo. Genera una respuesta empática, profunda, lúcida y orientada a la autonomía y serenidad del usuario en tono conversacional y sin viñetas.<end_of_turn>\n<start_of_turn>model\n")
         }
     }
 

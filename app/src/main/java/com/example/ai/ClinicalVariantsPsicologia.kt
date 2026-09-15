@@ -82,36 +82,25 @@ Aplica defusión cognitiva: nota cómo tu mente dice 'eso es por mí' y elige no
                 ClinicalVariant(
                     headerGreeting = "**Frenemos el bucle: Ya tienes suficiente información para comprender esto.**",
                     bodyText = """
-Seguir intentando descifrar las intenciones, silencios o contradicciones de la otra persona solo mantiene encendido el circuito de la rumiación.
-
-Distingamos los hechos observables de la fantasía:
-• **El Hecho:** El vínculo se rompió o la distancia es un hecho real en el presente.
-• **La Hipótesis:** Las mil explicaciones que tu mente inventa intentando calmar la incertidumbre.
-• **La Soberanía:** Lo único que puedes gobernar hoy son tus decisiones, tu descanso y tu atención.
+Seguir intentando descifrar las intenciones, silencios o contradicciones de la otra persona solo mantiene encendido el circuito de la rumiación. El vínculo se ha detenido en el presente, y las explicaciones que tu mente inventa solo buscan calmar la incertidumbre. Lo único fértil hoy es gobernar tus decisiones, tu descanso y tu atención.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**La rumiación no es análisis productivo, es evitación emocional.**",
                     bodyText = """
-Pensar una y otra vez en las mismas preguntas sin respuesta es un intento del cerebro de evitar sentir la tristeza pura de la pérdida. Analizar se siente falsamente activo, como si estuvieras 'resolviendo algo', pero en realidad solo estanca el duelo.
-
-Nombra el proceso: 'Estoy atrapado en un bucle mental'. No intentes responder a la pregunta número cien; en su lugar, haz una pausa, baja al cuerpo y permite que la emoción subyacente se exprese sin palabras.
+Pensar una y otra vez en las mismas preguntas sin respuesta es un intento del cerebro de evitar sentir la tristeza pura de la pérdida. Analizar se siente falsamente activo, pero en realidad solo estanca el duelo. Haz una pausa, baja al cuerpo y permite que la emoción se exprese sin palabras.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Aplica defusión cognitiva a los pensamientos intrusivos.**",
                     bodyText = """
-Tus pensamientos son eventos mentales, no verdades absolutas ni mandatos biológicos. Cuando aparezca el clásico '¿por qué me dijo aquello si luego hizo esto?', obsérvalo como hojas que bajan por un río.
-
-Pregúntate: '¿Pensar esto por trigésima vez hoy me acerca a la persona autónoma y en paz que quiero ser?'. Si la respuesta es no, agradece a tu mente el intento de protegerte y redirige tu atención a tu tarea actual.
+Tus pensamientos son eventos mentales, no verdades absolutas. Cuando aparezca el clásico reproche o duda sobre el pasado, obsérvalo como hojas que bajan por un río. Si pensar en eso no te acerca a la paz que buscas, agradece a tu mente el aviso y redirige tu atención a lo presente.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Cierra el expediente mental: la respuesta ya está en la conducta.**",
                     bodyText = """
-Buscamos un cierre verbal perfecto que casi nunca llega. Sin embargo, en psicología clínica sabemos que la conducta observada ES el mensaje. La falta de cuidado, el silencio o la distancia son toda la explicación que necesitas.
-
-No requieres una confesión detallada para validar tu decisión de soltar. Deja de interrogar al pasado y empieza a escuchar las necesidades de tu presente.
+Buscamos un cierre verbal perfecto que casi nunca llega. En psicología sabemos que la conducta observada es el mensaje principal. La falta de reciprocidad o la distancia son toda la explicación necesaria para validar tu decisión de soltar y cuidar tu presente.
                     """.trimIndent()
                 )
             )
@@ -120,36 +109,25 @@ No requieres una confesión detallada para validar tu decisión de soltar. Deja 
                 ClinicalVariant(
                     headerGreeting = "**El impulso es solo una ola neuroquímica; no es una orden que debas obedecer.**",
                     bodyText = """
-Lo que sientes en el pecho no es una señal mística de que debas romper la distancia. Es la respuesta biológica de alarma y abstinencia de tu sistema nervioso ante la pérdida de la figura vincular.
-
-Antes de mover las manos, analicemos con rigor:
-1. **¿Qué buscas realmente?** Un alivio fugaz de 10 minutos a cambio de reiniciar semanas de cicatrización emocional.
-2. **¿Qué no depende de ti?** Cómo responderá o qué sentirá la otra persona.
-3. **¿Qué sí depende de ti?** Tu autorregulación, tu palabra y tu templanza en este momento exacto.
+Lo que sientes en el pecho no es una señal mística de que debas romper la distancia, sino la respuesta de alarma y abstinencia de tu sistema nervioso ante la pérdida del vínculo. Un mensaje impulsivo solo da un alivio fugaz a cambio de reiniciar semanas de cicatrización emocional. Tu templanza hoy protege tu paz de mañana.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Aplica la técnica de 'surfear la urgencia' (Urge Surfing).**",
                     bodyText = """
-El craving relacional funciona exactamente como una ola en el mar: nace, crece gradualmente, alcanza un pico de máxima intensidad y luego decae de forma natural si no le das combustible.
-
-No luches contra la sensación física: localízala en tu cuerpo (garganta, estómago, pecho). Obsérvala con curiosidad clínica y cronometra 15 minutos sin hacer nada con el móvil. Verás cómo el pico neuroquímico se desinfla por sí mismo.
+El impulso de contactar funciona como una ola: nace, crece, alcanza un pico y luego decae de forma natural si no le das combustible. Localiza la sensación física en tu cuerpo, respira con calma y espera quince minutos sin tocar el móvil para notar cómo la urgencia pierde fuerza.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Tu sistema de apego está en estado de alarma de desamparo.**",
                     bodyText = """
-Desde el punto de vista del apego, el impulso de llamar es el reflejo primitivo del mamífero buscando al cuidador para asegurar la supervivencia. Tu cerebro límbico interpreta la separación como una amenaza vital.
-
-Pero hoy eres una persona adulta, no un niño indefenso. Puedes contenerte a ti mismo. Respira profundo, pon tu mano derecha sobre tu pecho y date la contención que pretendes mendigar afuera.
+El deseo de llamar es un reflejo primitivo del apego buscando seguridad inmediata. Pero hoy eres una persona adulta capaz de contenerse a sí misma. Respira profundo, pon tu mano en el pecho y date la calma y el cuidado que intentabas buscar afuera.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Pospón la acción impulsiva para proteger tu autoestima.**",
                     bodyText = """
-El problema del mensaje impulsivo no es solo el rechazo que probablemente recibirás; es el impacto devastador en tu autoeficacia al sentir que no puedes confiar en tus propios límites.
-
-Haz un pacto de demora: 'Si dentro de 24 horas sigo considerando que este mensaje es saludable y digno, me lo replantearé'. El 99% de las veces, cuando la amígdala se calma, el impulso desaparece.
+El mayor riesgo de un mensaje impulsivo es el golpe a tu confianza al sentir que no sostuviste tus propios límites. Aplica una pausa consciente de veinticuatro horas; cuando la mente se serena, casi siempre comprendes que el silencio era tu mejor refugio.
                     """.trimIndent()
                 )
             )
@@ -158,37 +136,25 @@ Haz un pacto de demora: 'Si dentro de 24 horas sigo considerando que este mensaj
                 ClinicalVariant(
                     headerGreeting = "**Diferenciemos el afecto legítimo de la dependencia emocional.**",
                     bodyText = """
-Sentir que 'no puedes vivir sin esa persona' es la forma en que tu cerebro traduce el miedo al desamparo y la pérdida de la fuente habitual de regulación externa.
-
-Revisemos esta distinción fundamental:
-• **Amor maduro:** Desear compartir la vida desde la propia plenitud y respeto mutuo.
-• **Dependencia:** Usar la presencia del otro como único ansiolítico para no sentir la soledad.
-
-Tu valor como ser humano no está hipotecado a la aprobación de nadie.
+Sentir que no puedes seguir sin esa persona es la forma en que el cerebro traduce el miedo al desamparo tras perder su fuente habitual de regulación externa. El amor maduro nace de la propia plenitud y el respeto, mientras que tu valor intrínseco nunca ha dependido de la aprobación ajena.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Reconstruye tu centro de gravedad psicológico.**",
                     bodyText = """
-En los vínculos dependientes, el centro de gravedad interno se desplaza por completo hacia la otra persona: sus estados de ánimo definen tu felicidad y sus silencios provocan tu derrumbe.
-
-La ruptura, con todo su dolor, es la oportunidad de repatriar tu centro de gravedad. Aprender a autorregularse emocionalmente sin depender del reflejo ajeno es la habilidad psicológica más liberadora que existe.
+En los vínculos dependientes, el centro de gravedad interno se desplaza hacia el otro, haciendo que sus silencios provoquen tu derrumbe. La distancia es la oportunidad de recuperar tu eje propio y aprender a sostenerte emocionalmente con total autonomía.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**La herida del abandono no se sana mendigando presencia.**",
                     bodyText = """
-Desde la psicología del apego y el desarrollo afectivo, cuando decimos 'sin ti no soy nada', estamos proyectando una herida infantil no resuelta en una relación de pareja adulta. Ninguna persona tiene la obligación ni la capacidad de cargar con tu vacío existencial.
-
-Asume la autorregulación emocional y la responsabilidad compasiva de tu propia vida psicológica. Trátate con la ternura y el cuidado que esperabas recibir del otro; tú eres la única persona que estará contigo hasta el último día.
+Ninguna persona externa tiene el deber ni la capacidad de llenar vacíos emocionales profundos. Asume con compasión la responsabilidad de tu propia vida y bríndate el cuidado, el respeto y la ternura que esperabas recibir de los demás.
                     """.trimIndent()
                 ),
                 ClinicalVariant(
                     headerGreeting = "**Desarticula la ilusión de que el otro es indispensable para respirar.**",
                     bodyText = """
-Antes de conocer a esa persona ya tenías una vida, gustos, capacidades y resiliencia. El apego ansioso borra esa memoria y te hace creer que tu supervivencia depende de su afecto.
-
-Comprueba la realidad física en este momento: tus pulmones se expanden, tu corazón late y sigues en pie sin su presencia. El dolor es real, pero la incapacidad de vivir es solo una distorsión cognitiva.
+Antes de conocer a esa persona ya tenías talentos, fortaleza y una vida propia. Aunque el dolor de la pérdida sea intenso, tu capacidad de salir adelante sigue intacta y se fortalece con cada día de autocuidado.
                     """.trimIndent()
                 )
             )
@@ -197,10 +163,7 @@ Comprueba la realidad física en este momento: tus pulmones se expanden, tu cora
                 ClinicalVariant(
                     headerGreeting = "**La nostalgia tiende a embellecer el pasado y borrar las heridas reales.**",
                     bodyText = """
-Es totalmente legítimo y humano extrañar momentos cálidos o la sensación de refugio. Sin embargo, no permitas que la memoria selectiva y eufórica te engañe:
-• **Extrañar no significa que la relación fuera viable ni sana.**
-• **El dolor que sientes es el trabajo psíquico de despedir una etapa, no una invitación a volver.**
-• **El duelo oscila:** Habrá días de calma y días de oleaje; esto no es un retroceso, es cicatrización.
+Es humano extrañar momentos cálidos, pero no permitas que el recuerdo selectivo te confunda. Extrañar no significa que el vínculo fuera viable ni sano; solo indica que estás despidiendo una etapa importante y procesando el cambio con madurez.
                     """.trimIndent()
                 ),
                 ClinicalVariant(

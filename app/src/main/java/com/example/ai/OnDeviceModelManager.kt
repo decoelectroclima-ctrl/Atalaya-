@@ -27,7 +27,7 @@ import java.net.URL
 object OnDeviceModelManager {
     const val MODEL_URL = "https://github.com/decoelectroclima-ctrl/Atalaya-/releases/download/Gemma/gemma3-270m-it-q8.task"
     const val MODEL_FILE_NAME = "gemma3-270m-it-q8.task"
-    const val EXPECTED_SIZE_BYTES = 302145678L
+    const val EXPECTED_SIZE_BYTES = 303950933L
     const val EXPECTED_SHA256 = "0f7147f1c22eaf758b819bbf7841793e4c90096c9352cde7fbe5c631f2265ef5"
 
     private const val PREFS_NAME = "atalaya_gemma_prefs"
